@@ -27,8 +27,20 @@
   time.timeZone = "Europe/London";
   services.xserver.xkb.layout = "gb";
 
+  # power & sleep
+  boot.resumeDevice = "/dev/disk/by-label/swap";
+  boot.kernelParams = [
+    "resume=LABEL=swap"
+  ];
+  systemd.sleep.extraConfig = ''
+    HibernateDelaySec=30s
+  '';
+
   # shell
   programs.fish.enable = true;
+
+  # environment variables
+  environment.sessionVariables = { NIXOS_OZONE_WL = "1"; };
 
   # fingerprint
   services.fprintd.enable = true;
