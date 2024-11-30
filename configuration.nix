@@ -33,7 +33,7 @@
     "resume=LABEL=swap"
   ];
   systemd.sleep.extraConfig = ''
-    HibernateDelaySec=30s
+    HibernateDelaySec=30m
   '';
 
   # shell
@@ -42,8 +42,8 @@
   # environment variables
   environment.sessionVariables = { NIXOS_OZONE_WL = "1"; };
 
-  # fingerprint
-  services.fprintd.enable = true;
+  # fingerprint (disabled until i encrypt my disk)
+  # services.fprintd.enable = true;
 
   users.users.maeve = {
     isNormalUser = true;
