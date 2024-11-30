@@ -13,6 +13,7 @@
   # systemd-boot
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # network
   networking.hostName = "replika";
@@ -28,6 +29,9 @@
 
   # shell
   programs.fish.enable = true;
+
+  # fingerprint
+  services.fprintd.enable = true;
 
   users.users.maeve = {
     isNormalUser = true;
@@ -45,6 +49,8 @@
 
     # apps
     microsoft-edge
+    telegram-desktop
+    discord
 
     # shell
     wget
