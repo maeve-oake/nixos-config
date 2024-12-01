@@ -9,7 +9,8 @@
 		extraGSettingsOverrides = ''
 			[org.gnome.shell]
 			favorite-apps=['microsoft-edge.desktop', 'discord.desktop', 'org.telegram.desktop.desktop', 'code.desktop', 'org.gnome.Console.desktop', 'org.gnome.Nautilus.desktop']
-		        # welcome-dialog-last-shown-version='100' # never show tour
+		        welcome-dialog-last-shown-version='100'
+			# ^^ never show tour
 
 			[org.gnome.desktop.interface]
 			color-scheme='prefer-dark'
@@ -25,7 +26,11 @@
 			auto-raise=false
 			focus-mode='sloppy'
 
-			[org.gnome.desktop.wm.keybindings] # keybinds
+			[org.gnome.desktop.background]
+			picture-uri='file:///home/maeve/.config/img/1975.jpg'
+
+			# keybinds
+			[org.gnome.desktop.wm.keybindings]
 			close=['<Shift><Super>q']
 			maximize=['<Shift><Super>Up']
 			move-to-monitor-down=@as []
