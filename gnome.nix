@@ -36,16 +36,16 @@
 
 			# keybinds
 
-			[org.gnome.settings-daemon.plugins.media-keys.custom-keybindings.custom0]
-			binding='<Super>Return'
-			command='kgx'
-			name='terminal'
-
 			[org.gnome.settings-daemon.plugins.media-keys]
 			custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings.custom0/']
 			help=@as []
 			screensaver=['<Shift><Super>x']
 			search=['<Super>space']
+
+			[org.gnome.settings-daemon.plugins.media-keys.custom-keybindings.custom0]
+			binding='<Super>Return'
+			command='kgx'
+			name='terminal'
 
 			[org.gnome.desktop.wm.keybindings]
 			close=['<Shift><Super>q']
