@@ -10,7 +10,7 @@
 			[org.gnome.shell]
 			favorite-apps=['microsoft-edge.desktop', 'discord.desktop', 'org.telegram.desktop.desktop', 'code.desktop', 'org.gnome.Console.desktop', 'org.gnome.Nautilus.desktop']
 		        # welcome-dialog-last-shown-version='100' # never show tour
-			
+
 			[org.gnome.desktop.interface]
 			color-scheme='prefer-dark'
 			enable-hot-corners=false
@@ -21,9 +21,11 @@
 			dynamic-workspaces=true
 			experimental-features=['scale-monitor-framebuffer']
 
-			# keybinds
+			[org.gnome.desktop.wm.preferences]
+			auto-raise=false
+			focus-mode='sloppy'
 
-			[org.gnome.desktop.wm.keybindings]
+			[org.gnome.desktop.wm.keybindings] # keybinds
 			close=['<Shift><Super>q']
 			maximize=['<Shift><Super>Up']
 			move-to-monitor-down=@as []
