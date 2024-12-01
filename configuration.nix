@@ -67,12 +67,15 @@
     microsoft-edge
     telegram-desktop
     discord
+    gqrx
+    plex-desktop
 
     # shell
     wget
     lolcat
     zoxide
     fzf
+    btop
   ];
 
   # Copy the NixOS configuration file and link it from the resulting system
