@@ -36,10 +36,6 @@
     HibernateDelaySec=30m
   '';
   services.logind.lidSwitch = "suspend-then-hibernate";
-  services.logind.powerKey = "suspend-then-hibernate";
-  services.logind.extraConfig = ''
-    IdleAction=suspend-then-hibernate
-  '';
 
   # shell
   programs.fish.enable = true;
