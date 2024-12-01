@@ -35,7 +35,7 @@
   systemd.sleep.extraConfig = ''
     HibernateDelaySec=30m
   '';
-  systemd.logind.extraConfig = ''
+  services.logind.extraConfig = ''
     HandleLidSwitch=suspend-then-hibernate
     HandlePowerKey=suspend-then=hibernate
     IdleAction=suspend-then-hibernate
