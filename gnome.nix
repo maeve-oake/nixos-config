@@ -95,10 +95,10 @@
 		'';
 
 		extraGSettingsOverridePackages = [
-			pkgs.gnome.gnome-shell
+			pkgs.gnome-shell
 			pkgs.gsettings-desktop-schemas
-			pkgs.gnome.mutter
-			pkgs.gnome.gnome-settings-daemon
+			pkgs.mutter
+			pkgs.gnome-settings-daemon
 		];
 	};
 }
