@@ -35,6 +35,11 @@
   systemd.sleep.extraConfig = ''
     HibernateDelaySec=30m
   '';
+  systemd.logind.extraConfig = ''
+    HandleLidSwitch=suspend-then-hibernate
+    HandlePowerKey=suspend-then=hibernate
+    IdleAction=suspend-then-hibernate
+  '';
 
   # shell
   programs.fish.enable = true;
