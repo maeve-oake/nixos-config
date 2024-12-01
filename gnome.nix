@@ -7,6 +7,11 @@
 	
 	services.xserver.desktopManager.gnome = {
 		extraGSettingsOverrides = ''
+			# power & sleep
+			[org.gnome.settings-daemon.plugins.power]
+			power-button-action='hibernate'
+			sleep-inactive-battery-type='hibernate'
+
 			[org.gnome.shell]
 			favorite-apps=['microsoft-edge.desktop', 'discord.desktop', 'org.telegram.desktop.desktop', 'code.desktop', 'org.gnome.Console.desktop', 'org.gnome.Nautilus.desktop']
 		        welcome-dialog-last-shown-version='100'
@@ -16,7 +21,7 @@
 			color-scheme='prefer-dark'
 			enable-hot-corners=false
 			toolkit-accessibility=false
-			show-battery-percentage=false
+			show-battery-percentage=true
 
 			[org.gnome.mutter]
 			dynamic-workspaces=true
@@ -30,6 +35,18 @@
 			picture-uri='file:///home/maeve/.config/img/1975.jpg'
 
 			# keybinds
+
+			[org.gnome.settings-daemon.plugins.media-keys.custom-keybindings.custom0]
+			binding='<Super>Return'
+			command='kgx'
+			name='terminal'
+
+			[org.gnome.settings-daemon.plugins.media-keys]
+			custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings.custom0/']
+			help=@as []
+			screensaver=['<Shift><Super>x']
+			search=['<Super>space']
+
 			[org.gnome.desktop.wm.keybindings]
 			close=['<Shift><Super>q']
 			maximize=['<Shift><Super>Up']
