@@ -15,6 +15,7 @@
 			color-scheme='prefer-dark'
 			enable-hot-corners=false
 			toolkit-accessibility=false
+			show-battery-percentage=false
 
 			[org.gnome.mutter]
 			dynamic-workspaces=true
