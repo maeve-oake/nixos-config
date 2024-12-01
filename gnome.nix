@@ -32,7 +32,7 @@
 			focus-mode='sloppy'
 
 			[org.gnome.desktop.background]
-			picture-uri='file:///home/maeve/.config/img/1975.jpg'
+			picture-uri-dark='file:///home/maeve/.config/img/1975.jpg'
 
 			# keybinds
 
