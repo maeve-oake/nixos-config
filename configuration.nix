@@ -59,10 +59,14 @@
 	environment.systemPackages = with pkgs; [
 		# dev
 		git
-		vscode
-		neovim
 		gh
-
+		neovim
+		(vscode-with-extensions.override {
+			vscodeExtensions = with vscode-extensions; [
+				ms-dotnettools.csharp
+				jnoortheen.nix-ide
+			];
+		})
 		(with dotnetCorePackages; combinePackages [
 			sdk_8_0
 			sdk_7_0
