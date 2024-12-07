@@ -5,6 +5,10 @@
 	services.xserver.displayManager.gdm.enable = true;
 	services.xserver.enable = true;
 
+	environment.systemPackages = with pkgs; [ 
+		gnome-tweaks
+	];
+
 	environment.gnome.excludePackages = [
 		pkgs.epiphany
 		pkgs.gnome-tour
