@@ -14,6 +14,18 @@
     pkgs.gnome-tour
   ];
 
+  system.activationScripts.script.text = ''
+    mkdir -p /var/lib/AccountsService/{icons,users}
+    cp /home/maeve/.config/img/pfp_maeve.jpg /var/lib/AccountsService/icons/maeve
+    echo -e "[User]\nIcon=/var/lib/AccountsService/icons/maeve\n" > /var/lib/AccountsService/users/maeve
+
+    chown root:root /var/lib/AccountsService/users/maeve
+    chmod 0600 /var/lib/AccountsService/users/maeve
+
+    chown root:root /var/lib/AccountsService/icons/maeve
+    chmod 0444 /var/lib/AccountsService/icons/maeve
+  '';
+
   programs.dconf = {
     enable = true;
     profiles.user.databases = [
