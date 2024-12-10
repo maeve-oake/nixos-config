@@ -76,6 +76,7 @@
     telegram-desktop
     discord
     gqrx
+    gimp
     plex-desktop
 
     # shell
