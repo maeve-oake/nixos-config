@@ -7,6 +7,8 @@
 
   environment.systemPackages = with pkgs; [
     gnome-tweaks
+    gnomeExtensions.user-themes
+    (callPackage ./Lion.nix { })
   ];
 
   environment.gnome.excludePackages = [
@@ -48,9 +50,10 @@
             sleep-inactive-battery-type = "hibernate";
           };
 
-          # dock
+          # dock & extensions
           "org/gnome/shell" = {
             favorite-apps = [ "microsoft-edge.desktop" "discord.desktop" "org.telegram.desktop.desktop" "code.desktop" "org.gnome.Console.desktop" "org.gnome.Nautilus.desktop" ];
+            enabled-extensions = [ "user-theme@gnome-shell-extensions.gcampax.github.com" ];
           };
 
           # appearance
@@ -58,6 +61,9 @@
             color-scheme = "prefer-dark";
             enable-hot-corners = false;
             show-battery-percentage = true;
+          };
+          "org/gnome/shell/extensions/user-theme" = {
+            name = "Lion";
           };
           "org/gnome/desktop/background" = {
             picture-uri-dark = "file:///home/maeve/.config/img/1975.jpg";

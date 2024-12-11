@@ -4,7 +4,7 @@
   imports =
     [
       ./hardware-configuration.nix
-      ./gnome.nix
+      ./gnome/gnome.nix
     ];
 
   # allow unfree pkgs
