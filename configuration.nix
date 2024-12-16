@@ -33,6 +33,7 @@
   boot.resumeDevice = "/dev/disk/by-label/swap";
   boot.kernelParams = [
     "resume=LABEL=swap"
+    "amdgpu.dcdebugmask=0x10"
   ];
   systemd.sleep.extraConfig = ''
     		HibernateDelaySec=30m
@@ -68,6 +69,7 @@
         ms-dotnettools.csharp
         ms-dotnettools.vscode-dotnet-runtime
         jnoortheen.nix-ide
+	ms-vsliveshare.vsliveshare
       ];
     })
 
