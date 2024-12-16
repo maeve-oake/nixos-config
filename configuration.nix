@@ -12,6 +12,7 @@
 
   # systemd-boot
   boot.loader.systemd-boot.enable = true;
+  boot.loader.timeout = 0;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = pkgs.linuxPackages_6_11;
 
@@ -43,7 +44,9 @@
   programs.fish.enable = true;
 
   # environment variables
-  environment.sessionVariables = { NIXOS_OZONE_WL = "1"; };
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";
+  };
 
   # fingerprint (disabled until i encrypt my disk)
   # services.fprintd.enable = true;
@@ -68,7 +71,7 @@
         ms-dotnettools.csharp
         ms-dotnettools.vscode-dotnet-runtime
         jnoortheen.nix-ide
-	ms-vsliveshare.vsliveshare
+        ms-vsliveshare.vsliveshare
       ];
     })
 
