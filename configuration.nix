@@ -13,7 +13,7 @@
   # systemd-boot
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_6_11;
 
   # network
   networking.hostName = "replika";
@@ -33,7 +33,6 @@
   boot.resumeDevice = "/dev/disk/by-label/swap";
   boot.kernelParams = [
     "resume=LABEL=swap"
-    "amdgpu.dcdebugmask=0x10"
   ];
   systemd.sleep.extraConfig = ''
     		HibernateDelaySec=30m
