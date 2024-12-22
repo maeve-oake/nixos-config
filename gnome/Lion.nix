@@ -2,13 +2,13 @@
 
 stdenv.mkDerivation rec {
   name = "Lion-theme";
-  version = "1.0";
+  version = "1.1";
 
   src = fetchFromGitHub {
     owner = "maeve-oake";
     repo = "Lion";
-    rev = "360384c6f4806b84e2c593edb27d240a6b824789";
-    sha256 = "sha256-n6r5oOuxjY86TLD4YM51rENHUR4qfzvlf4D3hZHpkyM=";
+    rev = "81107453ebd35188f79fa0870fc16e2f9895ba3f";
+    sha256 = "sha256-UV6QzgOtnEGqlzvgPSZjb+MdwhblvSI1YaEjIscTox8=";
   };
 
   installPhase = ''
