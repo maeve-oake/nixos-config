@@ -88,6 +88,7 @@
     gqrx
     gimp
     plex-desktop
+    (callPackage ./pkgs/satdump.nix { })
 
     # shell
     wget
