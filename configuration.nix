@@ -15,6 +15,12 @@
   boot.loader.timeout = 0;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = pkgs.linuxPackages_6_11;
+  boot.kernelPatches = [
+    {
+      name = "WCN785x-bluetooth-fix";
+      patch = ./patches/bt-audio.patch;
+    }
+  ];
 
   # network
   networking.hostName = "replika";
@@ -53,7 +59,7 @@
 
   users.users.maeve = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ];
+    extraGroups = [ "wheel" "networkmanager" "video" ];
     shell = pkgs.fish;
   };
 
