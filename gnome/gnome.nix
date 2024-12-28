@@ -5,17 +5,20 @@
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.enable = true;
 
+  # theme
   environment.systemPackages = with pkgs; [
     gnome-tweaks
     gnomeExtensions.user-themes
     (callPackage ./Lion.nix { })
   ];
 
+  # remove gnome tour and web browser
   environment.gnome.excludePackages = [
     pkgs.epiphany
     pkgs.gnome-tour
   ];
 
+  # profile picture
   system.activationScripts.script.text = ''
     mkdir -p /var/lib/AccountsService/{icons,users}
     cp /home/maeve/.config/img/pfp_maeve.jpg /var/lib/AccountsService/icons/maeve
