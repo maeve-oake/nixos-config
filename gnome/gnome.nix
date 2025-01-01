@@ -10,6 +10,7 @@
     gnome-tweaks
     gnomeExtensions.user-themes
     (callPackage ./Lion.nix { })
+    (callPackage ./BreezeXCursor.nix { })
   ];
 
   # remove gnome tour and web browser
@@ -62,6 +63,7 @@
           # appearance
           "org/gnome/desktop/interface" = {
             color-scheme = "prefer-dark";
+            cursor-theme = "BreezeX-Black";
             enable-hot-corners = false;
             show-battery-percentage = true;
           };
