@@ -94,6 +94,7 @@
 
     # shell
     wget
+    p7zip
     lolcat
     zoxide
     fzf
