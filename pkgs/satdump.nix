@@ -48,4 +48,9 @@ stdenv.mkDerivation rec {
   cmakeFlags = [
     "-DCMAKE_BUILD_TYPE=Release"
   ];
+
+  postPatch = ''
+    substituteInPlace src-core/CMakeLists.txt \
+      --replace-fail '$'{CMAKE_INSTALL_PREFIX}/'$'{CMAKE_INSTALL_LIBDIR} '$'{CMAKE_INSTALL_FULL_LIBDIR}
+  '';
 }
