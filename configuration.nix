@@ -27,6 +27,7 @@
   networking.networkmanager.enable = true;
   services.avahi.enable = false;
   services.resolved.enable = true;
+  networking.firewall.enable = false;
 
   # localisation
   i18n.defaultLocale = "en_GB.UTF-8";
@@ -52,6 +53,7 @@
   # environment variables
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
+    QT_QPA_PLATFORMTHEME = "flatpak"; # fix telegram filepicker
   };
 
   # fingerprint (disabled until i encrypt my disk)
