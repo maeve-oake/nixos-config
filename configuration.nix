@@ -37,7 +37,6 @@
   services.xserver.xkb.layout = "gb";
 
   #timezone
-  time.timeZone = "Europe/London";
   services.automatic-timezoned.enable = true;
   services.geoclue2.enableDemoAgent = lib.mkForce true;
   services.geoclue2.geoProviderUrl = "https://beacondb.net/v1/geolocate";
