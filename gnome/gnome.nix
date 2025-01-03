@@ -48,6 +48,14 @@
             focus-mode = "sloppy";
           };
 
+          # time & date
+          "org/gnome/desktop/datetime" = {
+            automatic-timezone = true;
+          };
+          "org/gnome/system/location" = {
+            enabled = true;
+          };
+
           # power & sleep
           "org/gnome/settings-daemon/plugins/power" = {
             power-button-action = "hibernate";

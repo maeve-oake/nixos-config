@@ -34,8 +34,13 @@
   console = {
     keyMap = "uk";
   };
-  time.timeZone = "Europe/London";
   services.xserver.xkb.layout = "gb";
+
+  #timezone
+  time.timeZone = "Europe/London";
+  services.automatic-timezoned.enable = true;
+  services.geoclue2.enableDemoAgent = lib.mkForce true;
+  services.geoclue2.geoProviderUrl = "https://beacondb.net/v1/geolocate";
 
   # power & sleep
   boot.resumeDevice = "/dev/disk/by-label/swap";
@@ -46,6 +51,15 @@
     		HibernateDelaySec=30m
     	'';
   services.logind.lidSwitch = "suspend-then-hibernate";
+
+  #   # fucking touchpad scrollspeed (fuck wayland)
+  #   services.udev.extraHwdb = ''
+  # evdev:name:PIXA3854:00 093A:0274 Touchpad:dmi:*svnFramework:*pnLaptop13(AMDRyzen7040Series)**
+  #  EVDEV_ABS_00=::121
+  #  EVDEV_ABS_01=::125
+  #  EVDEV_ABS_35=::121
+  #  EVDEV_ABS_36=::125
+  #   '';
 
   # shell
   programs.fish.enable = true;
