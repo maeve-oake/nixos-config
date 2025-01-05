@@ -11,7 +11,8 @@
     gnomeExtensions.user-themes
     (callPackage ./pkgs/Lion.nix { })
     (callPackage ./pkgs/BreezeXCursor.nix { })
-    # (callPackage ./pkgs/three-finger-drag.nix { })
+    (callPackage ./pkgs/swap-finger-gestures.nix { })
+    (callPackage ./pkgs/three-finger-drag.nix { })
   ];
 
   # remove gnome tour and web browser
@@ -66,7 +67,7 @@
           # dock & extensions
           "org/gnome/shell" = {
             favorite-apps = [ "microsoft-edge.desktop" "discord.desktop" "org.telegram.desktop.desktop" "code.desktop" "org.gnome.Console.desktop" "org.gnome.Nautilus.desktop" ];
-            enabled-extensions = [ "user-theme@gnome-shell-extensions.gcampax.github.com" ];
+            enabled-extensions = [ "user-theme@gnome-shell-extensions.gcampax.github.com" "swap-finger-gestures-3-4@icedman.github.com" ];
           };
 
           # appearance
