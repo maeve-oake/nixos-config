@@ -74,7 +74,7 @@
 
   users.users.maeve = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "video" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "input" ];
     shell = pkgs.fish;
   };
 

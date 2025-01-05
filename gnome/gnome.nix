@@ -5,15 +5,28 @@
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.enable = true;
 
-  # theme
   environment.systemPackages = with pkgs; [
+    # theme
     gnome-tweaks
     gnomeExtensions.user-themes
     (callPackage ./pkgs/Lion.nix { })
     (callPackage ./pkgs/BreezeXCursor.nix { })
+
+    # behaviour
     (callPackage ./pkgs/swap-finger-gestures.nix { })
-    (callPackage ./pkgs/three-finger-drag.nix { })
   ];
+
+  systemd.user.services.libinput-three-finger-drag = {
+    description = "three-finger-drag daemon";
+    wantedBy = [ "default.target" ];
+    after = [ "graphical-session-pre.target" ];
+
+    serviceConfig = {
+      ExecStart = "${(pkgs.callPackage ./pkgs/three-finger-drag.nix { })}/bin/libinput-three-finger-drag";
+      Type = "simple";
+      Restart = "always";
+    };
+  };
 
   # remove gnome tour and web browser
   environment.gnome.excludePackages = [
