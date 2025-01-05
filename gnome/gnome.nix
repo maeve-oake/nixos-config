@@ -9,8 +9,9 @@
   environment.systemPackages = with pkgs; [
     gnome-tweaks
     gnomeExtensions.user-themes
-    (callPackage ./Lion.nix { })
-    (callPackage ./BreezeXCursor.nix { })
+    (callPackage ./pkgs/Lion.nix { })
+    (callPackage ./pkgs/BreezeXCursor.nix { })
+    # (callPackage ./pkgs/three-finger-drag.nix { })
   ];
 
   # remove gnome tour and web browser
