@@ -75,6 +75,7 @@
             color-scheme = "prefer-dark";
             cursor-theme = "BreezeX-Black";
             enable-hot-corners = false;
+            gtk-enable-primary-paste = false;
             show-battery-percentage = true;
           };
           "org/gnome/shell/extensions/user-theme" = {
