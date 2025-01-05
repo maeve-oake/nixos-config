@@ -79,6 +79,7 @@
   };
 
   # packages
+  programs.steam.enable = true;
   environment.systemPackages = with pkgs; [
     # dev
     git
