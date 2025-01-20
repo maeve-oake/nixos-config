@@ -104,6 +104,7 @@
     gqrx
     gimp
     plex-desktop
+    ollama
     (callPackage ./pkgs/satdump.nix { })
 
     # shell
