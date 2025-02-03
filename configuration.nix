@@ -15,12 +15,6 @@
   boot.loader.timeout = 0;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = pkgs.linuxPackages_6_11;
-  boot.kernelPatches = [
-    {
-      name = "WCN785x-bluetooth-fix";
-      patch = ./patches/bt-audio.patch;
-    }
-  ];
 
   # network
   networking.hostName = "replika";
@@ -51,15 +45,6 @@
     	'';
   services.logind.lidSwitch = "suspend-then-hibernate";
 
-  #   # fucking touchpad scrollspeed (fuck wayland)
-  #   services.udev.extraHwdb = ''
-  # evdev:name:PIXA3854:00 093A:0274 Touchpad:dmi:*svnFramework:*pnLaptop13(AMDRyzen7040Series)**
-  #  EVDEV_ABS_00=::121
-  #  EVDEV_ABS_01=::125
-  #  EVDEV_ABS_35=::121
-  #  EVDEV_ABS_36=::125
-  #   '';
-
   # shell
   programs.fish.enable = true;
 
@@ -74,12 +59,17 @@
 
   users.users.maeve = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "video" "input" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "input" "vboxusers" ];
+    # wheel - sudo 
+    # networkmanager - network configuration
+    # input - three finger drag
+    # vboxusers - virtual box
     shell = pkgs.fish;
   };
 
   # packages
   programs.steam.enable = true;
+  virtualisation.virtualbox.host.enable = true;
   environment.systemPackages = with pkgs; [
     # dev
     git
