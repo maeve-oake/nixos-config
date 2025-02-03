@@ -54,13 +54,19 @@
     QT_QPA_PLATFORMTHEME = "flatpak"; # fix telegram filepicker
   };
 
+  # udev rules
+  services.udev.extraRules = ''
+    # give vboxusers raw access to Windows 1TB module
+    SUBSYSTEM=="block", KERNEL=="sd?", ATTRS{serial}=="071C435B161FE558", MODE="0660", GROUP="vboxusers", SYMLINK+="windows-module-disk"
+  '';
+
   # fingerprint (disabled until i encrypt my disk)
   # services.fprintd.enable = true;
 
   users.users.maeve = {
     isNormalUser = true;
     extraGroups = [ "wheel" "networkmanager" "video" "input" "vboxusers" ];
-    # wheel - sudo 
+    # wheel - sudo  
     # networkmanager - network configuration
     # input - three finger drag
     # vboxusers - virtual box
