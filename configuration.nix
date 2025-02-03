@@ -39,11 +39,13 @@
   boot.resumeDevice = "/dev/disk/by-label/swap";
   boot.kernelParams = [
     "resume=LABEL=swap"
+    "amd_pstate=active"
   ];
   systemd.sleep.extraConfig = ''
     		HibernateDelaySec=30m
     	'';
   services.logind.lidSwitch = "suspend-then-hibernate";
+  powerManagement.enable = true;
 
   # shell
   programs.fish.enable = true;
