@@ -14,7 +14,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.timeout = 0;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelPackages = pkgs.linuxPackages_6_11;
+  boot.kernelPackages = pkgs.linuxPackages_6_13;
 
   # network
   networking.hostName = "replika";
@@ -30,7 +30,7 @@
   };
   services.xserver.xkb.layout = "gb";
 
-  #timezone
+  # timezone
   services.automatic-timezoned.enable = true;
   services.geoclue2.enableDemoAgent = lib.mkForce true;
   services.geoclue2.geoProviderUrl = "https://beacondb.net/v1/geolocate";
@@ -39,13 +39,15 @@
   boot.resumeDevice = "/dev/disk/by-label/swap";
   boot.kernelParams = [
     "resume=LABEL=swap"
-    "amd_pstate=active"
+    "amd_pstate=guided"
   ];
   systemd.sleep.extraConfig = ''
     		HibernateDelaySec=30m
     	'';
   services.logind.lidSwitch = "suspend-then-hibernate";
   powerManagement.enable = true;
+  services.power-profiles-daemon.enable = true;
+  boot.kernelModules = [ "amd_pstate" "amd_pstate_ut" ];
 
   # shell
   programs.fish.enable = true;
@@ -78,6 +80,7 @@
   # packages
   programs.steam.enable = true;
   virtualisation.virtualbox.host.enable = true;
+  services.fwupd.enable = true;
   environment.systemPackages = with pkgs; [
     # dev
     git
