@@ -22,6 +22,8 @@
   services.avahi.enable = false;
   services.resolved.enable = true;
   networking.firewall.enable = false;
+  services.tailscale.enable = true;
+  services.tailscale.useRoutingFeatures = "client";
 
   # localisation
   i18n.defaultLocale = "en_GB.UTF-8";
@@ -106,6 +108,7 @@
     gimp
     plex-desktop
     ollama
+    bitwarden-desktop
     (callPackage ./pkgs/satdump.nix { })
 
     # shell
