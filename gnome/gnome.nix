@@ -13,7 +13,9 @@
     (callPackage ./pkgs/BreezeXCursor.nix { })
 
     # behaviour
+    gnomeExtensions.just-perfection
     (callPackage ./pkgs/swap-finger-gestures.nix { })
+    (callPackage ./pkgs/tailscale-qs.nix { })
   ];
 
   systemd.user.services.libinput-three-finger-drag = {
@@ -80,7 +82,7 @@
           # dock & extensions
           "org/gnome/shell" = {
             favorite-apps = [ "microsoft-edge.desktop" "discord.desktop" "org.telegram.desktop.desktop" "code.desktop" "org.gnome.Console.desktop" "org.gnome.Nautilus.desktop" ];
-            enabled-extensions = [ "user-theme@gnome-shell-extensions.gcampax.github.com" "swap-finger-gestures-3-4@icedman.github.com" ];
+            enabled-extensions = [ "user-theme@gnome-shell-extensions.gcampax.github.com" "swap-finger-gestures-3-4@icedman.github.com" "tailscale@joaophi.github.com" "just-perfection-desktop@just-perfection" ];
           };
 
           # appearance
@@ -96,6 +98,17 @@
           };
           "org/gnome/desktop/background" = {
             picture-uri-dark = "file:///home/maeve/.config/img/1975.jpg";
+          };
+          "org/gnome/shell/extensions/just-perfection" = {
+            events-button = false;
+            invert-calendar-column-items = true;
+            quick-settings-dark-mode = false;
+            quick-settings-night-light = false;
+            search = false;
+            show-apps-button = false;
+            switcher-popup-delay = false;
+            window-preview-caption = false;
+            world-clock = false;
           };
 
           # keybinds
