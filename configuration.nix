@@ -15,12 +15,12 @@ in
   nixpkgs.config.allowUnfree = true;
 
   # boot
+  boot.initrd.systemd.enable = true;
   boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.loader.timeout = 0;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = pkgs.linuxPackages_6_13;
   boot.bootspec.enable = true;
-
   boot.lanzaboote = {
     enable = true;
     pkiBundle = "/etc/secureboot";
@@ -48,9 +48,8 @@ in
   services.geoclue2.geoProviderUrl = "https://beacondb.net/v1/geolocate";
 
   # power & sleep
-  boot.resumeDevice = "/dev/disk/by-label/swap";
+  swapDevices = [{ device = "/swapfile"; size = 64 * 1024; }];
   boot.kernelParams = [
-    "resume=LABEL=swap"
     "amd_pstate=guided"
   ];
   systemd.sleep.extraConfig = ''
@@ -76,8 +75,9 @@ in
     SUBSYSTEM=="block", KERNEL=="sd?", ATTRS{serial}=="071C435B161FE558", MODE="0660", GROUP="vboxusers", SYMLINK+="windows-module-disk"
   '';
 
-  # fingerprint (disabled until i encrypt my disk)
-  # services.fprintd.enable = true;
+  # fingerprint & login
+  services.fprintd.enable = true;
+  security.polkit.enable = true;
 
   users.users.maeve = {
     isNormalUser = true;
