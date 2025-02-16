@@ -1,20 +1,30 @@
 { config, lib, pkgs, ... }:
-
+let
+  sources = import ./nix/sources.nix;
+  lanzaboote = import sources.lanzaboote;
+in
 {
   imports =
     [
       ./hardware-configuration.nix
       ./gnome/gnome.nix
+      lanzaboote.nixosModules.lanzaboote
     ];
 
   # allow unfree pkgs
   nixpkgs.config.allowUnfree = true;
 
-  # systemd-boot
-  boot.loader.systemd-boot.enable = true;
+  # boot
+  boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.loader.timeout = 0;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = pkgs.linuxPackages_6_13;
+  boot.bootspec.enable = true;
+
+  boot.lanzaboote = {
+    enable = true;
+    pkiBundle = "/etc/secureboot";
+  };
 
   # network
   networking.hostName = "replika";
@@ -118,6 +128,9 @@
     zoxide
     fzf
     btop
+
+    # niv
+    niv
   ];
 
   # Copy the NixOS configuration file and link it from the resulting system
