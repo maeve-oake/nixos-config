@@ -1,10 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
-
-    lanzaboote = {
-      url = "github:nix-community/lanzaboote/v0.4.2";
-    };
+    lanzaboote.url = "github:nix-community/lanzaboote/v0.4.2";
   };
   outputs = { self, nixpkgs, lanzaboote, ... }: {
     nixosConfigurations = {
