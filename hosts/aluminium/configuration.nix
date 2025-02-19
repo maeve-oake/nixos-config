@@ -11,8 +11,8 @@ in
       lanzaboote.nixosModules.lanzaboote
     ];
 
-  # allow unfree pkgs
-  nixpkgs.config.allowUnfree = true;
+  # flakes
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # boot
   boot.initrd.systemd.enable = true;
@@ -27,7 +27,8 @@ in
   };
 
   # network
-  networking.hostName = "replika";
+  boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
+  networking.hostName = "aluminium";
   networking.networkmanager.enable = true;
   services.avahi.enable = false;
   services.resolved.enable = true;
@@ -48,32 +49,17 @@ in
   services.geoclue2.geoProviderUrl = "https://beacondb.net/v1/geolocate";
 
   # power & sleep
-  swapDevices = [{ device = "/swapfile"; size = 64 * 1024; }];
-  boot.kernelParams = [
-    "amd_pstate=guided"
-  ];
+  swapDevices = [{ device = "/swapfile"; size = 16 * 1024; }];
   systemd.sleep.extraConfig = ''
     		HibernateDelaySec=30m
     	'';
   services.logind.lidSwitch = "suspend-then-hibernate";
-  powerManagement.enable = true;
-  services.power-profiles-daemon.enable = true;
-  boot.kernelModules = [ "amd_pstate" "amd_pstate_ut" ];
-
-  # shell
-  programs.fish.enable = true;
 
   # environment variables
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
     QT_QPA_PLATFORMTHEME = "flatpak"; # fix telegram filepicker
   };
-
-  # udev rules
-  services.udev.extraRules = ''
-    # give vboxusers raw access to Windows 1TB module
-    SUBSYSTEM=="block", KERNEL=="sd?", ATTRS{serial}=="071C435B161FE558", MODE="0660", GROUP="vboxusers", SYMLINK+="windows-module-disk"
-  '';
 
   # fingerprint & login
   services.fprintd.enable = true;
@@ -90,12 +76,10 @@ in
   };
 
   # packages
-  programs.steam.enable = true;
   virtualisation.virtualbox.host.enable = true;
   services.fwupd.enable = true;
   environment.systemPackages = with pkgs; [
     # dev
-    git
     gh
     neovim
     nixpkgs-fmt
@@ -112,31 +96,23 @@ in
 
     # apps
     microsoft-edge
+    teams-for-linux
     telegram-desktop
     discord
     gqrx
     gimp
-    plex-desktop
     ollama
     bitwarden-desktop
-    (callPackage ./pkgs/satdump.nix { })
 
     # shell
     wget
     p7zip
     lolcat
-    zoxide
-    fzf
     btop
 
     # niv
     niv
   ];
-
-  # Copy the NixOS configuration file and link it from the resulting system
-  # (/run/current-system/configuration.nix). This is useful in case you
-  # accidentally delete configuration.nix.
-  # system.copySystemConfiguration = true;
 
   # Do not remove
   system.stateVersion = "24.05";

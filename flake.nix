@@ -5,7 +5,15 @@
   outputs = { self, nixpkgs }: {
     nixosConfigurations.aluminium = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      modules = [ ./configuration.nix ];
+      modules = [
+        ./hosts/aluminium/configuration.nix
+      ];
+    };
+    nixosConfigurations.replika = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ./hosts/replika/configuration.nix
+      ];
     };
   };
 }
