@@ -13,7 +13,7 @@
         system = "x86_64-linux";
         modules = [
           ./hosts/aluminium/configuration.nix
-
+          ./common/default.nix
           lanzaboote.nixosModules.lanzaboote
         ];
       };
