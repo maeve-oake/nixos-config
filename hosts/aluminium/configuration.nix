@@ -1,13 +1,13 @@
 { config, lib, pkgs, ... }:
 let
-  sources = import ./nix/sources.nix;
+  sources = import ../../nix/sources.nix;
   lanzaboote = import sources.lanzaboote;
 in
 {
   imports =
     [
       ./hardware-configuration.nix
-      ./gnome/gnome.nix
+      ../../gnome/gnome.nix
       lanzaboote.nixosModules.lanzaboote
     ];
 
