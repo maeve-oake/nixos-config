@@ -4,6 +4,7 @@
     ./localisation.nix
     ./network.nix
     ./user.nix
+    ./fish.nix
   ];
 
   # allow unfree pkgs

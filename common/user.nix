@@ -1,7 +1,5 @@
 { pkgs, ... }:
 {
-  programs.fish.enable = true;
-
   users.users.maeve = {
     isNormalUser = true;
     extraGroups = [
