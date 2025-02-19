@@ -52,7 +52,7 @@
     gqrx
     plex-desktop
     ollama
-    (callPackage ./pkgs/satdump.nix { })
+    (callPackage ../../pkgs/satdump.nix { })
   ];
 
   # Do not remove
