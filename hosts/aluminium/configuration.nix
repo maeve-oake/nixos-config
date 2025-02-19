@@ -1,10 +1,9 @@
 { config, lib, pkgs, ... }:
 {
-  imports =
-    [
-      ./hardware-configuration.nix
-      ../../gnome/gnome.nix
-    ];
+  imports = [
+    ./hardware-configuration.nix
+    ../../gnome/gnome.nix
+  ];
 
   # flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
