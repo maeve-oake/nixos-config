@@ -17,6 +17,8 @@
         system = "x86_64-linux";
         modules = [
           ./hosts/replika/configuration.nix
+          ./common/default.nix
+          lanzaboote.nixosModules.lanzaboote
         ];
       };
     };
