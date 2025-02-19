@@ -6,7 +6,7 @@
   services.xserver.enable = true;
 
   environment.systemPackages = with pkgs; [
-    # theme
+    # appearance
     gnome-tweaks
     gnomeExtensions.user-themes
     (callPackage ./pkgs/Lion.nix { })
@@ -28,6 +28,12 @@
       Type = "simple";
       Restart = "always";
     };
+  };
+
+  # environment variables
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1"; # fix electron blur
+    QT_QPA_PLATFORMTHEME = "flatpak"; # fix telegram filepicker
   };
 
   # remove gnome tour and web browser
