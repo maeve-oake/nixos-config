@@ -58,11 +58,16 @@
           # behaviour
           "org/gnome/mutter" = {
             dynamic-workspaces = true;
+            edge-tiling = true;
             experimental-features = [ "scale-monitor-framebuffer" ];
+            workspaces-only-on-primary = true;
           };
           "org/gnome/desktop/wm/preferences" = {
             auto-raise = false;
             focus-mode = "sloppy";
+          };
+          "org/gnome/desktop/peripherals/mouse" = {
+            accel-profile = "flat";
           };
 
           # time & date
@@ -124,11 +129,11 @@
           };
           "org/gnome/desktop/wm/keybindings" = {
             close = [ "<Shift><Super>q" ];
-            maximize = [ "<Shift><Super>Up" ];
-            move-to-monitor-down = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
-            move-to-monitor-left = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
-            move-to-monitor-right = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
-            move-to-monitor-up = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
+            maximize = [ "<Shift><Super>Up" "<Shift><Super>L" ];
+            move-to-monitor-down = [ "<Shift><Control><Super>K" ];
+            move-to-monitor-left = [ "<Shift><Control><Super>J" ];
+            move-to-monitor-right = [ "<Shift><Control><Super>semicolon" ];
+            move-to-monitor-up = [ "<Shift><Control><Super>L" ];
             move-to-workspace-1 = [ "<Shift><Super>1" ];
             move-to-workspace-2 = [ "<Shift><Super>2" ];
             move-to-workspace-3 = [ "<Shift><Super>3" ];
@@ -152,11 +157,11 @@
             switch-input-source = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
             switch-input-source-backward = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
             toggle-fullscreen = [ "<Super>f" ];
-            unmaximize = [ "<Shift><Super>Down" ];
+            unmaximize = [ "<Shift><Super>Down" "<Shift><Super>K" ];
           };
           "org/gnome/mutter/keybindings" = {
-            toggle-tiled-left = [ "<Shift><Super>Left" ];
-            toggle-tiled-right = [ "<Shift><Super>Right" ];
+            toggle-tiled-left = [ "<Shift><Super>Left" "<Shift><Super>J" ];
+            toggle-tiled-right = [ "<Shift><Super>Right" "<Shift><Super>semicolon" ];
           };
           "org/gnome/shell/keybindings" = {
             focus-active-notification = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
