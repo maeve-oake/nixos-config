@@ -1,14 +1,10 @@
 { config, lib, pkgs, ... }:
-let
-  sources = import ../../nix/sources.nix;
-  lanzaboote = import sources.lanzaboote;
-in
+
 {
   imports =
     [
       ./hardware-configuration.nix
       ../../gnome/gnome.nix
-      lanzaboote.nixosModules.lanzaboote
     ];
 
   # flakes
@@ -109,9 +105,6 @@ in
     p7zip
     lolcat
     btop
-
-    # niv
-    niv
   ];
 
   # Do not remove
