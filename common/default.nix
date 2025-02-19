@@ -14,6 +14,7 @@
   services.fwupd.enable = true;
   environment.systemPackages = with pkgs; [
     # dev
+    gh
     git
     neovim
     nixpkgs-fmt
