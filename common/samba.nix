@@ -13,7 +13,11 @@ let
 in
 {
   age.secrets.mynah-smb.file = ../secrets/mynah-smb.age;
-  environment.systemPackages = [ pkgs.cifs-utils ];
+  environment.systemPackages = with pkgs; [
+    cifs-utils
+    gocryptfs
+  ];
+
   fileSystems = {
     "/mnt/mynah/maeve" = {
       device = "//anya-nas.maeve/maeve";
