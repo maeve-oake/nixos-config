@@ -2,7 +2,7 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../../gnome/gnome.nix
+    ../../gnome
     ../../common/secureboot.nix
   ];
 

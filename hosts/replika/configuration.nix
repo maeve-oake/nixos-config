@@ -2,8 +2,9 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../../gnome/gnome.nix
+    ../../gnome
     ../../common/secureboot.nix
+    ../../common/samba.nix
   ];
 
   # flakes

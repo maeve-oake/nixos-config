@@ -5,6 +5,10 @@
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.enable = true;
 
+  # fix crash on fast login (nixpkgs/issues/103746)
+  systemd.services."getty@tty1".enable = false;
+  systemd.services."autovt@tty1".enable = false;
+
   environment.systemPackages = with pkgs; [
     # appearance
     gnome-tweaks

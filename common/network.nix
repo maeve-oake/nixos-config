@@ -5,6 +5,9 @@
   services.avahi.enable = false;
   services.resolved.enable = true;
 
+  # ssh
+  services.openssh.enable = true;
+
   # firewall
   networking.firewall.enable = false;
 
