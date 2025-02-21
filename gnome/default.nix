@@ -107,6 +107,7 @@
             enable-hot-corners = false;
             gtk-enable-primary-paste = false;
             show-battery-percentage = true;
+            clock-show-seconds = true;
           };
           "org/gnome/shell/extensions/user-theme" = {
             name = "Lion";
