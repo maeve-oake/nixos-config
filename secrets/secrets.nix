@@ -5,4 +5,5 @@ let
 in
 {
   "mynah-smb.age".publicKeys = [ maeve ] ++ hosts;
+  "maeve-password.age".publicKeys = [ maeve ] ++ hosts;
 }
