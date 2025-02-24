@@ -1,7 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
-    
+
     nix-darwin = {
       url = "github:LnL7/nix-darwin/nix-darwin-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -24,36 +24,40 @@
   };
   outputs = inputs:
     let
-      commonModules = [
-        ./common
+      x86_64-linux_commonModules = [
+        ./common/x86_64-linux
         inputs.lanzaboote.nixosModules.lanzaboote
         inputs.nix-index-database.nixosModules.nix-index
         inputs.agenix.nixosModules.default
+      ];
+
+      aarch64-darwin_commonModules = [
+        ./common/aarch64-darwin
       ];
     in
     {
       nixosConfigurations = {
         aluminium = inputs.nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          modules = commonModules ++ [
+          modules = x86_64-linux_commonModules ++ [
             ./hosts/aluminium/configuration.nix
           ];
         };
         replika = inputs.nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          modules = commonModules ++ [
+          modules = x86_64-linux_commonModules ++ [
             ./hosts/replika/configuration.nix
           ];
         };
       };
 
       darwinConfigurations = {
-	stainless = inputs.nix-darwin.lib.darwinSystem {
-	  system = "aarch64-darwin";
-          modules = [
-	    ./hosts/stainless/configuration.nix
-	  ];
-	};
+        stainless = inputs.nix-darwin.lib.darwinSystem {
+          system = "aarch64-darwin";
+          modules = aarch64-darwin_commonModules ++ [
+            ./hosts/stainless/configuration.nix
+          ];
+        };
       };
     };
 }

@@ -1,22 +1,8 @@
 { pkgs, ... }: {
   imports = [
-    ../../common/fish.nix
+    ../../common/aarch64-darwin
   ];
 
-  nixpkgs.config.allowUnfree = true;
-  nix.settings.experimental-features = ["nix-command" "flakes"];
+  # Do not remove
   system.stateVersion = 5;
-
-  environment.systemPackages = with pkgs; [
-    neovim
-    gh
-    git
-    telegram-desktop
-    nixpkgs-fmt
-    vscode
-    fzf
-    zoxide
-    lolcat
-    p7zip
-  ];
 }

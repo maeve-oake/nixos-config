@@ -2,13 +2,10 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../../gnome
-    ../../common/secureboot.nix
-    ../../common/samba.nix
+    ../../common/x86_64-linux/gnome
+    ../../common/x86_64-linux/secureboot.nix
+    ../../common/x86_64-linux/samba.nix
   ];
-
-  # flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # boot
   boot.loader.timeout = 0;

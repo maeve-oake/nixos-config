@@ -12,7 +12,7 @@ let
   ];
 in
 {
-  age.secrets.mynah-smb.file = ../secrets/mynah-smb.age;
+  age.secrets.mynah-smb.file = ../../secrets/mynah-smb.age;
   environment.systemPackages = with pkgs; [
     cifs-utils
     gocryptfs
