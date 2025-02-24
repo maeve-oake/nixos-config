@@ -1,6 +1,11 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    
+    nix-darwin = {
+      url = "github:LnL7/nix-darwin/nix-darwin-24.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     lanzaboote = {
       url = "github:nix-community/lanzaboote/v0.4.2";
@@ -40,6 +45,15 @@
             ./hosts/replika/configuration.nix
           ];
         };
+      };
+
+      darwinConfigurations = {
+	stainless = inputs.nix-darwin.lib.darwinSystem {
+	  system = "aarch64-darwin";
+          modules = [
+	    ./hosts/stainless/configuration.nix
+	  ];
+	};
       };
     };
 }
