@@ -41,7 +41,6 @@
     zoxide
     wget
     p7zip
-    lolcat
     btop
   ];
 }

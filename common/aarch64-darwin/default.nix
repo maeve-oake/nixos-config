@@ -4,6 +4,7 @@
 
   imports = [
     ../. # common/default.nix
+    ./user.nix
   ];
 
   environment.systemPackages = with pkgs; [
@@ -15,7 +16,6 @@
     vscode
     fzf
     zoxide
-    lolcat
     p7zip
   ];
 }

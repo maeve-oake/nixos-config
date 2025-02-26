@@ -1,4 +1,6 @@
+{ pkgs, ... }:
 {
+  environment.systemPackages = [ pkgs.lolcat ];
   programs.fish = {
     enable = true;
     interactiveShellInit = ''
