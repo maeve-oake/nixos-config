@@ -3,7 +3,6 @@
   # common configuration for x86_64 Linux machines
 
   imports = [
-    ../. # common/default.nix
     ./localisation.nix
     ./network.nix
     ./user.nix

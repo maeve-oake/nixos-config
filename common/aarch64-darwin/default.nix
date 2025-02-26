@@ -3,7 +3,6 @@
   # common configuration for MacOS machines
 
   imports = [
-    ../. # common/default.nix
     ./user.nix
   ];
 
@@ -29,8 +28,8 @@
     dock = {
       autohide = true;
       autohide-delay = 0.0;
-      largesize = 72;         # magnification size
-      tilesize = 28;          # unmagnified size
+      largesize = 72; # magnification size
+      tilesize = 28; # unmagnified size
       orientation = "left";
       magnification = true;
       show-recents = false;
