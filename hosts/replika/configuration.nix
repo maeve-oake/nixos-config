@@ -44,6 +44,7 @@
     gqrx
     plex-desktop
     ollama
+    darktable
     (callPackage ../../pkgs/satdump.nix { })
   ];
 
