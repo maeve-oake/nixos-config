@@ -25,8 +25,8 @@
   outputs = inputs:
     let
       commonModules = [
-        inputs.agenix.nixosModules.default
         ./common
+        inputs.agenix.nixosModules.default
       ];
 
       x86_64-linux_commonModules = commonModules ++ [
