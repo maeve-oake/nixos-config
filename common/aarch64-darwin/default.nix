@@ -18,4 +18,12 @@
     zoxide
     p7zip
   ];
+
+  system.defaults = {
+    CustomUserPreferences = {
+      "com.apple.menuextra.clock" = {
+        ShowSeconds = true;
+      };
+    };
+  };
 }
