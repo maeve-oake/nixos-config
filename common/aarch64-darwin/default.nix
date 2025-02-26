@@ -25,5 +25,14 @@
         ShowSeconds = true;
       };
     };
+
+    dock = {
+      autohide = true;
+      autohide-delay = 0.0;
+      largesize = 72;
+      orientation = "left";
+      magnification = true;
+      show-recents = false;
+    };
   };
 }
