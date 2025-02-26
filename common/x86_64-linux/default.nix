@@ -6,6 +6,7 @@
     ../. # common/default.nix
     ./localisation.nix
     ./network.nix
+    ./user.nix
   ];
 
   # pkgs

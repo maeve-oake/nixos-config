@@ -24,14 +24,17 @@
   };
   outputs = inputs:
     let
-      x86_64-linux_commonModules = [
-        ./common/x86_64-linux
-        inputs.lanzaboote.nixosModules.lanzaboote
-        inputs.nix-index-database.nixosModules.nix-index
+      commonModules = [
         inputs.agenix.nixosModules.default
       ];
 
-      aarch64-darwin_commonModules = [
+      x86_64-linux_commonModules = commonModules ++ [
+        ./common/x86_64-linux
+        inputs.lanzaboote.nixosModules.lanzaboote
+        inputs.nix-index-database.nixosModules.nix-index
+      ];
+
+      aarch64-darwin_commonModules = commonModules ++ [
         ./common/aarch64-darwin
       ];
     in

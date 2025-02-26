@@ -3,7 +3,6 @@
   # please see subdirectories for arch-specific configuration
 
   imports = [
-    ./user.nix
     ./fish.nix
   ];
 
