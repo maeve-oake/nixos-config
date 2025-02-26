@@ -5,4 +5,6 @@
         shell = pkgs.fish;
         uid = 501;
     };
+    
+    security.pam.enableSudoTouchIdAuth = true;
 }
