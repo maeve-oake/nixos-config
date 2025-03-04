@@ -1,7 +1,6 @@
-{ pkgs, ... }: {
-  imports = [
-    ../../common/aarch64-darwin
-  ];
+{ pkgs, ... }: 
+{
+  imports = [ ];
 
   # Do not remove
   system.stateVersion = 5;

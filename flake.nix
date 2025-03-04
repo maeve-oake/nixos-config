@@ -21,6 +21,11 @@
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-homebrew = {
+      url = "github:zhaofengli/nix-homebrew";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = inputs:
     let
@@ -37,6 +42,7 @@
 
       aarch64-darwin_commonModules = commonModules ++ [
         ./common/aarch64-darwin
+        inputs.nix-homebrew.darwinModules.nix-homebrew
       ];
     in
     {

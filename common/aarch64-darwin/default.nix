@@ -7,16 +7,33 @@
   ];
 
   environment.systemPackages = with pkgs; [
+    # dev
+    nixpkgs-fmt
+    vscode
     neovim
     gh
     git
+
+    # apps
     telegram-desktop
-    nixpkgs-fmt
-    vscode
+
+    # shell
     fzf
     zoxide
     p7zip
   ];
+
+  nix-homebrew = {
+    user = "maeve";
+    enable = true;
+  };
+
+  homebrew = {
+    enable = true;
+    casks = [
+      "microsoft-edge"
+    ];
+  };
 
   system.defaults = {
     CustomUserPreferences = {
