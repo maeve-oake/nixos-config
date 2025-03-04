@@ -7,6 +7,41 @@
       };
     };
 
+    CustomSystemPreferences = {
+      "com.apple.inputsources" = {
+        AppleEnabledThirdPartyInputSources = [
+                {
+            InputSourceKind = "Keyboard Layout";
+            "KeyboardLayout ID" = "-9876";
+            "KeyboardLayout Name" = "English \\U2013 Ilya Birman Typography";
+        }
+                {
+            InputSourceKind = "Keyboard Layout";
+            "KeyboardLayout ID" = "-31553";
+            "KeyboardLayout Name" = "Russian \\U2013 Ilya Birman Typography";
+        }
+        ];
+      };
+
+      "com.apple.HIToolbox" = {
+        AppleCurrentKeyboardLayoutInputSourceID = "com.apple.keylayout.British-PC";
+        AppleEnabledInputSources = [
+          {
+            InputSourceKind = "Keyboard Layout";
+            "KeyboardLayout ID" = 250;
+            "KeyboardLayout Name" = "British-PC";
+          }
+        ];
+        AppleSelectedInputSources = [
+          {
+            InputSourceKind = "Keyboard Layout";
+            "KeyboardLayout ID" = 250;
+            "KeyboardLayout Name" = "British-PC";
+          }       
+        ];
+      };
+    };
+
     dock = {
       autohide = true;
       autohide-delay = 0.0;

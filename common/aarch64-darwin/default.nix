@@ -35,6 +35,7 @@
     enable = true;
     casks = [
       "microsoft-edge"
+      "ilya-birman-typography-layout"
     ];
   };
 }
