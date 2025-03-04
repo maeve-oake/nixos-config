@@ -4,8 +4,16 @@
 
   imports = [
     ./user.nix
+    ./system-defaults.nix
   ];
 
+  # nix-homebrew
+  nix-homebrew = {
+    user = "maeve";
+    enable = true;
+  };
+
+  # pkgs
   environment.systemPackages = with pkgs; [
     # dev
     nixpkgs-fmt
@@ -23,33 +31,10 @@
     p7zip
   ];
 
-  nix-homebrew = {
-    user = "maeve";
-    enable = true;
-  };
-
   homebrew = {
     enable = true;
     casks = [
       "microsoft-edge"
     ];
-  };
-
-  system.defaults = {
-    CustomUserPreferences = {
-      "com.apple.menuextra.clock" = {
-        ShowSeconds = true;
-      };
-    };
-
-    dock = {
-      autohide = true;
-      autohide-delay = 0.0;
-      largesize = 72; # magnification size
-      tilesize = 28; # unmagnified size
-      orientation = "left";
-      magnification = true;
-      show-recents = false;
-    };
   };
 }
