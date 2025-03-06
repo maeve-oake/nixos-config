@@ -1,5 +1,12 @@
 { ... }:
 {
+  /*
+    TODO: fix typography layout! right now, only the *last* in the EnabledThirdPartyInputSources list is actually "applied"
+          also look into pretty names (ask anya how she does it)
+
+          possibly create a nice dock setup and apply it? the mess with GUIDs doesnt look great
+  */
+
   system.defaults = {
     CustomUserPreferences = {
       "com.apple.menuextra.clock" = {
@@ -10,16 +17,16 @@
     CustomSystemPreferences = {
       "com.apple.inputsources" = {
         AppleEnabledThirdPartyInputSources = [
-                {
+          {
             InputSourceKind = "Keyboard Layout";
             "KeyboardLayout ID" = "-9876";
             "KeyboardLayout Name" = "English \\U2013 Ilya Birman Typography";
-        }
-                {
+          }
+          {
             InputSourceKind = "Keyboard Layout";
             "KeyboardLayout ID" = "-31553";
             "KeyboardLayout Name" = "Russian \\U2013 Ilya Birman Typography";
-        }
+          }
         ];
       };
 
