@@ -12,7 +12,13 @@
       "com.apple.menuextra.clock" = {
         ShowSeconds = true;
       };
+
+      "com.apple.Terminal" = {
+        FocusFollowsMouse = true;
+      };
     };
+
+    LaunchServices.LSQuarantine = false; # do not quarantine downloaded applications
 
     CustomSystemPreferences = {
       "com.apple.inputsources" = {
@@ -49,6 +55,13 @@
       };
     };
 
+    finder = {
+      AppleShowAllFiles = true; # show hidden files
+      NewWindowTarget = "Computer"; # default finder location
+      ShowPathbar = true; # show pathbar at the bottom of the window
+      QuitMenuItem = true; # allow quit
+    };
+
     dock = {
       autohide = true;
       autohide-delay = 0.0;
@@ -57,6 +70,20 @@
       orientation = "left";
       magnification = true;
       show-recents = false;
+    };
+
+    loginwindow = {
+      LoginwindowText = "maeve@oa.ke";
+    };
+
+    WindowManager = {
+      EnableTiledWindowMargins = false;
+      EnableTilingByEdgeDrag = true;
+    };
+
+    trackpad = {
+      Clicking = true; # tap-to-click
+      TrackpadThreeFingerDrag = true;
     };
   };
 }
