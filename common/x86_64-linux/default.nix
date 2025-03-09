@@ -33,7 +33,6 @@
     telegram-desktop
     discord
     gimp
-    bitwarden-desktop
 
     # shell
     fzf
