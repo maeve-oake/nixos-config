@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   services.xserver.desktopManager.gnome.enable = true;
   services.xserver.displayManager.gdm.enable = true;
@@ -95,8 +100,21 @@
 
           # dock & extensions
           "org/gnome/shell" = {
-            favorite-apps = [ "microsoft-edge.desktop" "discord.desktop" "org.telegram.desktop.desktop" "code.desktop" "org.gnome.Console.desktop" "org.gnome.Nautilus.desktop" ];
-            enabled-extensions = [ "user-theme@gnome-shell-extensions.gcampax.github.com" "swap-finger-gestures-3-4@icedman.github.com" "tailscale@joaophi.github.com" "just-perfection-desktop@just-perfection" ];
+            favorite-apps = [
+              "microsoft-edge.desktop"
+              "discord.desktop"
+              "org.telegram.desktop.desktop"
+              "teams-for-linux.desktop"
+              "code.desktop"
+              "org.gnome.Console.desktop"
+              "org.gnome.Nautilus.desktop"
+            ];
+            enabled-extensions = [
+              "user-theme@gnome-shell-extensions.gcampax.github.com"
+              "swap-finger-gestures-3-4@icedman.github.com"
+              "tailscale@joaophi.github.com"
+              "just-perfection-desktop@just-perfection"
+            ];
           };
 
           # appearance
@@ -128,7 +146,9 @@
 
           # keybinds
           "org/gnome/settings-daemon/plugins/media-keys" = {
-            custom-keybindings = [ "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/" ];
+            custom-keybindings = [
+              "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
+            ];
             screensaver = [ "<Shift><Super>x" ];
             search = [ "<Super>space" ];
           };
@@ -139,7 +159,10 @@
           };
           "org/gnome/desktop/wm/keybindings" = {
             close = [ "<Shift><Super>q" ];
-            maximize = [ "<Shift><Super>Up" "<Shift><Super>L" ];
+            maximize = [
+              "<Shift><Super>Up"
+              "<Shift><Super>L"
+            ];
             move-to-monitor-down = [ "<Shift><Control><Super>K" ];
             move-to-monitor-left = [ "<Shift><Control><Super>J" ];
             move-to-monitor-right = [ "<Shift><Control><Super>semicolon" ];
@@ -167,11 +190,20 @@
             switch-input-source = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
             switch-input-source-backward = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
             toggle-fullscreen = [ "<Super>f" ];
-            unmaximize = [ "<Shift><Super>Down" "<Shift><Super>K" ];
+            unmaximize = [
+              "<Shift><Super>Down"
+              "<Shift><Super>K"
+            ];
           };
           "org/gnome/mutter/keybindings" = {
-            toggle-tiled-left = [ "<Shift><Super>Left" "<Shift><Super>J" ];
-            toggle-tiled-right = [ "<Shift><Super>Right" "<Shift><Super>semicolon" ];
+            toggle-tiled-left = [
+              "<Shift><Super>Left"
+              "<Shift><Super>J"
+            ];
+            toggle-tiled-right = [
+              "<Shift><Super>Right"
+              "<Shift><Super>semicolon"
+            ];
           };
           "org/gnome/shell/keybindings" = {
             focus-active-notification = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
