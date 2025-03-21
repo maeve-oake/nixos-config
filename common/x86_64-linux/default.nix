@@ -17,6 +17,7 @@
     git
     neovim
     nixpkgs-fmt
+    nixfmt-rfc-style
     dotnet-sdk
     dotnet-runtime
     (vscode-with-extensions.override {
