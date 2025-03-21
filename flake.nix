@@ -7,6 +7,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nix-homebrew = {
+      url = "github:zhaofengli/nix-homebrew";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     lanzaboote = {
       url = "github:nix-community/lanzaboote/v0.4.2";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -21,13 +26,9 @@
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    nix-homebrew = {
-      url = "github:zhaofengli/nix-homebrew";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
-  outputs = inputs:
+  outputs =
+    inputs:
     let
       commonModules = [
         ./common
@@ -53,6 +54,7 @@
             ./hosts/aluminium/configuration.nix
           ];
         };
+
         replika = inputs.nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           modules = x86_64-linux_commonModules ++ [
