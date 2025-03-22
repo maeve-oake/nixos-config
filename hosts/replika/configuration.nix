@@ -1,4 +1,10 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  unstable,
+  ...
+}:
 {
   imports = [
     ./hardware-configuration.nix
@@ -15,7 +21,12 @@
   networking.hostName = "replika";
 
   # power & sleep
-  swapDevices = [{ device = "/swapfile"; size = 64 * 1024; }];
+  swapDevices = [
+    {
+      device = "/swapfile";
+      size = 64 * 1024;
+    }
+  ];
   boot.kernelParams = [
     "amd_pstate=guided"
   ];
@@ -25,7 +36,10 @@
   services.logind.lidSwitch = "suspend-then-hibernate";
   powerManagement.enable = true;
   services.power-profiles-daemon.enable = true;
-  boot.kernelModules = [ "amd_pstate" "amd_pstate_ut" ];
+  boot.kernelModules = [
+    "amd_pstate"
+    "amd_pstate_ut"
+  ];
 
   # udev rules
   services.udev.extraRules = ''
@@ -41,6 +55,7 @@
   programs.steam.enable = true;
   environment.systemPackages = with pkgs; [
     # apps
+    unstable.microsoft-edge
     gqrx
     plex-desktop
     ollama
