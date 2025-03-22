@@ -1,4 +1,9 @@
-{ pkgs, stdenv, lib, fetchFromGitHub }:
+{
+  pkgs,
+  stdenv,
+  lib,
+  fetchFromGitHub,
+}:
 
 stdenv.mkDerivation rec {
   name = "satdump";
@@ -11,7 +16,10 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-+Sne+NMwnIAs3ff64fBHAIE4/iDExIC64sXtO0LJwI0=";
   };
 
-  nativeBuildInputs = with pkgs; [ cmake pkg-config ];
+  nativeBuildInputs = with pkgs; [
+    cmake
+    pkg-config
+  ];
   buildInputs = with pkgs; [
     # required deps
     fftwFloat

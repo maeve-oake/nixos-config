@@ -14,7 +14,7 @@
       function nsh --wraps nix-shell --description "nix-shell -p <args> --run fish"
         nix-shell -p $argv --run fish
       end
-      
+
       zoxide init fish --cmd cd | source
     '';
   };

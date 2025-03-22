@@ -10,7 +10,7 @@
     extraGroups = [
       "wheel" # sudo
       "networkmanager" # network configuration
-      "video" #
+      "video"
       "input" # three finger drag
       "vboxusers" # vbox
     ];

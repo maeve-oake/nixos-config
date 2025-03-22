@@ -1,9 +1,16 @@
-{ stdenv, lib, fetchFromGitHub }:
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+}:
 
 stdenv.mkDerivation rec {
   name = "tailscale-gnome-qs";
   version = "v1";
-  phases = [ "unpackPhase" "installPhase" ];
+  phases = [
+    "unpackPhase"
+    "installPhase"
+  ];
 
   src = fetchFromGitHub {
     owner = "replikas";

@@ -1,9 +1,16 @@
-{ stdenv, lib, fetchFromGitHub }:
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+}:
 
 stdenv.mkDerivation rec {
   name = "swap-finger-gestures-3-4";
   version = "f4400b16093cd3461bcbc9fd26f73503d977f53b";
-  phases = [ "unpackPhase" "installPhase" ];
+  phases = [
+    "unpackPhase"
+    "installPhase"
+  ];
 
   src = fetchFromGitHub {
     owner = "maeve-oake";

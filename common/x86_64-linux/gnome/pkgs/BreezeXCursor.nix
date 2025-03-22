@@ -1,10 +1,10 @@
-{ stdenvNoCC
-, fetchFromGitHub
-, fetchzip
-, clickgen
-, nix-update-script
-, lib
-,
+{
+  stdenvNoCC,
+  fetchFromGitHub,
+  fetchzip,
+  clickgen,
+  nix-update-script,
+  lib,
 }:
 
 stdenvNoCC.mkDerivation rec {

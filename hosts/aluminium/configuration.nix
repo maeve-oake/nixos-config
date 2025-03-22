@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   imports = [
     ./hardware-configuration.nix
@@ -14,7 +19,12 @@
   networking.hostName = "aluminium";
 
   # power & sleep
-  swapDevices = [{ device = "/swapfile"; size = 16 * 1024; }];
+  swapDevices = [
+    {
+      device = "/swapfile";
+      size = 16 * 1024;
+    }
+  ];
   systemd.sleep.extraConfig = ''
     		HibernateDelaySec=30m
     	'';
@@ -34,8 +44,9 @@
     (final: prev: {
       # overlay to fix microsoft edge sync w/ aad accounts
       # https://github.com/NixOS/nixpkgs/issues/343401#issuecomment-2692747174
-      microsoft-edge = prev.microsoft-edge.overrideAttrs
-        (old: (
+      microsoft-edge = prev.microsoft-edge.overrideAttrs (
+        old:
+        (
           let
             deps = [
               # extra dependencies for libmip_core/libmip_protection_sdk
@@ -47,17 +58,21 @@
             ];
           in
           {
-            rpath = old.rpath + ":" + lib.makeLibraryPath deps + ":" + lib.makeSearchPathOutput "lib" "lib64" deps;
+            rpath =
+              old.rpath + ":" + lib.makeLibraryPath deps + ":" + lib.makeSearchPathOutput "lib" "lib64" deps;
             binpath = old.binpath + ":" + lib.makeBinPath deps;
 
             installPhase = (
-              builtins.replaceStrings [ "--prefix XDG_" ] [
-                ''--set SSL_CERT_FILE "${final.cacert}/etc/ssl/certs/ca-bundle.crt" --prefix XDG_''
-              ]
+              builtins.replaceStrings
+                [ "--prefix XDG_" ]
+                [
+                  ''--set SSL_CERT_FILE "${final.cacert}/etc/ssl/certs/ca-bundle.crt" --prefix XDG_''
+                ]
                 old.installPhase
             );
           }
-        ));
+        )
+      );
     })
   ];
 

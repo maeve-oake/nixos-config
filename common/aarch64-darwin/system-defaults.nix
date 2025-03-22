@@ -50,7 +50,7 @@
             InputSourceKind = "Keyboard Layout";
             "KeyboardLayout ID" = 250;
             "KeyboardLayout Name" = "British-PC";
-          }       
+          }
         ];
       };
     };

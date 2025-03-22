@@ -1,10 +1,10 @@
-{ lib
-, rustPlatform
-, fetchFromGitHub
-, libinput
-, xdotool
-, makeWrapper
-,
+{
+  lib,
+  rustPlatform,
+  fetchFromGitHub,
+  libinput,
+  xdotool,
+  makeWrapper,
 }:
 
 rustPlatform.buildRustPackage {
