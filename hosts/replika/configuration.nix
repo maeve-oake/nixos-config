@@ -55,7 +55,6 @@
   programs.steam.enable = true;
   environment.systemPackages = with pkgs; [
     # apps
-    unstable.microsoft-edge
     gqrx
     plex-desktop
     ollama

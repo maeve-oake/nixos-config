@@ -39,7 +39,6 @@
   environment.systemPackages = with pkgs; [
     # apps
     teams-for-linux
-    unstable.microsoft-edge
   ];
 
   # Do not remove
