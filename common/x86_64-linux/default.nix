@@ -16,7 +16,6 @@
     gh
     git
     neovim
-    nixpkgs-fmt
     nixfmt-rfc-style
     dotnet-sdk
     dotnet-runtime
@@ -31,9 +30,7 @@
 
     # apps
     (microsoft-edge.override {
-      commandLineArgs = [
-        "--enable-features=TouchpadOverscrollHistoryNavigation"
-      ];
+      commandLineArgs = [ "--enable-features=TouchpadOverscrollHistoryNavigation" ];
     })
     telegram-desktop
     discord
