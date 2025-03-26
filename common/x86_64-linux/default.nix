@@ -30,7 +30,11 @@
     })
 
     # apps
-    microsoft-edge
+    (microsoft-edge.override {
+      commandLineArgs = [
+        "--enable-features=TouchpadOverscrollHistoryNavigation"
+      ];
+    })
     telegram-desktop
     discord
     gimp
