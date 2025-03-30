@@ -7,6 +7,9 @@
     ./system-defaults.nix
   ];
 
+  # tailscale
+  services.tailscale.enable = true;
+
   # nix-homebrew
   nix-homebrew = {
     user = "maeve";
@@ -14,9 +17,11 @@
   };
 
   /*
-    TODO: investigate linking apps from the nix store to spotlight / environment
-          currently, apps installed via Brew do show up properly but ones installed via Nix must be found in the store and then added to dock / indexed manually
-          vscode seems to have some issues when installed via nix (asks for helper script installs on every reboot) and discord has JS crashes
+    TODO: investigate linking apps from the nix store to spotlight / environment and have then indexed
+          currently, apps installed via Brew do show up properly but ones installed via Nix must be launched from /Applications/Nix Apps
+          vscode seems to have some issues when installed via nix (asks for helper script installs on every reboot)
+
+          they ARE linked in /Applications/Nix apps, so i guess we just need to get it to *actually index*?
 
           If brew just turns out to be better, look into immutable taps! this will provide the immutability of Nix without the problems of nixpkgs
   */
@@ -25,20 +30,21 @@
   environment.systemPackages = with pkgs; [
     # dev
     nixpkgs-fmt
-    neovim
+    neovim 
     gh
     git
 
     # apps
-    telegram-desktop
+    discord
+    raycast
+    gimp
 
     # shell
     fzf
+    nmap
     zoxide
+    wget
     p7zip
-
-    # system
-    raycast
   ];
 
   homebrew = {
@@ -49,7 +55,9 @@
 
       # apps
       "microsoft-edge"
-      "discord"
+      "telegram"
+      "autodesk-fusion"
+      "ultimaker-cura"
 
       # system
       "ilya-birman-typography-layout"
