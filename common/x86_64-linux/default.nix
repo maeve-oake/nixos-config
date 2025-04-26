@@ -33,6 +33,7 @@
       commandLineArgs = [ "--enable-features=TouchpadOverscrollHistoryNavigation" ];
     })
     telegram-desktop
+    element-desktop
     discord
     gimp
 

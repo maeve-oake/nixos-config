@@ -104,6 +104,7 @@
               "microsoft-edge.desktop"
               "discord.desktop"
               "org.telegram.desktop.desktop"
+              "element-desktop.desktop"
               "teams-for-linux.desktop"
               "code.desktop"
               "org.gnome.Console.desktop"
