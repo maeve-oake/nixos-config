@@ -22,21 +22,21 @@
 
     # behaviour
     gnomeExtensions.just-perfection
-    (callPackage ./pkgs/swap-finger-gestures.nix { })
+    # (callPackage ./pkgs/swap-finger-gestures.nix { })
     (callPackage ./pkgs/tailscale-qs.nix { })
   ];
 
-  systemd.user.services.libinput-three-finger-drag = {
-    description = "three-finger-drag daemon";
-    wantedBy = [ "default.target" ];
-    after = [ "graphical-session-pre.target" ];
+  # systemd.user.services.libinput-three-finger-drag = {
+  #   description = "three-finger-drag daemon";
+  #   wantedBy = [ "default.target" ];
+  #   after = [ "graphical-session-pre.target" ];
 
-    serviceConfig = {
-      ExecStart = "${(pkgs.callPackage ./pkgs/three-finger-drag.nix { })}/bin/libinput-three-finger-drag";
-      Type = "simple";
-      Restart = "always";
-    };
-  };
+  #   serviceConfig = {
+  #     ExecStart = "${(pkgs.callPackage ./pkgs/three-finger-drag.nix { })}/bin/libinput-three-finger-drag";
+  #     Type = "simple";
+  #     Restart = "always";
+  #   };
+  # };
 
   # environment variables
   environment.sessionVariables = {
