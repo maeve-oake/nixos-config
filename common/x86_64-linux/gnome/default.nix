@@ -212,6 +212,11 @@
             switch-to-application-2 = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
             switch-to-application-3 = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
             switch-to-application-4 = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
+            switch-to-application-5 = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
+            switch-to-application-6 = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
+            switch-to-application-7 = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
+            switch-to-application-8 = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
+            switch-to-application-9 = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
             toggle-application-view = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
             toggle-message-tray = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
           };
