@@ -6,6 +6,7 @@
     ./localisation.nix
     ./network.nix
     ./user.nix
+    ./1password.nix
   ];
 
   # pkgs

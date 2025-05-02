@@ -8,6 +8,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    # ../../common/x86_64-linux/hyprland
     ../../common/x86_64-linux/gnome
     ../../common/x86_64-linux/secureboot.nix
   ];
