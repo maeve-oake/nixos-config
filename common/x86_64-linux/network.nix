@@ -6,7 +6,10 @@
   services.resolved.enable = true;
 
   # ssh
-  services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+    settings.PasswordAuthentication = false;
+  };
 
   # firewall
   networking.firewall.enable = false;
