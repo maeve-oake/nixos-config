@@ -120,7 +120,7 @@
 
           # appearance
           "org/gnome/desktop/interface" = {
-            color-scheme = "prefer-dark";
+            color-scheme = "prefer-light";
             cursor-theme = "BreezeX-Black";
             enable-hot-corners = false;
             gtk-enable-primary-paste = false;
@@ -131,7 +131,7 @@
             name = "Lion";
           };
           "org/gnome/desktop/background" = {
-            picture-uri-dark = "file:///home/maeve/.config/img/1975.jpg";
+            picture-uri-light = "file:///home/maeve/.config/img/1975.jpg";
           };
           "org/gnome/shell/extensions/just-perfection" = {
             events-button = false;
