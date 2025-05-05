@@ -131,7 +131,7 @@
             name = "Lion";
           };
           "org/gnome/desktop/background" = {
-            picture-uri-light = "file:///home/maeve/.config/img/1975.jpg";
+            picture-uri = "file:///home/maeve/.config/img/1975.jpg";
           };
           "org/gnome/shell/extensions/just-perfection" = {
             events-button = false;
