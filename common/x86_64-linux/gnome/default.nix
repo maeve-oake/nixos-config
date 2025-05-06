@@ -102,10 +102,11 @@
           "org/gnome/shell" = {
             favorite-apps = [
               "microsoft-edge.desktop"
-              "discord.desktop"
               "org.telegram.desktop.desktop"
+              "discord.desktop"
               "element-desktop.desktop"
               "teams-for-linux.desktop"
+              "1password.desktop"
               "code.desktop"
               "org.gnome.Console.desktop"
               "org.gnome.Nautilus.desktop"
