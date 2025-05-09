@@ -67,6 +67,14 @@
           ];
           specialArgs = x86_64-linux_unstableNixpkgs;
         };
+
+        elster = inputs.nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = x86_64-linux_commonModules ++ [
+            ./hosts/elster/configuration.nix
+          ];
+          specialArgs = x86_64-linux_unstableNixpkgs;
+        };
       };
 
       darwinConfigurations = {
