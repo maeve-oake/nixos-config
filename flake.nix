@@ -38,6 +38,7 @@
         ./common/x86_64-linux
         inputs.lanzaboote.nixosModules.lanzaboote
         inputs.nix-index-database.nixosModules.nix-index
+        inputs.nix-flatpak.nixosModules.nix-flatpak
       ];
 
       x86_64-linux_unstableNixpkgs = {
@@ -66,7 +67,6 @@
           system = "x86_64-linux";
           modules = x86_64-linux_commonModules ++ [
             ./hosts/replika/configuration.nix
-            inputs.nix-flatpak.nixosModules.nix-flatpak
           ];
           specialArgs = x86_64-linux_unstableNixpkgs;
         };

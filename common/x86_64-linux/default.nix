@@ -12,6 +12,8 @@
   # pkgs
   virtualisation.virtualbox.host.enable = true;
   services.fwupd.enable = true;
+  services.flatpak.enable = true;
+  services.flatpak.packages = [ "com.bambulab.BambuStudio" ];
   environment.systemPackages = with pkgs; [
     # dev
     gh
