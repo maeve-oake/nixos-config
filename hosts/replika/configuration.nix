@@ -66,6 +66,10 @@
     (callPackage ../../pkgs/satdump.nix { })
   ];
 
+  # flatpak
+  services.flatpak.enable = true;
+  services.flatpak.packages = [ "com.bambulab.BambuStudio" ];
+
   # Do not remove
   system.stateVersion = "24.05";
 }

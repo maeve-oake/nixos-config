@@ -23,6 +23,8 @@
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-flatpak.url = "github:gmodena/nix-flatpak";
   };
   outputs =
     inputs:
@@ -64,6 +66,7 @@
           system = "x86_64-linux";
           modules = x86_64-linux_commonModules ++ [
             ./hosts/replika/configuration.nix
+            inputs.nix-flatpak.nixosModules.nix-flatpak
           ];
           specialArgs = x86_64-linux_unstableNixpkgs;
         };
