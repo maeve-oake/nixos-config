@@ -1,4 +1,5 @@
 {
+  inputs,
   config,
   lib,
   pkgs,
@@ -8,17 +9,16 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../../common/x86_64-linux/gnome
-    ../../common/x86_64-linux/secureboot.nix
-    ../../common/x86_64-linux/samba.nix
+    (inputs.self + /common/x86_64-linux/gnome)
+    (inputs.self + /common/x86_64-linux/secureboot.nix)
+    (inputs.self + /common/x86_64-linux/samba.nix)
   ];
 
   # boot
   boot.loader.timeout = 0;
   boot.kernelPackages = pkgs.linuxPackages_6_14;
 
-  # network
-  networking.hostName = "replika";
+  # networking
   hardware.wirelessRegulatoryDatabase = true;
   boot.extraModprobeConfig = ''
     options cfg80211 ieee80211_regdom="GB"
@@ -63,7 +63,7 @@
     plex-desktop
     ollama
     darktable
-    (callPackage ../../pkgs/satdump.nix { })
+    (callPackage (inputs.self + /pkgs/satdump.nix) { })
   ];
 
   # Do not remove

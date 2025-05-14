@@ -1,4 +1,4 @@
-{ pkgs, config, ... }:
+{ inputs, pkgs, config, ... }:
 let
   mynahOptions = [
     "x-systemd.automount"
@@ -12,7 +12,7 @@ let
   ];
 in
 {
-  age.secrets.mynah-smb.file = ../../secrets/mynah-smb.age;
+  age.secrets.mynah-smb.file = (inputs.self + /secrets/mynah-smb.age);
   environment.systemPackages = with pkgs; [
     cifs-utils
     gocryptfs

@@ -1,6 +1,6 @@
-{ pkgs, config, ... }:
+{ inputs, pkgs, config, ... }:
 {
-  age.secrets.maeve-password.file = ../../secrets/maeve-password.age;
+  age.secrets.maeve-password.file = (inputs.self + /secrets/maeve-password.age);
 
   users.mutableUsers = false;
   users.users.maeve = {

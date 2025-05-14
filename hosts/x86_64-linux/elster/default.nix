@@ -1,4 +1,5 @@
 {
+  inputs,
   config,
   lib,
   pkgs,
@@ -8,19 +9,16 @@
 {
   imports = [
     ./hardware-configuration.nix
-    #../../common/x86_64-linux/i3
-    ../../common/x86_64-linux/gnome
-    # ../../common/x86_64-linux/secureboot.nix
-    #../../common/x86_64-linux/samba.nix
+    # (inputs.self + /common/x86_64-linux/i3)
+    (inputs.self + /common/x86_64-linux/gnome)
+    # (inputs.self + /common/x86_64-linux/secureboot.nix)
+    # (inputs.self + /common/x86_64-linux/samba.nix)
   ];
 
   # boot
   boot.loader.systemd-boot.enable = true;
   boot.loader.timeout = 0;
   boot.kernelPackages = pkgs.linuxPackages_6_14;
-
-  # network
-  networking.hostName = "elster";
 
   # power & sleep
   swapDevices = [

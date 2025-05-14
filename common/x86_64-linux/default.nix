@@ -1,4 +1,10 @@
-{ pkgs, ... }:
+{ pkgs, inputs, config, system, ... }:
+let
+  unstable = import inputs.nix-unstable {
+    inherit system;
+    config.allowUnfree = true;
+  };
+in
 {
   # common configuration for x86_64 Linux machines
 
@@ -7,7 +13,12 @@
     ./network.nix
     ./user.nix
     ./1password.nix
+    inputs.lanzaboote.nixosModules.lanzaboote
+    inputs.nix-index-database.nixosModules.nix-index
+    inputs.nix-flatpak.nixosModules.nix-flatpak
   ];
+
+  _module.args.unstable = unstable;
 
   # pkgs
   virtualisation.virtualbox.host.enable = true;
