@@ -17,7 +17,6 @@
 
   # boot
   boot.loader.systemd-boot.enable = true;
-  boot.loader.timeout = 0;
   boot.kernelPackages = pkgs.linuxPackages_6_14;
 
   # power & sleep

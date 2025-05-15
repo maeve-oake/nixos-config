@@ -15,7 +15,6 @@
   ];
 
   # boot
-  boot.loader.timeout = 0;
   boot.kernelPackages = pkgs.linuxPackages_6_14;
 
   # networking

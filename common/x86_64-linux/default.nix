@@ -1,4 +1,10 @@
-{ pkgs, inputs, config, system, ... }:
+{
+  pkgs,
+  inputs,
+  config,
+  system,
+  ...
+}:
 let
   unstable = import inputs.nix-unstable {
     inherit system;
@@ -17,6 +23,9 @@ in
     inputs.nix-index-database.nixosModules.nix-index
     inputs.nix-flatpak.nixosModules.nix-flatpak
   ];
+
+  # boot
+  boot.loader.timeout = 0;
 
   _module.args.unstable = unstable;
 
