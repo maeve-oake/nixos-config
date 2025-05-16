@@ -24,6 +24,14 @@ in
     inputs.nix-flatpak.nixosModules.nix-flatpak
   ];
 
+  # cache
+  nix.settings.extra-substituters = [
+    "https://attic.oa.ke/nixos"
+  ];
+  nix.settings.extra-trusted-public-keys = [
+    "nixos:qbhh36l2BlhnNhXnU0I2XHOzIT3mzwxKfs86C4am5aY="
+  ];
+
   # boot
   boot.loader.timeout = 0;
 
