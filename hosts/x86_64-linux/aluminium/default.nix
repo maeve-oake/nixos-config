@@ -36,7 +36,7 @@
   # packages
   environment.systemPackages = with pkgs; [
     # apps
-    teams-for-linux
+    unstable.teams-for-linux
   ];
 
   # Do not remove
