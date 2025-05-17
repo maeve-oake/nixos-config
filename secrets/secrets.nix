@@ -9,4 +9,5 @@ in
   "maeve-password.age".publicKeys = [ maeve ] ++ hosts;
   "mynah-vault.age".publicKeys = [ maeve replika ];
   "mynah-smb.age".publicKeys = [ maeve replika ];
+  "attic-netrc.age".publicKeys = [ maeve ] ++ hosts;
 }
