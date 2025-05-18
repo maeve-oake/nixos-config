@@ -17,10 +17,12 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_run' && 'update_flake_lock_action' || github.ref }}
+            ref: ${{ github.event_name == 'workflow_run' && 'update_flake_lock_action' || github.ref }}
 
       - name: Install Nix
         uses: cachix/install-nix-action@v31
+        with:
+            github_access_token: ${{ github.token }}
 
       - name: Setup Attic cache
         uses: ryanccn/attic-action@v0
