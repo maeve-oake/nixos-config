@@ -1,28 +1,38 @@
-name: Build & Cache NixOS Artifacts
+name: Build & Cache flake outputs
 
 on:
   push:
     branches:
         - flakes
-  workflow_run:
-    workflows:
-        - "Update flake.lock"
-    types:
-        - completed
+        - update_flake_lock_action
 
 jobs:
   build-and-cache:
-    runs-on: [self-hosted, linux, x64]
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
+      - if: matrix.os == 'ubuntu-22.04'
+        name: Maximize build space
+        uses: easimon/maximize-build-space@master
         with:
-            ref: ${{ github.event_name == 'workflow_run' && 'update_flake_lock_action' || github.ref }}
+          remove-dotnet: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-docker-images: 'true'
+          root-reserve-mb: '10240'
+          build-mount-path: '/nix'
+      
+      - if: matrix.os == 'ubuntu-22.04'
+        name: Fix permissions
+        run: sudo chown -R root /nix
 
-      - name: Install Nix
-        uses: cachix/install-nix-action@v31
-        with:
-            github_access_token: ${{ github.token }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Nix
+        uses: DeterminateSystems/nix-installer-action@main
 
       - name: Setup Attic cache
         uses: ryanccn/attic-action@v0
@@ -31,11 +41,8 @@ jobs:
             token: ${{ secrets.ATTIC_TOKEN }}
             cache: nixos
 
-      - name: Build all NixOS configurations
-        run: |
-          configs=$(nix flake show --json . | jq -r '.nixosConfigurations | keys[]')
+      - name: Install omnix
+        run: nix profile install "github:juspay/omnix"
 
-          for cfg in $configs; do
-            echo "▶️ Building $cfg"
-            nix build .#nixosConfigurations."$cfg".config.system.build.toplevel
-          done
+      - name: Build all flake outputs
+        run: om ci run --extra-access-tokens ${{ secrets.GITHUB_TOKEN }}
