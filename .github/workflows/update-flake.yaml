@@ -11,12 +11,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: cachix/install-nix-action@v31
+      - name: Set up Nix
+        uses: DeterminateSystems/nix-installer-action@main
 
       - name: Update flake.lock
-        id: update
         uses: DeterminateSystems/update-flake-lock@v24
-
-      - name: Print PR number
-        run: echo Pull request number is ${{ steps.update.outputs.pull-request-number }}.
