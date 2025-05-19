@@ -4,11 +4,7 @@ on:
   push:
     branches:
         - flakes
-  workflow_run:
-    workflows:
-        - "Update flake.lock"
-    types:
-        - completed
+        - update_flake_lock_action
 
 jobs:
   build-and-cache:
@@ -33,8 +29,6 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-            ref: ${{ github.event_name == 'workflow_run' && 'update_flake_lock_action' || github.ref }}
 
       - name: Set up Nix
         uses: DeterminateSystems/nix-installer-action@main
