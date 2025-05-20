@@ -62,7 +62,7 @@
     plex-desktop
     ollama
     darktable
-    (callPackage (inputs.self + /pkgs/satdump.nix) { })
+    satdump
   ];
 
   # Do not remove

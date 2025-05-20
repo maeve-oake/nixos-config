@@ -5,8 +5,8 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "tailscale-gnome-qs";
-  version = "v1";
+  pname = "tailscale-gnome-qs";
+  version = "1";
   phases = [
     "unpackPhase"
     "installPhase"

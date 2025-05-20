@@ -29,4 +29,9 @@
   ];
   age.secrets.attic-netrc.file = (inputs.self + /secrets/attic-netrc.age);
   nix.settings.netrc-file = config.age.secrets.attic-netrc.path;
+
+  # overlays
+  nixpkgs.overlays = [
+    (import (inputs.self + /pkgs))
+  ];
 }

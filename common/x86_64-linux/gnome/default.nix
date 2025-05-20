@@ -17,13 +17,13 @@
     # appearance
     gnome-tweaks
     gnomeExtensions.user-themes
-    (callPackage ./pkgs/Lion.nix { })
-    (callPackage ./pkgs/BreezeXCursor.nix { })
+    lion-theme
+    breezex-cursor
 
     # behaviour
     gnomeExtensions.just-perfection
-    # (callPackage ./pkgs/swap-finger-gestures.nix { })
-    (callPackage ./pkgs/tailscale-qs.nix { })
+    # swap-finger-gestures-3-4
+    tailscale-gnome-qs
   ];
 
   # systemd.user.services.libinput-three-finger-drag = {
@@ -32,7 +32,7 @@
   #   after = [ "graphical-session-pre.target" ];
 
   #   serviceConfig = {
-  #     ExecStart = "${(pkgs.callPackage ./pkgs/three-finger-drag.nix { })}/bin/libinput-three-finger-drag";
+  #     ExecStart = "${libinput-three-finger-drag}/bin/libinput-three-finger-drag";
   #     Type = "simple";
   #     Restart = "always";
   #   };
