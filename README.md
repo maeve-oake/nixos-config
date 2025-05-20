@@ -2,7 +2,7 @@
 
 - `common` - shared configuration for all machines
 
-    - `aarch64-darwin` common configs for MacOS computers
+    - `aarch64-darwin` common configs for macOS computers
 
     - `x86_64-linux` common configs for x86 Linux computers
         
@@ -12,21 +12,25 @@
 
 - `hosts` - hardware specific configuration
 
-    - `aluminium` - Framework 13 work laptop
+    - `aarch64-darwin` macOS computers
 
-    - `elster` - rack-mounted gaming PC
+        - `stainless` - 2021 MacBook Pro work laptop
 
-    - `replika` - Framework 13 personal laptop
+    - `x86_64-linux` x86 Linux computers
 
-    - `stainless` - 2021 MacBook Pro work laptop
+        - `aluminium` - Framework 13 work laptop
+
+        - `elster` - rack-mounted gaming PC
+
+        - `replika` - Framework 13 personal laptop
 
 - `pkgs` - non arch-specific packges
 
 - `secrets` - age encrypted secrets
 
-## flake layout
+## flake
 
-yeag
+`nixosConfigurations` and `darwinConfigurations` are automatically generated and populated. To add a new computer, simply add it in the correct `hosts` subdirectory. `inputs` is passed through to each host's config, so flakes can be added to imports individually.
 
 ## install instructions
 
