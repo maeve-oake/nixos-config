@@ -5,7 +5,7 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "Lion-theme";
+  pname = "lion-theme";
   version = "1.2";
 
   src = fetchFromGitHub {

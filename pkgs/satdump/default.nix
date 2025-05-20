@@ -6,7 +6,7 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "satdump";
+  pname = "satdump";
   version = "1.2.2";
 
   src = fetchFromGitHub {
