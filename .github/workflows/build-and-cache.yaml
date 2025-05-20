@@ -1,10 +1,6 @@
 name: Build & Cache flake outputs
 
-on:
-  push:
-    branches:
-        - flakes
-        - update_flake_lock_action
+on: push
 
 jobs:
   build-and-cache:

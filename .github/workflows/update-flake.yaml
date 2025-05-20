@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up Nix
         uses: DeterminateSystems/nix-installer-action@main
@@ -18,3 +20,10 @@ jobs:
         uses: DeterminateSystems/update-flake-lock@v24
         with:
           token: ${{ secrets.FLAKE_LOCK_PAT }}
+          branch: flake-update
+          commit-msg: "flake.lock: update"
+          pr-title: "flake.lock: update"
+          pr-body: |
+            ```
+            {{ env.GIT_COMMIT_MESSAGE }}
+            ```
