@@ -1,32 +1,18 @@
 # maeve's nixos config
 
-- `common` - shared configuration for all machines
-
-    - `aarch64-darwin` common configs for macOS computers
-
-    - `x86_64-linux` common configs for x86 Linux computers
-        
-        - `gnome`, `i3`, `hyprland` - WM & DE configs
-
-            - `pkgs` - WM & DE specific packages
-
-- `hosts` - hardware specific configuration
-
-    - `aarch64-darwin` macOS computers
-
-        - `stainless` - 2021 MacBook Pro work laptop
-
-    - `x86_64-linux` x86 Linux computers
-
-        - `aluminium` - Framework 13 work laptop
-
-        - `elster` - rack-mounted gaming PC
-
-        - `replika` - Framework 13 personal laptop
-
-- `pkgs` - non arch-specific packges
-
-- `secrets` - age encrypted secrets
+```
+nixos-config
+┣━━ common                          # shared configuration for all machines
+┃   ┣━━ aarch64-darwin              # common configs for nix-darwin hosts
+┃   ┗━━ x86_64-linux                # common configs for NixOS hosts
+┃       ┗━━ gnome, i3, hyprland     # WM & DE configs 
+┃           ┗━━ pkgs                # WM & DE specific packages
+┣━━ hosts                           # host specific configuration
+┃   ┣━━ aarch64-darwin              # nix-darwin hosts
+┃   ┗━━ x86_64-linux                # NixOS hosts
+┣━━ pkgs                            # non arch-specific packages
+┗━━ secrets                         # age encrypted secrets
+```
 
 ## flake
 
