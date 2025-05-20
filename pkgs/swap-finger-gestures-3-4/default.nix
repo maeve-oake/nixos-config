@@ -5,8 +5,8 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "swap-finger-gestures-3-4";
-  version = "f4400b16093cd3461bcbc9fd26f73503d977f53b";
+  pname = "swap-finger-gestures-3-4";
+  version = "4";
   phases = [
     "unpackPhase"
     "installPhase"
