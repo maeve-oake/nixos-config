@@ -1,22 +1,22 @@
-# maeve's nixos config
+# maeve's nix config
 
 ```
 nixos-config
-┣━━ common                          # shared configuration for all machines
-┃   ┣━━ aarch64-darwin              # common configs for nix-darwin hosts
-┃   ┗━━ x86_64-linux                # common configs for NixOS hosts
-┃       ┗━━ gnome, i3, hyprland     # WM & DE configs 
+┣━━ common                          # common modules for all hosts
+┃   ┣━━ aarch64-darwin              # modules for nix-darwin hosts
+┃   ┗━━ x86_64-linux                # modules for NixOS hosts
+┃       ┗━━ gnome, i3, hyprland     # WM & DE modules 
 ┃           ┗━━ pkgs                # WM & DE specific packages
 ┣━━ hosts                           # host specific configuration
 ┃   ┣━━ aarch64-darwin              # nix-darwin hosts
 ┃   ┗━━ x86_64-linux                # NixOS hosts
-┣━━ pkgs                            # non arch-specific packages
+┣━━ pkgs                            # non-system-specific packages
 ┗━━ secrets                         # age encrypted secrets
 ```
 
 ## flake
 
-`nixosConfigurations` and `darwinConfigurations` are automatically generated and populated. To add a new computer, simply add it in the correct `hosts` subdirectory. `inputs` is passed through to each host's config, so flakes can be added to imports individually.
+`nixosConfigurations` and `darwinConfigurations` are automatically generated and populated. To add a new host, create a new directory within the correct `hosts` subdirectory. `inputs` is passed through to each host's config, so flakes can be imported in host-specific configurations.
 
 ## install instructions
 
