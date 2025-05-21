@@ -6,11 +6,10 @@ nixos-config
 ┃   ┣━━ aarch64-darwin              # modules for nix-darwin hosts
 ┃   ┗━━ x86_64-linux                # modules for NixOS hosts
 ┃       ┗━━ gnome, i3, hyprland     # WM & DE modules 
-┃           ┗━━ pkgs                # WM & DE specific packages
 ┣━━ hosts                           # host specific configuration
 ┃   ┣━━ aarch64-darwin              # nix-darwin hosts
 ┃   ┗━━ x86_64-linux                # NixOS hosts
-┣━━ pkgs                            # non-system-specific packages
+┣━━ pkgs                            # package derivations
 ┗━━ secrets                         # age encrypted secrets
 ```
 
