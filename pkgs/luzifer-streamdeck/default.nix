@@ -6,7 +6,7 @@
 }:
 
 buildGoModule rec {
-  pname = "streamdeck";
+  pname = "luzifer-streamdeck";
   version = "1.7.2";
 
   src =
