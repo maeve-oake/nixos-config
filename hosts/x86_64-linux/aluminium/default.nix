@@ -16,6 +16,7 @@
 
   # boot
   boot.kernelPackages = pkgs.linuxPackages_6_13;
+  boot.loader.systemd-boot.configurationLimit = 1;
 
   # power & sleep
   swapDevices = [
