@@ -1,4 +1,10 @@
-{ inputs, hostname, config, ... }:
+{
+  inputs,
+  hostname,
+  config,
+  system,
+  ...
+}:
 {
   # common configuration for all architectures
   # please see subdirectories for arch-specific configuration
@@ -7,6 +13,9 @@
     ./fish.nix
     inputs.agenix.nixosModules.default
   ];
+
+  # age
+  environment.systemPackages = [ inputs.agenix.packages.${system}.default ];
 
   # networking
   networking.hostName = hostname;
