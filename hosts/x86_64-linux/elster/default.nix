@@ -11,13 +11,13 @@
     ./hardware-configuration.nix
     # (inputs.self + /common/x86_64-linux/i3)
     (inputs.self + /common/x86_64-linux/gnome)
-    # (inputs.self + /common/x86_64-linux/secureboot.nix)
+    (inputs.self + /common/x86_64-linux/secureboot.nix)
     # (inputs.self + /common/x86_64-linux/samba.nix)
   ];
 
   # boot
-  boot.loader.systemd-boot.enable = true;
   boot.kernelPackages = pkgs.linuxPackages_6_14;
+  boot.kernelModules = [ "firewire_ohci" ];
 
   # power & sleep
   swapDevices = [
