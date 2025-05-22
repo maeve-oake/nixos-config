@@ -66,5 +66,8 @@ in
     wget
     p7zip
     btop
+    age
+    usbutils
+    pciutils
   ];
 }
