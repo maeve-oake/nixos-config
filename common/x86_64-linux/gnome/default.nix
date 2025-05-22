@@ -40,7 +40,6 @@
 
   # environment variables
   environment.sessionVariables = {
-    NIXOS_OZONE_WL = "1"; # fix electron blur
     QT_QPA_PLATFORMTHEME = "flatpak"; # fix telegram filepicker
   };
 
