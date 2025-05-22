@@ -32,7 +32,7 @@
     ];
 
     profiles = {
-      "$HOME_SSID" = {
+      Home = {
         connection = {
           id = "$HOME_SSID";
           type = "wifi";
@@ -47,7 +47,7 @@
         };
       };
 
-      "$HOTSPOT_SSID" = {
+      Hotspot = {
         connection = {
           id = "$HOTSPOT_SSID";
           type = "wifi";
@@ -62,14 +62,7 @@
         };
       };
 
-      "$WORK_SSID" = {
-        "802.1x" = {
-          domain-suffix-match = "$WORK_DOMAIN";
-          eap = "peap";
-          identity = "$WORK_USERNAME";
-          password = "$WORK_PASSWORD";
-          phase2-auth = "mschapv2";
-        };
+      Work = {
         connection = {
           id = "$WORK_SSID";
           type = "wifi";
@@ -80,6 +73,14 @@
         };
         wifi-security = {
           key-mgmt = "wpa-eap";
+          auth-alg = "open";
+        };
+        "802-1x" = {
+          domain-suffix-match = "$WORK_DOMAIN";
+          eap = "peap";
+          identity = "$WORK_USERNAME";
+          password = "$WORK_PASSWORD";
+          phase2-auth = "mschapv2";
         };
       };
     };
