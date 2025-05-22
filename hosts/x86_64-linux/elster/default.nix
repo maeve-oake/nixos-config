@@ -18,6 +18,7 @@
   # boot
   boot.kernelPackages = pkgs.linuxPackages_6_14;
   boot.kernelModules = [ "firewire_ohci" ];
+  networking.interfaces.enp13s0.wakeOnLan.enable = true;
 
   # power & sleep
   swapDevices = [
