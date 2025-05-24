@@ -157,6 +157,38 @@
         "type": "github"
       }
     },
+    "homebrew-cask": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1748096371,
+        "narHash": "sha256-06n6usyH61QQmcCZinApm77TvTRH48tMeFqbkrFfH/c=",
+        "owner": "homebrew",
+        "repo": "homebrew-cask",
+        "rev": "9d822c4d0a335ffe24f7a65d4a10cb313006470e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "homebrew",
+        "repo": "homebrew-cask",
+        "type": "github"
+      }
+    },
+    "homebrew-core": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1748094740,
+        "narHash": "sha256-4EfideoRF0cLKVOCZGTZj0TNd5zhC9KDgMxsTiLEX3M=",
+        "owner": "homebrew",
+        "repo": "homebrew-core",
+        "rev": "aee85e9f07b3ccd4fc384cf896f7e261231473cf",
+        "type": "github"
+      },
+      "original": {
+        "owner": "homebrew",
+        "repo": "homebrew-core",
+        "type": "github"
+      }
+    },
     "lanzaboote": {
       "inputs": {
         "crane": "crane",
@@ -400,6 +432,8 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
+        "homebrew-cask": "homebrew-cask",
+        "homebrew-core": "homebrew-core",
         "lanzaboote": "lanzaboote",
         "nix-darwin": "nix-darwin",
         "nix-flatpak": "nix-flatpak",
