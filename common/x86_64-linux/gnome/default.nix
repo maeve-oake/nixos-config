@@ -176,7 +176,7 @@ in
               switcher-popup-delay = false;
               window-preview-caption = false;
               world-clock = false;
-              support-notifier-type = 0;
+              support-notifier-type = lib.gvariant.mkInt32 0;
             };
 
             # keybinds
