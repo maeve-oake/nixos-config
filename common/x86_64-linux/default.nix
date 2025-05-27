@@ -10,10 +10,6 @@ let
     inherit system;
     config.allowUnfree = true;
   };
-  nixpkgs-24-11 = import inputs.nixpkgs-24-11 {
-    inherit system;
-    config.allowUnfree = true;
-  };
 in
 {
   # common configuration for x86_64 Linux machines
@@ -58,7 +54,7 @@ in
     })
 
     # apps
-    (nixpkgs-24-11.microsoft-edge.override {
+    (microsoft-edge.override {
       commandLineArgs = [ "--enable-features=TouchpadOverscrollHistoryNavigation" ];
     })
     telegram-desktop
