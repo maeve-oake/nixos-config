@@ -29,7 +29,6 @@ in
   boot.loader.timeout = 0;
 
   _module.args.unstable = unstable;
-  _module.args.nixpkgs-24-11 = nixpkgs-24-11;
 
   # pkgs
   virtualisation.virtualbox.host.enable = true;
