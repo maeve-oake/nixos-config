@@ -6,10 +6,7 @@
 
     nix-flatpak.url = "github:gmodena/nix-flatpak";
 
-    nix-homebrew = {
-      url = "github:zhaofengli/nix-homebrew";
-      inputs.nixpkgs.follows = "nix-darwin";
-    };
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
