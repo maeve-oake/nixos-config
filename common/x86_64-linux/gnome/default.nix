@@ -87,16 +87,20 @@ in
 
     # profile picture
     system.activationScripts.script.text = ''
-        mkdir -p /var/lib/AccountsService/{icons,users}
-        cp /home/maeve/.config/img/pfp_maeve.jpg /var/lib/AccountsService/icons/maeve
-        echo -e "[User]\nIcon=/var/lib/AccountsService/icons/maeve\n" > /var/lib/AccountsService/users/maeve
+          mkdir -p /var/lib/AccountsService/{icons,users}
+          cp /home/maeve/.config/img/pfp_maeve.jpg /var/lib/AccountsService/icons/maeve
+          echo -e "[User]\nIcon=/var/lib/AccountsService/icons/maeve\n" > /var/lib/AccountsService/users/maeve
 
-        chown root:root /var/lib/AccountsService/users/maeve
-        chmod 0600 /var/lib/AccountsService/users/maeve
+          chown root:root /var/lib/AccountsService/users/maeve
+          chmod 0600 /var/lib/AccountsService/users/maeve
 
       chown root:root /var/lib/AccountsService/icons/maeve
       chmod 0444 /var/lib/AccountsService/icons/maeve
     '';
+
+    fonts.packages = with pkgs; [
+      cantarell-fonts
+    ];
 
     programs.dconf = {
       enable = true;
@@ -114,6 +118,7 @@ in
             "org/gnome/desktop/wm/preferences" = {
               auto-raise = false;
               focus-mode = "sloppy";
+              titlebar-font = "Cantarell Bold 11";
             };
             "org/gnome/desktop/peripherals/mouse" = {
               accel-profile = "flat";
@@ -152,6 +157,8 @@ in
               gtk-enable-primary-paste = false;
               show-battery-percentage = true;
               clock-show-seconds = true;
+              font-name = "Cantarell 11";
+              document-font-name = "Cantarell 11";
             };
             "org/gnome/shell/extensions/user-theme" = {
               name = "Lion";
@@ -169,6 +176,7 @@ in
               switcher-popup-delay = false;
               window-preview-caption = false;
               world-clock = false;
+              support-notifier-type = 0;
             };
 
             # keybinds
