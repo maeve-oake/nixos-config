@@ -19,6 +19,7 @@ in
     ./network.nix
     ./user.nix
     ./1password.nix
+    ./isight.nix
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.nix-index-database.nixosModules.nix-index
     inputs.nix-flatpak.nixosModules.nix-flatpak
