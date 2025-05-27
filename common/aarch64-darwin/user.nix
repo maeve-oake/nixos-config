@@ -1,10 +1,10 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 {
-  users.knownUsers = [ "maeve" ];
-  users.users.maeve = {
+  config.users.knownUsers = [ "maeve" ];
+  config.users.users.maeve = {
     shell = pkgs.fish;
     uid = 501;
   };
-
-  security.pam.enableSudoTouchIdAuth = true;
+  config.system.primaryUser = "maeve";
+  config.security.pam.services.sudo_local.touchIdAuth = true;
 }

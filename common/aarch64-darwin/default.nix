@@ -1,4 +1,4 @@
-{ pkgs, hostname, inputs, ... }:
+{ pkgs, hostname, inputs, config, ... }:
 {
   # common configuration for MacOS machines
 
@@ -18,6 +18,13 @@
   nix-homebrew = {
     user = "maeve";
     enable = true;
+
+    taps = with inputs; {
+      "homebrew/homebrew-core" = homebrew-core;
+      "homebrew/homebrew-cask" = homebrew-cask;
+    };
+
+    mutableTaps = false;
   };
 
   /*
@@ -53,6 +60,9 @@
 
   homebrew = {
     enable = true;
+    onActivation.cleanup = "zap";
+    taps = builtins.attrNames config.nix-homebrew.taps;
+
     casks = [
       # dev
       "visual-studio-code"
@@ -61,7 +71,6 @@
       "microsoft-edge"
       "telegram"
       "autodesk-fusion"
-      "ultimaker-cura"
 
       # system
       "ilya-birman-typography-layout"
