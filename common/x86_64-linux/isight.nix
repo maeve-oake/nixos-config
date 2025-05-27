@@ -1,6 +1,14 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  ...
+}:
 let
-  inherit (lib) mkDefault mkEnableOption mkIf mkOption optional types;
+  inherit (lib)
+    mkDefault
+    mkEnableOption
+    mkIf
+    ;
   cfg = config.hardware.isight;
 in
 {
@@ -14,7 +22,6 @@ in
     boot.extraModprobeConfig = ''
       options v4l2loopback devices=0
     '';
-
 
     services.v4l2-relayd.instances.isight = {
       enable = mkDefault true;

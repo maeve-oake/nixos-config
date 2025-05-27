@@ -5,7 +5,7 @@
   fetchFromGitHub,
 }:
 
-buildGoModule rec {
+buildGoModule {
   pname = "luzifer-streamdeck";
   version = "1.7.2";
 

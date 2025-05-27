@@ -1,4 +1,9 @@
-{ inputs, pkgs, config, ... }:
+{
+  inputs,
+  pkgs,
+  config,
+  ...
+}:
 {
   age.secrets.maeve-password.file = (inputs.self + /secrets/maeve-password.age);
 

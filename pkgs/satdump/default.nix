@@ -1,11 +1,10 @@
 {
   pkgs,
   stdenv,
-  lib,
   fetchFromGitHub,
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation {
   pname = "satdump";
   version = "1.2.2";
 

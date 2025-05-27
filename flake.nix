@@ -12,7 +12,7 @@
       url = "github:homebrew/homebrew-core";
       flake = false;
     };
-    
+
     homebrew-cask = {
       url = "github:homebrew/homebrew-cask";
       flake = false;
@@ -33,11 +33,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = inputs:
+  outputs =
+    inputs:
     let
       inherit (inputs.nixpkgs) lib;
 
-      mkHost = system: hostname:
+      mkHost =
+        system: hostname:
         let
           isDarwin = builtins.match ".*darwin$" system != null;
           builder = if isDarwin then inputs.nix-darwin.lib.darwinSystem else inputs.nixpkgs.lib.nixosSystem;
@@ -53,16 +55,22 @@
           };
           key = if isDarwin then "darwinConfigurations" else "nixosConfigurations";
         in
-        { ${key} = { ${hostname} = config; }; };
+        {
+          ${key} = {
+            ${hostname} = config;
+          };
+        };
 
       systems = builtins.attrNames (builtins.readDir ./hosts);
 
-      hosts = builtins.concatMap (system:
+      hosts = builtins.concatMap (
+        system:
         let
           hostnames = builtins.attrNames (builtins.readDir (./hosts + "/${system}"));
         in
         map (hostname: mkHost system hostname) hostnames
       ) systems;
 
-    in builtins.foldl' lib.recursiveUpdate {} hosts;
+    in
+    builtins.foldl' lib.recursiveUpdate { } hosts;
 }
