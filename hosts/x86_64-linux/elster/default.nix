@@ -17,7 +17,6 @@
 
   # boot
   boot.kernelPackages = unstable.linuxPackages_6_14;
-  boot.kernelModules = [ "firewire_ohci" ];
   networking.interfaces.enp13s0.wakeOnLan.enable = true;
 
   # power & sleep
@@ -47,6 +46,9 @@
     nvidiaSettings = true;
   };
 
+  # camera
+  hardware.isight.enable = true;
+
   # packages
   programs.steam.enable = true;
   environment.systemPackages = with pkgs; [
@@ -54,11 +56,7 @@
     plex-desktop
     ollama
     darktable
-
-    ((ffmpeg.overrideAttrs (super: rec {
-      configureFlags = super.configureFlags ++ [ "--enable-libiec61883" ];
-      buildInputs = super.buildInputs ++ [ pkgs.libiec61883 pkgs.libavc1394 ];
-    })).override {withDc1394 = true;})
+    ffmpeg
   ];
 
   # Do not remove
