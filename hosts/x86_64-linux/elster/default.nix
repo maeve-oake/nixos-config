@@ -16,11 +16,11 @@
   ];
 
   # boot
-  boot.kernelPackages = pkgs.linuxPackages_6_14;
-  boot.kernelModules = [ "firewire_ohci" ];
+  boot.kernelPackages = unstable.linuxPackages_6_14;
   networking.interfaces.enp13s0.wakeOnLan.enable = true;
 
   # power & sleep
+  services.xserver.displayManager.gdm.autoSuspend = false;
   swapDevices = [
     {
       device = "/swapfile";
@@ -32,19 +32,22 @@
   services.fprintd.enable = true;
   security.polkit.enable = true;
 
-  # # graphics
-  # services.xserver.videoDrivers = [ "nvidia" ];
-  # hardware.graphics = {
-  #   enable = true;
-  # };
-  # hardware.nvidia = {
-  #   package = config.boot.kernelPackages.nvidiaPackages.stable;
-  #   modesetting.enable = true;
-  #   powerManagement.enable = false;
-  #   powerManagement.finegrained = false;
-  #   open = false;
-  #   nvidiaSettings = true;
-  # };
+  # graphics
+  services.xserver.videoDrivers = [ "nvidia" ];
+  hardware.graphics = {
+    enable = true;
+  };
+  hardware.nvidia = {
+    package = config.boot.kernelPackages.nvidiaPackages.beta;
+    modesetting.enable = true;
+    powerManagement.enable = false;
+    powerManagement.finegrained = false;
+    open = true;
+    nvidiaSettings = true;
+  };
+
+  # camera
+  hardware.isight.enable = true;
 
   # packages
   programs.steam.enable = true;
@@ -53,6 +56,7 @@
     plex-desktop
     ollama
     darktable
+    ffmpeg
   ];
 
   # Do not remove

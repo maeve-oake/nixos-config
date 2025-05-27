@@ -30,6 +30,10 @@
     	'';
   services.logind.lidSwitch = "suspend-then-hibernate";
 
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1"; # fix electron blur
+  };
+
   # fingerprint & login
   services.fprintd.enable = true;
   security.polkit.enable = true;
