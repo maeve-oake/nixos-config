@@ -1,6 +1,6 @@
 { pkgs, ... }:
 {
-  environment.systemPackages = [ pkgs.lolcat ];
+  environment.systemPackages = [ pkgs.clolcat ];
   programs.fish = {
     enable = true;
     interactiveShellInit = ''
@@ -8,7 +8,7 @@
         echo "      |\      _,,,---,,_
       ZZZzz /,`.-'`'    -.  ;-;;,_
            |,4-  ) )-,_. ,\ (  `'-'
-          '---'''(_/--'  `-'\_)" | lolcat
+          '---'''(_/--'  `-'\_)" | clolcat
       end
 
       function nsh --wraps nix-shell --description "nix-shell -p <args> --run fish"
