@@ -1,7 +1,6 @@
 {
   inputs,
   pkgs,
-  unstable,
   ...
 }:
 {
@@ -42,9 +41,9 @@
   security.polkit.enable = true;
 
   # packages
-  environment.systemPackages = [
+  environment.systemPackages = with pkgs; [
     # apps
-    unstable.teams-for-linux
+    teams-for-linux
   ];
 
   # Do not remove
