@@ -1,4 +1,4 @@
-{ pkgs, config, ... }:
+{ pkgs, ... }:
 {
   config.users.knownUsers = [ "maeve" ];
   config.users.users.maeve = {

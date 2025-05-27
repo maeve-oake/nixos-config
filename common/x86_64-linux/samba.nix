@@ -1,4 +1,9 @@
-{ inputs, pkgs, config, ... }:
+{
+  inputs,
+  pkgs,
+  config,
+  ...
+}:
 let
   mynahOptions = [
     "x-systemd.automount"

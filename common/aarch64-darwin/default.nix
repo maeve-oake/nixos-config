@@ -1,4 +1,10 @@
-{ pkgs, hostname, inputs, config, ... }:
+{
+  pkgs,
+  hostname,
+  inputs,
+  config,
+  ...
+}:
 {
   # common configuration for MacOS machines
 
@@ -41,7 +47,7 @@
   environment.systemPackages = with pkgs; [
     # dev
     nixpkgs-fmt
-    neovim 
+    neovim
     gh
     git
 

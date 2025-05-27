@@ -1,10 +1,9 @@
 {
   stdenv,
-  lib,
   fetchFromGitHub,
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation {
   pname = "swap-finger-gestures-3-4";
   version = "4";
   phases = [

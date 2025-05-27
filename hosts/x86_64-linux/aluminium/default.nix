@@ -1,7 +1,5 @@
 {
   inputs,
-  config,
-  lib,
   pkgs,
   unstable,
   ...
@@ -39,7 +37,7 @@
   security.polkit.enable = true;
 
   # packages
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = [
     # apps
     unstable.teams-for-linux
   ];

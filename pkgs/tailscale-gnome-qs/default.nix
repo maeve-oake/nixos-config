@@ -1,10 +1,9 @@
 {
   stdenv,
-  lib,
   fetchFromGitHub,
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation {
   pname = "tailscale-gnome-qs";
   version = "1";
   phases = [
