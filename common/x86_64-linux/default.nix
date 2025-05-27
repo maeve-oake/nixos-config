@@ -40,6 +40,7 @@ in
     git
     neovim
     nixfmt-rfc-style
+    nixd
     dotnet-sdk
     dotnet-runtime
     (vscode-with-extensions.override {
