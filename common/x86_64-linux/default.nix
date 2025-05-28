@@ -64,7 +64,9 @@ in
 
     # apps
     (nixpkgs-24-11.microsoft-edge.override {
-      commandLineArgs = [ "--enable-features=TouchpadOverscrollHistoryNavigation,Vulkan" ];
+      commandLineArgs = [
+        "--enable-features=TouchpadOverscrollHistoryNavigation,Vulkan,VaapiVideoDecoder,VaapiIgnoreDriverChecks,DefaultANGLEVulkan,VulkanFromANGLE"
+      ];
     })
     telegram-desktop
     element-desktop
