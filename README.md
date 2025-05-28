@@ -8,7 +8,11 @@ nixos-config
 ┃       ┗━━ gnome, i3, hyprland     # WM & DE modules 
 ┣━━ hosts                           # host specific configuration
 ┃   ┣━━ aarch64-darwin              # nix-darwin hosts
+┃   ┃   ┗━━ stainless               # 2021 MacBook Pro 
 ┃   ┗━━ x86_64-linux                # NixOS hosts
+┃       ┣━━ aluminium               # Framework 13 
+┃       ┣━━ elster                  # desktop gaming PC 
+┃       ┗━━ replika                 # Framework 13 
 ┣━━ pkgs                            # package derivations
 ┗━━ secrets                         # age encrypted secrets
 ```
