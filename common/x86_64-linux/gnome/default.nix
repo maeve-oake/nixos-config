@@ -6,10 +6,38 @@
 }:
 let
   cfg = config.gnome;
+
+  mkDockOption =
+    default:
+    lib.mkOption (
+      with lib.types;
+      {
+        inherit default;
+        type = listOf (strMatching "^.*\.desktop$");
+        description = "Gnome dock favourite items";
+      }
+    );
 in
 {
   options = {
-    gnome.enable = lib.mkEnableOption "Gnome";
+    gnome = {
+      enable = lib.mkEnableOption "Gnome";
+      dockItems = {
+        left = mkDockOption [
+          "microsoft-edge.desktop"
+          "org.telegram.desktop.desktop"
+          "discord.desktop"
+          "element-desktop.desktop"
+        ];
+        middle = mkDockOption [ ];
+        right = mkDockOption [
+          "1password.desktop"
+          "code.desktop"
+          "org.gnome.Console.desktop"
+          "org.gnome.Nautilus.desktop"
+        ];
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -107,17 +135,7 @@ in
 
             # dock & extensions
             "org/gnome/shell" = {
-              favorite-apps = [
-                "microsoft-edge.desktop"
-                "org.telegram.desktop.desktop"
-                "discord.desktop"
-                "element-desktop.desktop"
-                "teams-for-linux.desktop"
-                "1password.desktop"
-                "code.desktop"
-                "org.gnome.Console.desktop"
-                "org.gnome.Nautilus.desktop"
-              ];
+              favorite-apps = with cfg.dockItems; left ++ middle ++ right;
               enabled-extensions = [
                 "user-theme@gnome-shell-extensions.gcampax.github.com"
                 "swap-finger-gestures-3-4@icedman.github.com"

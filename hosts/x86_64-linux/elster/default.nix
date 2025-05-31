@@ -14,6 +14,9 @@
 
   # DE
   gnome.enable = true;
+  gnome.dockItems.middle = [
+    "steam.desktop"
+  ];
 
   # boot
   boot.kernelPackages = unstable.linuxPackages_6_14;

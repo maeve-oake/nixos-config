@@ -13,6 +13,9 @@
 
   # DE
   gnome.enable = true;
+  gnome.dockItems.middle = [
+    "teams-for-linux.desktop"
+  ];
 
   # boot
   boot.kernelPackages = pkgs.linuxPackages_6_13;
