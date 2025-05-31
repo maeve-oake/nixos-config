@@ -36,7 +36,7 @@ in
   _module.args.nixpkgs-24-11 = nixpkgs-24-11;
 
   # pkgs
-  virtualisation.virtualbox.host.enable = true;
+  # virtualisation.virtualbox.host.enable = true;
   services.fwupd.enable = true;
   services.flatpak.enable = true;
   services.flatpak.packages = [ "com.bambulab.BambuStudio" ];

@@ -14,7 +14,7 @@
   gnome.enable = true;
 
   # boot
-  boot.kernelPackages = pkgs.linuxPackages_6_14;
+  boot.kernelPackages = pkgs.linuxPackages_6_15;
 
   # networking
   hardware.wirelessRegulatoryDatabase = true;
