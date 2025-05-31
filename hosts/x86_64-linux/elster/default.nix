@@ -8,10 +8,14 @@
 {
   imports = [
     ./hardware-configuration.nix
-    # (inputs.self + /common/x86_64-linux/i3)
-    (inputs.self + /common/x86_64-linux/gnome)
     (inputs.self + /common/x86_64-linux/secureboot.nix)
     # (inputs.self + /common/x86_64-linux/samba.nix)
+  ];
+
+  # DE
+  gnome.enable = true;
+  gnome.dockItems.middle = [
+    "steam.desktop"
   ];
 
   # boot
