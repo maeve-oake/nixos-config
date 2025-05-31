@@ -40,7 +40,7 @@ in
   services.lnxlink.clientId = hostname;
 
   # pkgs
-  virtualisation.virtualbox.host.enable = true;
+  # virtualisation.virtualbox.host.enable = true;
   services.fwupd.enable = true;
   services.flatpak.enable = true;
   services.flatpak.packages = [ "com.bambulab.BambuStudio" ];
