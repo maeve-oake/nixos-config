@@ -9,6 +9,10 @@ let
     inherit system;
     config.allowUnfree = true;
   };
+  nixpkgs-24-11 = import inputs.nixpkgs-24-11 {
+    inherit system;
+    config.allowUnfree = true;
+  };
 in
 {
   # common configuration for x86_64 Linux machines
@@ -29,9 +33,10 @@ in
   boot.loader.timeout = 0;
 
   _module.args.unstable = unstable;
+  _module.args.nixpkgs-24-11 = nixpkgs-24-11;
 
   # pkgs
-  virtualisation.virtualbox.host.enable = true;
+  # virtualisation.virtualbox.host.enable = true;
   services.fwupd.enable = true;
   services.flatpak.enable = true;
   services.flatpak.packages = [ "com.bambulab.BambuStudio" ];
@@ -54,8 +59,10 @@ in
     })
 
     # apps
-    (microsoft-edge.override {
-      commandLineArgs = [ "--enable-features=TouchpadOverscrollHistoryNavigation" ];
+    (nixpkgs-24-11.microsoft-edge.override {
+      commandLineArgs = [
+        "--enable-features=TouchpadOverscrollHistoryNavigation,Vulkan,VaapiVideoDecoder,VaapiIgnoreDriverChecks,DefaultANGLEVulkan,VulkanFromANGLE"
+      ];
     })
     telegram-desktop
     element-desktop
