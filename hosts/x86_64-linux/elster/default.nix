@@ -62,6 +62,23 @@
     ffmpeg
   ];
 
+  # lnxlink
+  age.secrets.lnxlink-env.file = (inputs.self + /secrets/lnxlink-env.age);
+  services.lnxlink = {
+    enable = true;
+    envFile = config.age.secrets.lnxlink-env.path;
+    addons = {
+      cpu.enable = true;
+      memory.enable = true;
+      shutdown.enable = true;
+      restart.enable = true;
+      suspend.enable = true;
+      microphone_used.enable = true;
+      camera_used.enable = true;
+      speaker_used.enable = true;
+    };
+  };
+
   # Do not remove
   system.stateVersion = "24.05";
 }

@@ -27,4 +27,7 @@ in
   "wifi-home.age".publicKeys = all;
   "wifi-hotspot.age".publicKeys = all;
   "wifi-work.age".publicKeys = all;
+
+  # services
+  "lnxlink-env.age".publicKeys = all;
 }
