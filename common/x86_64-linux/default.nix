@@ -2,6 +2,7 @@
   pkgs,
   inputs,
   system,
+  hostname,
   ...
 }:
 let
@@ -20,6 +21,7 @@ in
     ./1password.nix
     ./isight.nix
     ./gnome
+    ./lnxlink.nix
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.nix-index-database.nixosModules.nix-index
     inputs.nix-flatpak.nixosModules.nix-flatpak
@@ -29,6 +31,8 @@ in
   boot.loader.timeout = 0;
 
   _module.args.unstable = unstable;
+
+  services.lnxlink.clientId = hostname;
 
   # pkgs
   virtualisation.virtualbox.host.enable = true;
