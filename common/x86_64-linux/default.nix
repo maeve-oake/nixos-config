@@ -39,6 +39,13 @@ in
 
   services.lnxlink.clientId = hostname;
 
+  # auto gc
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
+  };
+
   # pkgs
   # virtualisation.virtualbox.host.enable = true;
   services.fwupd.enable = true;
