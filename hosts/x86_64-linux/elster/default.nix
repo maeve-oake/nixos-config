@@ -13,10 +13,13 @@
   ];
 
   # DE
-  gnome.enable = true;
-  gnome.dockItems.middle = [
-    "steam.desktop"
-  ];
+  gnome = {
+    enable = true;
+    dockItems.middle = [
+      "steam.desktop"
+    ];
+    powerButtonAction = "interactive";
+  };
 
   # boot
   boot.kernelPackages = unstable.linuxPackages_6_14;

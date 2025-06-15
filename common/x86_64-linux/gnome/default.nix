@@ -37,6 +37,12 @@ in
           "org.gnome.Nautilus.desktop"
         ];
       };
+
+      powerButtonAction = lib.mkOption {
+        type = lib.types.str;
+        default = "hibernate";
+        description = "Power button action";
+      };
     };
   };
 
@@ -134,7 +140,7 @@ in
 
             # power & sleep
             "org/gnome/settings-daemon/plugins/power" = {
-              power-button-action = "hibernate";
+              power-button-action = cfg.powerButtonAction;
               sleep-inactive-battery-type = "hibernate";
             };
 
