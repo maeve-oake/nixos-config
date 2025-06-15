@@ -60,6 +60,7 @@
     ollama
     darktable
     ffmpeg
+    easyeda-pro
   ];
 
   # lnxlink
