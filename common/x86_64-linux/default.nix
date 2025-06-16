@@ -56,12 +56,15 @@ in
     dotnet-sdk
     dotnet-runtime
     (vscode-with-extensions.override {
-      vscodeExtensions = with vscode-extensions; [
-        ms-dotnettools.csharp
-        ms-dotnettools.vscode-dotnet-runtime
-        jnoortheen.nix-ide
-        ms-vsliveshare.vsliveshare
-      ];
+      vscodeExtensions =
+        with vscode-marketplace;
+        with vscode-extensions;
+        [
+          ms-dotnettools.csharp
+          ms-dotnettools.vscode-dotnet-runtime
+          jnoortheen.nix-ide
+          ms-vsliveshare.vsliveshare
+        ];
     })
 
     # apps
