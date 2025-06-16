@@ -55,6 +55,7 @@ in
     nixd
     dotnet-sdk
     dotnet-runtime
+    unstable.esphome
     (vscode-with-extensions.override {
       vscodeExtensions =
         with vscode-marketplace;
@@ -64,6 +65,7 @@ in
           ms-dotnettools.vscode-dotnet-runtime
           jnoortheen.nix-ide
           ms-vsliveshare.vsliveshare
+          esphome.esphome-vscode
         ];
     })
 
