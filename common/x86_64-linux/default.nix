@@ -10,10 +10,6 @@ let
     inherit system;
     config.allowUnfree = true;
   };
-  nixpkgs-24-11 = import inputs.nixpkgs-24-11 {
-    inherit system;
-    config.allowUnfree = true;
-  };
 in
 {
   # common configuration for x86_64 Linux machines
@@ -35,9 +31,6 @@ in
   # boot
   boot.loader.timeout = 0;
 
-  _module.args.unstable = unstable;
-  _module.args.nixpkgs-24-11 = nixpkgs-24-11;
-
   services.lnxlink.clientId = hostname;
 
   # auto gc
@@ -48,6 +41,7 @@ in
   };
 
   # pkgs
+  _module.args.unstable = unstable;
   # virtualisation.virtualbox.host.enable = true;
   services.fwupd.enable = true;
   services.flatpak.enable = true;
@@ -71,7 +65,7 @@ in
     })
 
     # apps
-    (nixpkgs-24-11.microsoft-edge.override {
+    (microsoft-edge.override {
       commandLineArgs = [
         "--enable-features=TouchpadOverscrollHistoryNavigation,Vulkan,VaapiVideoDecoder,VaapiIgnoreDriverChecks,DefaultANGLEVulkan,VulkanFromANGLE"
       ];
