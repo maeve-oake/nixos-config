@@ -62,7 +62,7 @@ in
         # appearance
         gnome-tweaks
         user-themes
-        status-icons
+        appindicator
         lion-theme
         breezex-cursor
 
@@ -156,7 +156,7 @@ in
                 "swap-finger-gestures-3-4@icedman.github.com"
                 "tailscale@joaophi.github.com"
                 "just-perfection-desktop@just-perfection"
-                "status-icons@gnome-shell-extensions.gcampax.github.com"
+                "appindicatorsupport@rgcjonas.gmail.com"
               ];
             };
 
