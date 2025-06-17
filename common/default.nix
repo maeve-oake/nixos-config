@@ -44,4 +44,6 @@
     inputs.nix-vscode-extensions.overlays.default
     (import (inputs.self + /pkgs))
   ];
+
+  system.configurationRevision = inputs.self.rev or "dirty";
 }

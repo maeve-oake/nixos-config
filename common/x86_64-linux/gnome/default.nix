@@ -55,18 +55,22 @@ in
     systemd.services."getty@tty1".enable = false;
     systemd.services."autovt@tty1".enable = false;
 
-    environment.systemPackages = with pkgs; [
-      # appearance
-      gnome-tweaks
-      gnomeExtensions.user-themes
-      lion-theme
-      breezex-cursor
+    environment.systemPackages =
+      with pkgs;
+      with gnomeExtensions;
+      [
+        # appearance
+        gnome-tweaks
+        user-themes
+        status-icons
+        lion-theme
+        breezex-cursor
 
-      # behaviour
-      gnomeExtensions.just-perfection
-      # swap-finger-gestures-3-4
-      tailscale-gnome-qs
-    ];
+        # behaviour
+        just-perfection
+        # swap-finger-gestures-3-4
+        tailscale-gnome-qs
+      ];
 
     # systemd.user.services.libinput-three-finger-drag = {
     #   description = "three-finger-drag daemon";
@@ -152,6 +156,7 @@ in
                 "swap-finger-gestures-3-4@icedman.github.com"
                 "tailscale@joaophi.github.com"
                 "just-perfection-desktop@just-perfection"
+                "status-icons@gnome-shell-extensions.gcampax.github.com"
               ];
             };
 
