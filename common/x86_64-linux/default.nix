@@ -45,6 +45,7 @@ in
   # virtualisation.virtualbox.host.enable = true;
   services.fwupd.enable = true;
   services.flatpak.enable = true;
+  programs.direnv.enable = true;
   services.flatpak.packages = [ "com.bambulab.BambuStudio" ];
   environment.systemPackages = with pkgs; [
     # dev
@@ -55,7 +56,6 @@ in
     nixd
     dotnet-sdk
     dotnet-runtime
-    unstable.esphome
     (vscode-with-extensions.override {
       vscodeExtensions =
         with vscode-marketplace;
@@ -66,6 +66,7 @@ in
           jnoortheen.nix-ide
           ms-vsliveshare.vsliveshare
           esphome.esphome-vscode
+          mkhl.direnv
         ];
     })
 
