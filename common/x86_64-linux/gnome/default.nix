@@ -14,14 +14,14 @@ let
       {
         inherit default;
         type = listOf (strMatching "^.*\.desktop$");
-        description = "Gnome dock favourite items";
+        description = "GNOME dock favourite items";
       }
     );
 in
 {
   options = {
     gnome = {
-      enable = lib.mkEnableOption "Gnome";
+      enable = lib.mkEnableOption "GNOME";
       dockItems = {
         left = mkDockOption [
           "microsoft-edge.desktop"
@@ -43,6 +43,20 @@ in
         default = "hibernate";
         description = "Power button action";
       };
+
+      shellExtensions = lib.mkOption {
+        type = lib.types.listOf lib.types.package;
+        description = "List of packages containing GNOME Shell Extensions to install.";
+        default =
+          with pkgs;
+          with pkgs.gnomeExtensions;
+          [
+            user-themes
+            tailscale-gnome-qs
+            just-perfection
+            appindicator
+          ];
+      };
     };
   };
 
@@ -57,20 +71,12 @@ in
 
     environment.systemPackages =
       with pkgs;
-      with gnomeExtensions;
       [
-        # appearance
         gnome-tweaks
-        user-themes
-        appindicator
         lion-theme
         breezex-cursor
-
-        # behaviour
-        just-perfection
-        # swap-finger-gestures-3-4
-        tailscale-gnome-qs
-      ];
+      ]
+      ++ cfg.shellExtensions;
 
     # systemd.user.services.libinput-three-finger-drag = {
     #   description = "three-finger-drag daemon";
@@ -97,12 +103,12 @@ in
 
     # profile picture
     system.activationScripts.script.text = ''
-          mkdir -p /var/lib/AccountsService/{icons,users}
-          cp /home/maeve/.config/img/pfp_maeve.jpg /var/lib/AccountsService/icons/maeve
-          echo -e "[User]\nIcon=/var/lib/AccountsService/icons/maeve\n" > /var/lib/AccountsService/users/maeve
+      mkdir -p /var/lib/AccountsService/{icons,users}
+      cp /home/maeve/.config/img/pfp_maeve.jpg /var/lib/AccountsService/icons/maeve
+      echo -e "[User]\nIcon=/var/lib/AccountsService/icons/maeve\n" > /var/lib/AccountsService/users/maeve
 
-          chown root:root /var/lib/AccountsService/users/maeve
-          chmod 0600 /var/lib/AccountsService/users/maeve
+      chown root:root /var/lib/AccountsService/users/maeve
+      chmod 0600 /var/lib/AccountsService/users/maeve
 
       chown root:root /var/lib/AccountsService/icons/maeve
       chmod 0444 /var/lib/AccountsService/icons/maeve
@@ -151,13 +157,7 @@ in
             # dock & extensions
             "org/gnome/shell" = {
               favorite-apps = with cfg.dockItems; left ++ middle ++ right;
-              enabled-extensions = [
-                "user-theme@gnome-shell-extensions.gcampax.github.com"
-                "swap-finger-gestures-3-4@icedman.github.com"
-                "tailscale@joaophi.github.com"
-                "just-perfection-desktop@just-perfection"
-                "appindicatorsupport@rgcjonas.gmail.com"
-              ];
+              enabled-extensions = map (p: p.extensionUuid) cfg.shellExtensions;
             };
 
             # appearance
