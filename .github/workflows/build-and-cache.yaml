@@ -6,10 +6,10 @@ jobs:
   build-and-cache:
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-latest]
+        os: [ubuntu-22.04, macos-latest, ubuntu-22.04-arm]
     runs-on: ${{ matrix.os }}
     steps:
-      - if: matrix.os == 'ubuntu-22.04'
+      - if: matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-22.04-arm'
         name: Maximize build space
         uses: easimon/maximize-build-space@master
         with:
@@ -20,7 +20,7 @@ jobs:
           root-reserve-mb: '10240'
           build-mount-path: '/nix'
       
-      - if: matrix.os == 'ubuntu-22.04'
+      - if: matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-22.04-arm'
         name: Fix permissions
         run: sudo chown -R root /nix
 
