@@ -12,6 +12,12 @@
 
   # DE
   gnome.enable = true;
+  gnome.dockItems.left = [
+    "firefox.desktop"
+    "org.telegram.desktop.desktop"
+    "legcord.desktop"
+    "element-desktop.desktop"
+  ];
 
   boot.extraModprobeConfig = ''
     options hid_apple iso_layout=1
