@@ -13,5 +13,9 @@
   # DE
   gnome.enable = true;
 
+  boot.extraModprobeConfig = ''
+    options hid_apple iso_layout=1
+  '';
+
   system.stateVersion = "25.11";
 }
