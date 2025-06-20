@@ -17,5 +17,9 @@
     options hid_apple iso_layout=1
   '';
 
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1"; # fix electron blur
+  };
+
   system.stateVersion = "25.11";
 }
