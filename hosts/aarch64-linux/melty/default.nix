@@ -7,18 +7,10 @@
     inputs.apple-silicon-support.nixosModules.apple-silicon-support
   ];
 
-  networking.networkmanager.enable = true;
-  networking.wireless.iwd = {
-    enable = true;
-    settings.General.EnableNetworkConfiguration = true;
-  };
-
-  services.openssh = {
-    enable = true;
-    settings.PasswordAuthentication = false;
-  };
-
   hardware.asahi.peripheralFirmwareDirectory = ./firmware;
+
+  # DE
+  gnome.enable = true;
 
   system.stateVersion = "25.11";
 }

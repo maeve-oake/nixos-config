@@ -71,14 +71,8 @@ in
     })
 
     # apps
-    (microsoft-edge.override {
-      commandLineArgs = [
-        "--enable-features=TouchpadOverscrollHistoryNavigation,Vulkan,VaapiVideoDecoder,VaapiIgnoreDriverChecks,DefaultANGLEVulkan,VulkanFromANGLE"
-      ];
-    })
     telegram-desktop
     element-desktop
-    discord
     gimp
 
     # shell

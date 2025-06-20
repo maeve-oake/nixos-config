@@ -51,14 +51,18 @@
       mkHost =
         system: hostname:
         let
-          isDarwin = builtins.match ".*darwin$" system != null;
+          systemParts = lib.splitString "-" system;
+          arch = builtins.elemAt systemParts 0;
+          kernel = builtins.elemAt systemParts 1;
+          isDarwin = kernel == "darwin";
           builder = if isDarwin then inputs.nix-darwin.lib.darwinSystem else inputs.nixpkgs.lib.nixosSystem;
           config = builder {
             inherit system;
             specialArgs = { inherit inputs; };
             modules = [
               ./common
-              ./common/${system}
+              ./common/${kernel}
+              ./common/${kernel}/${arch}
               ./hosts/${system}/${hostname}
               { config._module.args = { inherit system hostname; }; }
             ];
