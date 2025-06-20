@@ -18,5 +18,7 @@
     settings.PasswordAuthentication = false;
   };
 
+  hardware.asahi.peripheralFirmwareDirectory = ./firmware;
+
   system.stateVersion = "25.11";
 }
