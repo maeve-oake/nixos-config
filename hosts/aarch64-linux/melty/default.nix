@@ -8,6 +8,7 @@
   ];
 
   hardware.asahi.peripheralFirmwareDirectory = ./firmware;
+  hardware.asahi.useExperimentalGPUDriver = true;
 
   # DE
   gnome.enable = true;
