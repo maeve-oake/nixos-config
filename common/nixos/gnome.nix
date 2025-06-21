@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }:
 let
@@ -102,17 +103,22 @@ in
     ];
 
     # profile picture
-    system.activationScripts.script.text = ''
-      mkdir -p /var/lib/AccountsService/{icons,users}
-      cp /home/maeve/.config/img/pfp_maeve.jpg /var/lib/AccountsService/icons/maeve
-      echo -e "[User]\nIcon=/var/lib/AccountsService/icons/maeve\n" > /var/lib/AccountsService/users/maeve
+    system.activationScripts.script.text =
+      let
+        username = config.me.username;
+        pfp = inputs.self + /assets/pfp.jpg;
+      in
+      ''
+        mkdir -p /var/lib/AccountsService/{icons,users}
+        cp ${pfp} /var/lib/AccountsService/icons/${username}
+        echo -e "[User]\nIcon=/var/lib/AccountsService/icons/${username}\n" > /var/lib/AccountsService/users/${username}
 
-      chown root:root /var/lib/AccountsService/users/maeve
-      chmod 0600 /var/lib/AccountsService/users/maeve
+        chown root:root /var/lib/AccountsService/users/${username}
+        chmod 0600 /var/lib/AccountsService/users/${username}
 
-      chown root:root /var/lib/AccountsService/icons/maeve
-      chmod 0444 /var/lib/AccountsService/icons/maeve
-    '';
+        chown root:root /var/lib/AccountsService/icons/${username}
+        chmod 0444 /var/lib/AccountsService/icons/${username}
+      '';
 
     fonts.packages = with pkgs; [
       cantarell-fonts
@@ -175,7 +181,7 @@ in
               name = "Lion";
             };
             "org/gnome/desktop/background" = {
-              picture-uri-dark = "file:///home/maeve/.config/img/1975.jpg";
+              picture-uri-dark = "file://${inputs.self + /assets/wallpaper.jpg}";
             };
             "org/gnome/shell/extensions/just-perfection" = {
               events-button = false;

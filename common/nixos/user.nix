@@ -8,7 +8,7 @@
   age.secrets.maeve-password.file = (inputs.self + /secrets/maeve-password.age);
 
   users.mutableUsers = false;
-  users.users.maeve = {
+  users.users.${config.me.username} = {
     isNormalUser = true;
     uid = 1000;
     group = "users";
@@ -23,7 +23,7 @@
     shell = pkgs.fish;
     hashedPasswordFile = config.age.secrets.maeve-password.path;
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBDvkX/XN4U6idAnpWO9JbFpKxJFsvGzfmSCCFKIMmpv maeve@oa.ke"
+      config.me.sshKey
     ];
   };
 
