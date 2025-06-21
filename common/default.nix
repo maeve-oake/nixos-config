@@ -10,6 +10,7 @@
 
   imports = [
     ./fish.nix
+    ./me.nix
     ./nix.nix
     inputs.agenix.nixosModules.default
   ];

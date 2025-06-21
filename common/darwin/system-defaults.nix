@@ -1,4 +1,5 @@
 {
+  config,
   ...
 }:
 {
@@ -75,7 +76,7 @@
     };
 
     loginwindow = {
-      LoginwindowText = "maeve@oa.ke";
+      LoginwindowText = config.me.email;
     };
 
     WindowManager = {
