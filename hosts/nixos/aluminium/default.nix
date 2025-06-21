@@ -1,13 +1,10 @@
 {
-  inputs,
   pkgs,
   ...
 }:
 {
   imports = [
     ./hardware-configuration.nix
-    # (inputs.self + /common/linux/hyprland)
-    (inputs.self + /common/linux/secureboot.nix)
   ];
 
   # DE
@@ -17,6 +14,7 @@
   ];
 
   # boot
+  boot.secureboot = true;
   boot.kernelPackages = pkgs.linuxPackages_6_13;
   boot.loader.systemd-boot.configurationLimit = 1;
 

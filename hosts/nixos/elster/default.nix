@@ -8,8 +8,6 @@
 {
   imports = [
     ./hardware-configuration.nix
-    (inputs.self + /common/linux/secureboot.nix)
-    # (inputs.self + /common/linux/samba.nix)
   ];
 
   # DE
@@ -22,6 +20,7 @@
   };
 
   # boot
+  boot.secureboot = true;
   boot.kernelPackages = unstable.linuxPackages_6_14;
   networking.interfaces.enp13s0.wakeOnLan.enable = true;
 
@@ -82,6 +81,9 @@
       speaker_used.enable = true;
     };
   };
+
+  # misc
+  maeve.samba.enable = true;
 
   # Do not remove
   system.stateVersion = "24.05";
