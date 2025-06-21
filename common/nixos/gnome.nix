@@ -173,7 +173,7 @@ in
               name = "Lion";
             };
             "org/gnome/desktop/background" = {
-              picture-uri-dark = inputs.self + /assets/wallpaper.jpg;
+              picture-uri-dark = "file://${inputs.self + /assets/wallpaper.jpg}";
             };
             "org/gnome/shell/extensions/just-perfection" = {
               events-button = false;
