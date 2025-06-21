@@ -22,7 +22,7 @@
 
   # nix-homebrew
   nix-homebrew = {
-    user = "maeve";
+    user = config.me.username;
     enable = true;
 
     taps = with inputs; {
