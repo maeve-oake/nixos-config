@@ -18,6 +18,11 @@
       flake = false;
     };
 
+    apple-silicon-support = {
+      url = "github:nix-community/nixos-apple-silicon";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     lanzaboote = {
       url = "github:nix-community/lanzaboote/v0.4.2";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -46,14 +51,18 @@
       mkHost =
         system: hostname:
         let
-          isDarwin = builtins.match ".*darwin$" system != null;
+          systemParts = lib.splitString "-" system;
+          arch = builtins.elemAt systemParts 0;
+          kernel = builtins.elemAt systemParts 1;
+          isDarwin = kernel == "darwin";
           builder = if isDarwin then inputs.nix-darwin.lib.darwinSystem else inputs.nixpkgs.lib.nixosSystem;
           config = builder {
             inherit system;
             specialArgs = { inherit inputs; };
             modules = [
               ./common
-              ./common/${system}
+              ./common/${kernel}
+              ./common/${kernel}/${arch}
               ./hosts/${system}/${hostname}
               { config._module.args = { inherit system hostname; }; }
             ];

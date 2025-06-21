@@ -4,10 +4,12 @@ let
   aluminium = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICjsH0Zu/aVH+uDjzALotADjozJp0yfrf4OAIVJFXud3";
   elster = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINzeE24EUgkih3TLH7hn5ZsHcACIsk6VAVl3ve2SaSgF";
   stainless = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN+t14PSPA87rn3D/V71YhTkQSpy6xhXrQ7JCXI/AiJO";
+  melty = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH2Th3R/tavkelXDnJbk+QZkNfvICIoYZS2F+d97szr8";
   hosts = [
     replika
     aluminium
     elster
+    melty
   ];
   all = [ maeve ] ++ hosts;
 in
@@ -16,10 +18,12 @@ in
   "mynah-vault.age".publicKeys = [
     maeve
     replika
+    elster
   ];
   "mynah-smb.age".publicKeys = [
     maeve
     replika
+    elster
   ];
   "attic-netrc.age".publicKeys = all ++ [ stainless ];
 

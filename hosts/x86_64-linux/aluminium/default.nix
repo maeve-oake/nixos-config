@@ -6,8 +6,8 @@
 {
   imports = [
     ./hardware-configuration.nix
-    # (inputs.self + /common/x86_64-linux/hyprland)
-    (inputs.self + /common/x86_64-linux/secureboot.nix)
+    # (inputs.self + /common/linux/hyprland)
+    (inputs.self + /common/linux/secureboot.nix)
   ];
 
   # DE

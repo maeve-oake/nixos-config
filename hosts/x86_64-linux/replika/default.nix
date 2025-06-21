@@ -6,8 +6,8 @@
 {
   imports = [
     ./hardware-configuration.nix
-    (inputs.self + /common/x86_64-linux/secureboot.nix)
-    (inputs.self + /common/x86_64-linux/samba.nix)
+    (inputs.self + /common/linux/secureboot.nix)
+    (inputs.self + /common/linux/samba.nix)
   ];
 
   # DE
