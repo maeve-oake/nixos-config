@@ -3,16 +3,16 @@
 ```
 nixos-config
 ┣━━ common                          # common modules for all hosts
-┃   ┣━━ aarch64-darwin              # modules for nix-darwin hosts
-┃   ┗━━ x86_64-linux                # modules for NixOS hosts
-┃       ┗━━ gnome, i3, hyprland     # WM & DE modules 
+┃   ┣━━ darwin                      # modules for nix-darwin hosts
+┃   ┗━━ nixos                       # modules for NixOS hosts
 ┣━━ hosts                           # host specific configuration
-┃   ┣━━ aarch64-darwin              # nix-darwin hosts
-┃   ┃   ┗━━ stainless               # 2021 MacBook Pro 
-┃   ┗━━ x86_64-linux                # NixOS hosts
-┃       ┣━━ aluminium               # Framework 13 
-┃       ┣━━ elster                  # desktop gaming PC 
-┃       ┗━━ replika                 # Framework 13 
+┃   ┣━━ darwin                      # nix-darwin hosts
+┃   ┃   ┗━━ stainless               # 2021 MacBook Pro
+┃   ┗━━ nixos                       # NixOS hosts
+┃       ┣━━ aluminium               # Framework 13
+┃       ┣━━ elster                  # desktop gaming PC
+┃       ┣━━ melty                   # 2020 MacBook Air (M1)
+┃       ┗━━ replika                 # Framework 13
 ┣━━ pkgs                            # package derivations
 ┗━━ secrets                         # age encrypted secrets
 ```

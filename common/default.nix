@@ -1,8 +1,7 @@
 {
   inputs,
   hostname,
-  config,
-  system,
+  pkgs,
   ...
 }:
 {
@@ -11,39 +10,17 @@
 
   imports = [
     ./fish.nix
+    ./nix.nix
     inputs.agenix.nixosModules.default
   ];
 
   # age
-  environment.systemPackages = [ inputs.agenix.packages.${system}.default ];
+  environment.systemPackages = [
+    pkgs.agenix
+  ];
 
   # networking
   networking.hostName = hostname;
-
-  # allow unfree pkgs
-  nixpkgs.config.allowUnfree = true;
-
-  # flakes
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
-
-  # cache
-  nix.settings.extra-substituters = [
-    "https://attic.oa.ke/nixos"
-  ];
-  nix.settings.extra-trusted-public-keys = [
-    "nixos:qbhh36l2BlhnNhXnU0I2XHOzIT3mzwxKfs86C4am5aY="
-  ];
-  age.secrets.attic-netrc.file = (inputs.self + /secrets/attic-netrc.age);
-  nix.settings.netrc-file = config.age.secrets.attic-netrc.path;
-
-  # overlays
-  nixpkgs.overlays = [
-    inputs.nix-vscode-extensions.overlays.default
-    (import (inputs.self + /pkgs))
-  ];
 
   system.configurationRevision = inputs.self.rev or "dirty";
 }

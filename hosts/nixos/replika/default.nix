@@ -1,19 +1,17 @@
 {
-  inputs,
   pkgs,
   ...
 }:
 {
   imports = [
     ./hardware-configuration.nix
-    (inputs.self + /common/linux/secureboot.nix)
-    (inputs.self + /common/linux/samba.nix)
   ];
 
   # DE
   gnome.enable = true;
 
   # boot
+  boot.secureboot = true;
   boot.kernelPackages = pkgs.linuxPackages_6_15;
 
   # networking
@@ -67,6 +65,9 @@
     darktable
     satdump
   ];
+
+  # misc
+  maeve.samba.enable = true;
 
   # Do not remove
   system.stateVersion = "24.05";

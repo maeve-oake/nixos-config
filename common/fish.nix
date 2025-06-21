@@ -1,4 +1,7 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  ...
+}:
 {
   environment.systemPackages = [ pkgs.clolcat ];
   programs.fish = {

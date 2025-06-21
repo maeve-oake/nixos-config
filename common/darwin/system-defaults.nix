@@ -1,4 +1,6 @@
-{ ... }:
+{
+  ...
+}:
 {
   /*
     TODO: fix typography layout! right now, only the *last* in the EnabledThirdPartyInputSources list is actually "applied"
