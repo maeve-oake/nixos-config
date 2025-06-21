@@ -1,5 +1,6 @@
 {
   pkgs,
+  config,
   ...
 }:
 {
@@ -8,7 +9,7 @@
     enable = true;
     # Certain features, including CLI integration and system authentication support,
     # require enabling PolKit integration on some desktop environments (e.g. Plasma).
-    polkitPolicyOwners = [ "maeve" ];
+    polkitPolicyOwners = [ config.me.username ];
   };
 
   environment.etc."xdg/autostart/1password.desktop".source = (

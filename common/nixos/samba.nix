@@ -6,6 +6,7 @@
   ...
 }:
 let
+  username = config.me.username;
   mynahOptions = [
     "x-systemd.automount"
     "noauto"
@@ -13,7 +14,7 @@ let
     "x-systemd.device-timeout=5s"
     "x-systemd.mount-timeout=5s"
     "soft"
-    "uid=${toString config.users.users.maeve.uid}"
+    "uid=${toString config.users.users.${username}.uid}"
     "gid=${toString config.users.groups.users.gid}"
   ];
 in
