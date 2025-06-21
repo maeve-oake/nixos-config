@@ -103,21 +103,13 @@ in
     ];
 
     # profile picture
-    system.activationScripts.script.text =
+    boot.postBootCommands =
       let
         username = config.me.username;
         pfp = inputs.self + /assets/pfp.jpg;
       in
       ''
-        mkdir -p /var/lib/AccountsService/{icons,users}
-        cp ${pfp} /var/lib/AccountsService/icons/${username}
-        echo -e "[User]\nIcon=/var/lib/AccountsService/icons/${username}\n" > /var/lib/AccountsService/users/${username}
-
-        chown root:root /var/lib/AccountsService/users/${username}
-        chmod 0600 /var/lib/AccountsService/users/${username}
-
-        chown root:root /var/lib/AccountsService/icons/${username}
-        chmod 0444 /var/lib/AccountsService/icons/${username}
+        echo -e "[User]\nIcon=${pfp}\n" > /var/lib/AccountsService/users/${username}
       '';
 
     fonts.packages = with pkgs; [
