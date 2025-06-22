@@ -4,6 +4,8 @@
   ...
 }:
 {
+  hardware.enableRedistributableFirmware = lib.mkDefault true;
+
   boot.initrd.availableKernelModules = [
     "nvme"
     "ahci"
