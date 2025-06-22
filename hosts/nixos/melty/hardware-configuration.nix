@@ -3,6 +3,8 @@
   ...
 }:
 {
+  hardware.enableRedistributableFirmware = lib.mkDefault true;
+
   boot.initrd.availableKernelModules = [ "usb_storage" ];
 
   fileSystems."/" = {
