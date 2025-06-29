@@ -44,7 +44,10 @@
     }
   ];
 
-  hardware.framework.laptop13.audioEnhancement.enable = true;
+  hardware.framework.laptop13.audioEnhancement = {
+    enable = true;
+    rawDeviceName = "alsa_output.pci-0000_00_1f.3.analog-stereo";
+  };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 }
