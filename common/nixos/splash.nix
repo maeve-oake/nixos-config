@@ -27,7 +27,7 @@
         "fbcon=nodefer"
         "vt.global_cursor_default=0"
       ];
-      boot.loader.grub.splashImage = null;
+      loader.grub.splashImage = null;
     };
   };
 }
