@@ -24,6 +24,7 @@ in
     ./network.nix
     ./samba.nix
     ./secureboot.nix
+    ./splash.nix
     ./user.nix
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.nix-index-database.nixosModules.nix-index
