@@ -63,7 +63,7 @@
     plex-desktop
     ollama
     darktable
-    satdump
+    unstable.satdump
   ];
 
   # misc
