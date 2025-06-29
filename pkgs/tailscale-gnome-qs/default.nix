@@ -15,10 +15,10 @@ stdenv.mkDerivation {
   ];
 
   src = fetchFromGitHub {
-    owner = "replikas";
+    owner = "oake";
     repo = pname;
-    rev = "d0239060f58eb26b0cc7bdf7b887140fcbbc88da";
-    sha256 = "sha256-veSlAFeg1fpK4MFu62b5ot+t4z89IZXsWxLpjSAIqhk=";
+    rev = "0e5294c9a7b376b32490e5b134e9abe51418b7fd";
+    sha256 = "sha256-3kkHR/c1lMMILtXa6JVwalwp+HTeLiwxClldjBU6i7Y=";
   };
 
   installPhase = ''
