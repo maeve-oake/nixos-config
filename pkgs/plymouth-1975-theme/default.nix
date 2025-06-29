@@ -13,7 +13,7 @@ stdenvNoCC.mkDerivation {
     sparseCheckout = [
       "plymouth/1975"
     ];
-    sha256 = "sha256-Sny8/GxOKbDsO/ewzxrxiENhjyErL9ovrhU24PKp11w=";
+    sha256 = "sha256-zgTVX07PdfGcVmdrPEcOe/l7e6dAevcZtmDyUJfR6VM=";
   };
 
   dontBuild = true;
