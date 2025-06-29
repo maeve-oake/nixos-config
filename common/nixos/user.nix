@@ -18,6 +18,7 @@
       "video"
       "input" # three finger drag
       "vboxusers" # vbox
+      "dialout" # serial
     ];
 
     shell = pkgs.fish;
