@@ -1,5 +1,6 @@
 {
   pkgs,
+  unstable,
   ...
 }:
 {
@@ -63,7 +64,7 @@
     plex-desktop
     ollama
     darktable
-    satdump
+    unstable.satdump
   ];
 
   # misc
