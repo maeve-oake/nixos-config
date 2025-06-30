@@ -4,6 +4,8 @@
     nix-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.05";
 
+    nixos-hardware.url = "github:NixOS/nixos-hardware";
+
     nix-flatpak.url = "github:gmodena/nix-flatpak";
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
