@@ -59,6 +59,7 @@ in
       neovim
       nixfmt-rfc-style
       nixd
+      nixpkgs-review
       dotnet-sdk
       dotnet-runtime
       (vscode-with-extensions.override {
