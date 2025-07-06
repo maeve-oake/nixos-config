@@ -42,6 +42,8 @@
       url = "github:nix-community/nix-vscode-extensions";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-things.url = "github:oake/nix-things";
   };
   outputs =
     inputs:

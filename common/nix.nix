@@ -27,6 +27,7 @@
   nixpkgs.overlays = [
     inputs.nix-vscode-extensions.overlays.default
     inputs.agenix.overlays.default
+    inputs.nix-things.overlays.default
     (import (inputs.self + /pkgs))
   ];
 }
