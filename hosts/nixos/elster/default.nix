@@ -21,7 +21,7 @@
 
   # boot
   boot.secureboot = true;
-  boot.kernelPackages = unstable.linuxPackages_6_14;
+  boot.kernelPackages = pkgs.linuxPackages_6_15;
   networking.interfaces.enp13s0.wakeOnLan.enable = true;
 
   # power & sleep
@@ -43,7 +43,6 @@
     enable = true;
   };
   hardware.nvidia = {
-    package = config.boot.kernelPackages.nvidiaPackages.beta;
     modesetting.enable = true;
     powerManagement.enable = false;
     powerManagement.finegrained = false;
