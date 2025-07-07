@@ -19,12 +19,6 @@
   boot.loader.systemd-boot.configurationLimit = 1;
 
   # power & sleep
-  swapDevices = [
-    {
-      device = "/swapfile";
-      size = 16 * 1024;
-    }
-  ];
   systemd.sleep.extraConfig = ''
     		HibernateDelaySec=30m
     	'';
@@ -35,7 +29,6 @@
   };
 
   # fingerprint & login
-  services.fprintd.enable = true;
   security.polkit.enable = true;
 
   # packages

@@ -26,12 +26,6 @@
 
   # power & sleep
   services.xserver.displayManager.gdm.autoSuspend = false;
-  swapDevices = [
-    {
-      device = "/swapfile";
-      size = 32 * 1024;
-    }
-  ];
 
   # fingerprint & login
   services.fprintd.enable = true;
