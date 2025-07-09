@@ -20,7 +20,7 @@
   };
 
   # boot
-  boot.secureboot = true;
+  boot.secureboot.enable = true;
   boot.kernelPackages = pkgs.linuxPackages_6_15;
   networking.interfaces.enp13s0.wakeOnLan.enable = true;
 

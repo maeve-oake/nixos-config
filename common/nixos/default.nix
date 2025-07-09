@@ -2,53 +2,44 @@
   pkgs,
   inputs,
   hostname,
+  lib,
+  onlyArm,
+  onlyX86,
   ...
 }:
-let
-  unstable = import inputs.nix-unstable {
-    system = pkgs.system;
-    config.allowUnfree = true;
-  };
-  inherit (pkgs.stdenv.hostPlatform) isAarch64 isx86_64;
-in
 {
   # common configuration for x86_64 Linux machines
 
   imports = [
-    ./1password.nix
     ./gnome.nix
-    ./isight.nix
-    ./lnxlink.nix
     ./localisation.nix
-    ./magic-trackpad.nix
     ./network.nix
     ./samba.nix
-    ./secureboot.nix
-    ./splash.nix
     ./user.nix
-    inputs.lanzaboote.nixosModules.lanzaboote
     inputs.nix-index-database.nixosModules.nix-index
     inputs.nix-flatpak.nixosModules.nix-flatpak
+    inputs.nix-things.nixosModules.default
   ];
 
   # boot
   boot.loader.timeout = 0;
+  boot.splash = {
+    enable = lib.mkDefault true;
+    themePackage = pkgs.plymouth-1975-theme;
+    theme = "1975";
+  };
 
   services.lnxlink.clientId = hostname;
 
-  # auto gc
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 30d";
-  };
+  hardware.magic-trackpad-quirks.enable = true;
 
   # pkgs
-  _module.args.unstable = unstable;
   # virtualisation.virtualbox.host.enable = true;
   services.fwupd.enable = true;
   services.flatpak.enable = true;
   programs.direnv.enable = true;
+  programs._1password.enable = true;
+  programs._1password-gui.enable = true;
   services.flatpak.packages = [ "com.bambulab.BambuStudio" ];
   environment.systemPackages =
     with pkgs;
@@ -90,11 +81,11 @@ in
       usbutils
       pciutils
     ]
-    ++ lib.optionals isAarch64 [
+    ++ onlyArm [
       legcord
       firefox
     ]
-    ++ lib.optionals isx86_64 [
+    ++ onlyX86 [
       (microsoft-edge.override {
         commandLineArgs = [
           "--enable-features=TouchpadOverscrollHistoryNavigation,Vulkan,VaapiVideoDecoder,VaapiIgnoreDriverChecks,DefaultANGLEVulkan,VulkanFromANGLE"

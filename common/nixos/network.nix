@@ -22,7 +22,6 @@
   # tailscale
   services.tailscale.enable = true;
   services.tailscale.useRoutingFeatures = "client";
-  boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
 
   # wifi
   age.secrets.wifi-home.file = (inputs.self + /secrets/wifi-home.age);

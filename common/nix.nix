@@ -1,18 +1,10 @@
 {
   inputs,
   config,
+  pkgs,
   ...
 }:
 {
-  # allow unfree pkgs
-  nixpkgs.config.allowUnfree = true;
-
-  # flakes
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
-
   # cache
   nix.settings.extra-substituters = [
     "https://attic.oa.ke/nixos"
@@ -27,7 +19,6 @@
   nixpkgs.overlays = [
     inputs.nix-vscode-extensions.overlays.default
     inputs.agenix.overlays.default
-    inputs.nix-things.overlays.default
     (import (inputs.self + /pkgs))
   ];
 }

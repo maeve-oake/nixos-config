@@ -44,6 +44,28 @@
         "type": "github"
       }
     },
+    "blueprint": {
+      "inputs": {
+        "nixpkgs": [
+          "nix-things",
+          "nixpkgs"
+        ],
+        "systems": "systems_2"
+      },
+      "locked": {
+        "lastModified": 1744632722,
+        "narHash": "sha256-0chvqUV1Kzf8BMQ7MsH3CeicJEb2HeCpwliS77FGyfc=",
+        "owner": "numtide",
+        "repo": "blueprint",
+        "rev": "49bbd5d072b577072f4a1d07d4b0621ecce768af",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "blueprint",
+        "type": "github"
+      }
+    },
     "brew-src": {
       "flake": false,
       "locked": {
@@ -132,6 +154,7 @@
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": [
+          "nix-things",
           "lanzaboote",
           "nixpkgs"
         ]
@@ -152,7 +175,7 @@
     },
     "flake-utils": {
       "inputs": {
-        "systems": "systems_2"
+        "systems": "systems_3"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -171,6 +194,7 @@
     "gitignore": {
       "inputs": {
         "nixpkgs": [
+          "nix-things",
           "lanzaboote",
           "pre-commit-hooks-nix",
           "nixpkgs"
@@ -249,6 +273,7 @@
         "flake-compat": "flake-compat_2",
         "flake-parts": "flake-parts",
         "nixpkgs": [
+          "nix-things",
           "nixpkgs"
         ],
         "pre-commit-hooks-nix": "pre-commit-hooks-nix",
@@ -342,12 +367,22 @@
       }
     },
     "nix-things": {
+      "inputs": {
+        "blueprint": "blueprint",
+        "lanzaboote": "lanzaboote",
+        "nix-unstable": [
+          "nix-unstable"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
       "locked": {
-        "lastModified": 1751816469,
-        "narHash": "sha256-SHveidZ+nbC40eptnsT2GCl+rTV2REMbKMNSO4nm/Ic=",
+        "lastModified": 1752509714,
+        "narHash": "sha256-MZuuiAZAG0P02RplQytSOwhWXt/VWi+cjTiP+ZSypeg=",
         "owner": "oake",
         "repo": "nix-things",
-        "rev": "e387b6e2a5d5ead999dd957e6291b9e8ec895536",
+        "rev": "2ffff18523c0d548cb350f8ae7dac6a64b3c2a71",
         "type": "github"
       },
       "original": {
@@ -459,11 +494,13 @@
     "pre-commit-hooks-nix": {
       "inputs": {
         "flake-compat": [
+          "nix-things",
           "lanzaboote",
           "flake-compat"
         ],
         "gitignore": "gitignore",
         "nixpkgs": [
+          "nix-things",
           "lanzaboote",
           "nixpkgs"
         ],
@@ -489,7 +526,6 @@
         "apple-silicon-support": "apple-silicon-support",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
-        "lanzaboote": "lanzaboote",
         "nix-darwin": "nix-darwin",
         "nix-flatpak": "nix-flatpak",
         "nix-homebrew": "nix-homebrew",
@@ -504,6 +540,7 @@
     "rust-overlay": {
       "inputs": {
         "nixpkgs": [
+          "nix-things",
           "lanzaboote",
           "nixpkgs"
         ]
@@ -538,6 +575,21 @@
       }
     },
     "systems_2": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_3": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",

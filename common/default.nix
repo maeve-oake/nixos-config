@@ -13,6 +13,7 @@
     ./me.nix
     ./nix.nix
     inputs.agenix.nixosModules.default
+    inputs.nix-things.commonModules.default
   ];
 
   # age
