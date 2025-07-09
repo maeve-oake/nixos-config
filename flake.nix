@@ -25,11 +25,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    lanzaboote = {
-      url = "github:nix-community/lanzaboote/v0.4.2";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -45,7 +40,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-things.url = "github:oake/nix-things";
+    nix-things = {
+      url = "github:oake/nix-things";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nix-unstable.follows = "nix-unstable";
+    };
   };
   outputs =
     inputs:

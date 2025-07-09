@@ -12,7 +12,7 @@
   gnome.enable = true;
 
   # boot
-  boot.secureboot = true;
+  boot.secureboot.enable = true;
   boot.kernelPackages = pkgs.linuxPackages_6_15;
 
   # networking
