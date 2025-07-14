@@ -37,8 +37,5 @@ jobs:
             token: ${{ secrets.ATTIC_TOKEN }}
             cache: nixos
 
-      - name: Install omnix
-        run: nix profile install "github:juspay/omnix"
-
       - name: Build all flake outputs
-        run: om ci run --extra-access-tokens ${{ secrets.GITHUB_TOKEN }}
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- -f .#nixosConfigurations --no-nom -j 1 --eval-workers 1 --skip-cached
