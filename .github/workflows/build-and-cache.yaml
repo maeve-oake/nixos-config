@@ -38,4 +38,4 @@ jobs:
             cache: nixos
 
       - name: Build all flake outputs
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- -f .#nixosConfigurations --no-nom -j 1 --eval-workers 1 --skip-cached
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- -f .#nixosConfigurations --no-nom -j 1 --skip-cached
