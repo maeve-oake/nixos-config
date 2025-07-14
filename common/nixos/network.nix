@@ -21,7 +21,7 @@
 
   # tailscale
   services.tailscale.enable = true;
-  services.tailscale.useRoutingFeatures = "client";
+  services.tailscale.useRoutingFeatures = "both";
 
   # wifi
   age.secrets.wifi-home.file = (inputs.self + /secrets/wifi-home.age);
