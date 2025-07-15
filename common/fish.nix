@@ -32,6 +32,8 @@
         cd $store_path
       end
 
+      export NIXPKGS_ALLOW_UNFREE=1
+
       zoxide init fish --cmd cd | source
     '';
   };
