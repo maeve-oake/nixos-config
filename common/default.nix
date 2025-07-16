@@ -6,7 +6,7 @@
 }:
 {
   # common configuration for all architectures
-  # please see subdirectories for arch-specific configuration
+  # please see subdirectories for OS-specific configuration
 
   imports = [
     ./fish.nix
