@@ -89,6 +89,7 @@
       (microsoft-edge.override {
         commandLineArgs = [
           "--enable-features=TouchpadOverscrollHistoryNavigation,Vulkan,VaapiVideoDecoder,VaapiIgnoreDriverChecks,DefaultANGLEVulkan,VulkanFromANGLE"
+          "--disable-features=GlobalShortcutsPortal" # https://issues.chromium.org/issues/404298968
         ];
       })
       discord
