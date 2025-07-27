@@ -26,11 +26,13 @@
   # wifi
   age.secrets.wifi-home.file = (inputs.self + /secrets/wifi-home.age);
   age.secrets.wifi-hotspot.file = (inputs.self + /secrets/wifi-hotspot.age);
+  age.secrets.wifi-anna.file = (inputs.self + /secrets/wifi-anna.age);
   age.secrets.wifi-work.file = (inputs.self + /secrets/wifi-work.age);
   networking.networkmanager.ensureProfiles = {
     environmentFiles = [
       config.age.secrets.wifi-home.path
       config.age.secrets.wifi-hotspot.path
+      config.age.secrets.wifi-anna.path
       config.age.secrets.wifi-work.path
     ];
 
@@ -62,6 +64,21 @@
         wifi-security = {
           key-mgmt = "wpa-psk";
           psk = "$HOTSPOT_PSK";
+        };
+      };
+
+      Anna = {
+        connection = {
+          id = "$ANNA_SSID";
+          type = "wifi";
+        };
+        wifi = {
+          mode = "infrastructure";
+          ssid = "$ANNA_SSID";
+        };
+        wifi-security = {
+          key-mgmt = "sae";
+          psk = "$ANNA_PSK";
         };
       };
 

@@ -30,6 +30,7 @@ in
   # wifi
   "wifi-home.age".publicKeys = all;
   "wifi-hotspot.age".publicKeys = all;
+  "wifi-anna.age".publicKeys = all;
   "wifi-work.age".publicKeys = all;
 
   # services
