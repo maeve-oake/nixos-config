@@ -8,6 +8,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./network.nix
   ];
 
   # DE
@@ -22,7 +23,6 @@
   # boot
   boot.secureboot.enable = true;
   boot.kernelPackages = pkgs.linuxPackages_6_15;
-  networking.interfaces.enp13s0.wakeOnLan.enable = true;
 
   # power & sleep
   services.xserver.displayManager.gdm.autoSuspend = false;
