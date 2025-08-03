@@ -58,6 +58,16 @@
     easyeda-pro
   ];
 
+  programs.obs-studio = {
+    enable = true;
+    enableVirtualCamera = true;
+    plugins = with pkgs.obs-studio-plugins; [
+      obs-pipewire-audio-capture
+      obs-vkcapture
+    ];
+  };
+
+
   # lnxlink
   age.secrets.lnxlink-env.file = (inputs.self + /secrets/lnxlink-env.age);
   services.lnxlink = {
