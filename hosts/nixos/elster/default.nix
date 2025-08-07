@@ -67,7 +67,6 @@
     ];
   };
 
-
   # lnxlink
   age.secrets.lnxlink-env.file = (inputs.self + /secrets/lnxlink-env.age);
   services.lnxlink = {
