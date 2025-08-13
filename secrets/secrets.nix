@@ -35,4 +35,5 @@ in
 
   # services
   "lnxlink-env.age".publicKeys = all;
+  "netbird-personal.age".publicKeys = all;
 }

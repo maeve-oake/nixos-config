@@ -1,6 +1,7 @@
 {
   config,
   inputs,
+  unstable,
   ...
 }:
 {
@@ -22,6 +23,24 @@
   # tailscale
   services.tailscale.enable = true;
   services.tailscale.useRoutingFeatures = "both";
+
+  # netbird
+  age.secrets.netbird-personal = {
+    file = (inputs.self + /secrets/netbird-personal.age);
+    owner = "netbird";
+    group = "netbird";
+  };
+
+  services.netbird = {
+    simple = {
+      enable = true;
+      managementUrl = "https://net.oa.ke";
+      setupKeyFile = config.age.secrets.netbird-personal.path;
+    };
+
+    package = unstable.netbird;
+    ui.package = unstable.netbird-ui;
+  };
 
   # wifi
   age.secrets.wifi-home.file = (inputs.self + /secrets/wifi-home.age);
