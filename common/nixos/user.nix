@@ -15,10 +15,11 @@
     extraGroups = [
       "wheel" # sudo
       "networkmanager" # network configuration
-      "video"
+      "video" # video
       "input" # three finger drag
       "vboxusers" # vbox
       "dialout" # serial
+      "netbird" # netbird-ui
     ];
 
     shell = pkgs.fish;
