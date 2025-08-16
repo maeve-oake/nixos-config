@@ -73,8 +73,6 @@
       gimp
 
       # shell
-      fzf
-      zoxide
       wget
       p7zip
       btop

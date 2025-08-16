@@ -4,6 +4,15 @@
 }:
 {
   environment.systemPackages = [ pkgs.clolcat ];
+  programs.zoxide = {
+    enable = true;
+    enableFishIntegration = true;
+    flags = [
+      "--no-cmd"
+      "--cmd cd"
+    ];
+  };
+  programs.fzf.fuzzyCompletion = true;
   programs.fish = {
     enable = true;
     interactiveShellInit = ''
@@ -33,8 +42,6 @@
       end
 
       export NIXPKGS_ALLOW_UNFREE=1
-
-      zoxide init fish --cmd cd | source
     '';
   };
 }

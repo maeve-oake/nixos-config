@@ -11,6 +11,7 @@
   imports = [
     ./user.nix
     ./system-defaults.nix
+    ./fish.nix
     inputs.nix-homebrew.darwinModules.nix-homebrew
   ];
 
