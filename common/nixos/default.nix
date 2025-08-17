@@ -16,6 +16,7 @@
     ./network.nix
     ./samba.nix
     ./user.nix
+    ./fish.nix
     inputs.nix-index-database.nixosModules.nix-index
     inputs.nix-flatpak.nixosModules.nix-flatpak
     inputs.nix-things.nixosModules.default
