@@ -15,12 +15,17 @@ let
 in
 {
   "maeve-password.age".publicKeys = all;
-  "mynah-vault.age".publicKeys = [
+  "anna-mynah-vault.age".publicKeys = [
     maeve
     replika
     elster
   ];
-  "mynah-smb.age".publicKeys = [
+  "anna-mynah-smb.age".publicKeys = [
+    maeve
+    replika
+    elster
+  ];
+  "maeve-mynah-smb.age".publicKeys = [
     maeve
     replika
     elster
