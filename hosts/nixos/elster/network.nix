@@ -11,7 +11,7 @@
       };
       bond = {
         mode = "active-backup";
-        primary = "enp11s0";
+        primary = "enp5s0";
         miimon = "100";
       };
     };
@@ -21,7 +21,7 @@
         type = "ethernet";
         port-type = "bond";
         controller = "bond0";
-        interface-name = "enp11s0";
+        interface-name = "enp5s0";
       };
     };
     Ethernet = {
