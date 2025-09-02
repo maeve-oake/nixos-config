@@ -66,10 +66,17 @@
             ];
           };
           key = "${system}Configurations";
+          drv = config.config.system.build.toplevel;
         in
         {
           ${key} = {
             ${hostname} = config;
+          };
+
+          checks = {
+            ${drv.system} = {
+              ${hostname} = drv;
+            };
           };
         };
 
