@@ -2,6 +2,7 @@
   inputs,
   lib,
   unstable,
+  config,
   ...
 }:
 {
@@ -15,5 +16,5 @@
     ui.package = unstable.netbird-ui;
   };
 
-  lxc.pve.host = lib.mkDefault "mynah.lan.ci";
+  lxc.pve.host = lib.mkDefault "mynah." + config.me.lanDomain;
 }

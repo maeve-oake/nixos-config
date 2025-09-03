@@ -16,7 +16,7 @@
         sshKey = config.me.sshKey;
       };
       anna = {
-        sshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHf6UCNeXSN8WAZ9cXh8jz61+jbP+ts+inct/CCjcN/o";
+        sshKey = config.me.wifeKey;
       };
     };
   };

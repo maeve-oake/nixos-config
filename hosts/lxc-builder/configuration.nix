@@ -1,5 +1,6 @@
 {
   inputs,
+  config,
   ...
 }:
 {
@@ -17,7 +18,7 @@
 
   users.users.root.openssh.authorizedKeys.keys = [
     # anya uses lxc-builder as a remote builder for x86_64-linux stuff
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHf6UCNeXSN8WAZ9cXh8jz61+jbP+ts+inct/CCjcN/o anna-oake"
+    config.me.wifeKey
   ];
 
   system.stateVersion = "25.11";
