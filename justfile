@@ -1,6 +1,11 @@
 @_default:
   just --list  --unsorted
 
+# use deploy-rs to update an existing host
+[group('deployment')]
+@deploy host: _add
+  nix run github:serokell/deploy-rs#deploy-rs -- .#{{host}} -s
+
 # create/edit agenix secret
 [group('secrets')]
 @secret secret: _add && rekey

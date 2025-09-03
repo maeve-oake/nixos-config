@@ -55,6 +55,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nix-unstable.follows = "nix-unstable";
     };
+
+    buildbot-nix = {
+      url = "github:nix-community/buildbot-nix";
+      inputs.nixpkgs.follows = "nix-unstable";
+    };
+
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -80,12 +90,30 @@
       inherit (blueprint)
         nixosConfigurations
         darwinConfigurations
-        checks
         ;
 
       commonModules = mkModules blueprint.modules.common;
+      lxcModules = mkModules blueprint.modules.lxc;
       nixosModules = mkModules blueprint.nixosModules;
       darwinModules = mkModules blueprint.darwinModules;
+
+      checks = lib.foldl' lib.recursiveUpdate blueprint.checks [
+        (builtins.mapAttrs (system: packages: { inherit (packages) deploy-rs; }) inputs.deploy-rs.packages)
+      ];
+
+      deploy.nodes = lib.mapAttrs (
+        name: cfg:
+        let
+          hostname = (lib.strings.removePrefix "lxc-" name) + ".lan.ci";
+        in
+        {
+          inherit hostname;
+          profiles.system = {
+            sshUser = "root";
+            path = inputs.deploy-rs.lib.${cfg.pkgs.system}.activate.nixos cfg;
+          };
+        }
+      ) blueprint.nixosConfigurations;
 
       agenix-rekey = inputs.agenix-rekey.configure {
         userFlake = inputs.self;
