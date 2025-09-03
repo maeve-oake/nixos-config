@@ -1,5 +1,4 @@
 {
-  inputs,
   pkgs,
   config,
   lib,
@@ -28,18 +27,18 @@ in
   options.maeve.samba.enable = lib.mkEnableOption "mounting of Samba shares";
 
   config = lib.mkIf config.maeve.samba.enable {
-    age.secrets.maeve-mynah-smb.file = (inputs.self + /secrets/maeve-mynah-smb.age);
-    age.secrets.anna-mynah-smb.file = (inputs.self + /secrets/anna-mynah-smb.age);
+    age.secrets."samba-client/maeve-mynah" = { };
+    age.secrets."samba-client/anna-mynah" = { };
     environment.systemPackages = with pkgs; [
       cifs-utils
       gocryptfs
     ];
 
     fileSystems =
-      (mkMounts "share.lan.ci" config.age.secrets.maeve-mynah-smb.path {
+      (mkMounts "share.lan.ci" config.age.secrets."samba-client/maeve-mynah".path {
         "/mnt/mynah/maeve" = "maeve";
       })
-      // (mkMounts "share.lan.al" config.age.secrets.anna-mynah-smb.path {
+      // (mkMounts "share.lan.al" config.age.secrets."samba-client/anna-mynah".path {
         "/mnt/anna-mynah/maeve" = "maeve";
         "/mnt/anna-mynah/oake" = "oake";
       });

@@ -1,9 +1,17 @@
 {
   config,
-  inputs,
+  lib,
   unstable,
   ...
 }:
+let
+  wifiSecrets = [
+    "home"
+    "hotspot"
+    "anna"
+    "work"
+  ];
+in
 {
   networking.networkmanager.enable = true;
 
@@ -25,11 +33,13 @@
   services.tailscale.useRoutingFeatures = "both";
 
   # netbird
-  age.secrets.netbird-personal = {
-    file = (inputs.self + /secrets/netbird-personal.age);
-    owner = "netbird";
-    group = "netbird";
-  };
+  age.secrets = {
+    netbird-personal = {
+      owner = "netbird";
+      group = "netbird";
+    };
+  }
+  // lib.genAttrs (map (name: "wifi/${name}") wifiSecrets) (_: { });
 
   services.netbird = {
     simple = {
@@ -43,17 +53,8 @@
   };
 
   # wifi
-  age.secrets.wifi-home.file = (inputs.self + /secrets/wifi-home.age);
-  age.secrets.wifi-hotspot.file = (inputs.self + /secrets/wifi-hotspot.age);
-  age.secrets.wifi-anna.file = (inputs.self + /secrets/wifi-anna.age);
-  age.secrets.wifi-work.file = (inputs.self + /secrets/wifi-work.age);
   networking.networkmanager.ensureProfiles = {
-    environmentFiles = [
-      config.age.secrets.wifi-home.path
-      config.age.secrets.wifi-hotspot.path
-      config.age.secrets.wifi-anna.path
-      config.age.secrets.wifi-work.path
-    ];
+    environmentFiles = map (name: config.age.secrets."wifi/${name}".path) wifiSecrets;
 
     profiles = {
       Home = {

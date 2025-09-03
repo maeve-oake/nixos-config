@@ -62,7 +62,7 @@
   ];
 
   # lnxlink
-  age.secrets.lnxlink-env.file = (inputs.self + /secrets/lnxlink-env.age);
+  age.secrets.lnxlink-env = { };
   services.lnxlink = {
     enable = true;
     envFile = config.age.secrets.lnxlink-env.path;
