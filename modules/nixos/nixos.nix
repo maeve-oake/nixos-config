@@ -41,6 +41,7 @@
     with pkgs;
     [
       # dev
+      just
       gh
       git
       neovim

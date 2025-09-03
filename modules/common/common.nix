@@ -1,7 +1,6 @@
 {
   inputs,
   hostName,
-  pkgs,
   ...
 }:
 {
@@ -9,13 +8,7 @@
   # please see subdirectories for OS-specific configuration
 
   imports = [
-    inputs.agenix.nixosModules.default
     inputs.nix-things.commonModules.default
-  ];
-
-  # age
-  environment.systemPackages = [
-    pkgs.agenix
   ];
 
   # networking
