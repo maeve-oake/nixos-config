@@ -71,6 +71,7 @@
     inputs:
     let
       inherit (inputs.nixpkgs) lib;
+      inherit (inputs.nix-things.lib) mkDiskoChecks mkLxcChecks mkDeployNodes;
 
       blueprint = inputs.blueprint {
         inherit inputs;
@@ -97,20 +98,15 @@
       nixosModules = mkModules blueprint.nixosModules;
       darwinModules = mkModules blueprint.darwinModules;
 
-      checks =
-        let
-          inherit (inputs.nix-things.lib) mkDiskoChecks mkLxcChecks;
-        in
-        lib.foldl' lib.recursiveUpdate blueprint.checks [
-          (mkDiskoChecks blueprint.nixosConfigurations)
-          (mkLxcChecks blueprint.nixosConfigurations)
-          (builtins.mapAttrs (system: packages: { inherit (packages) deploy-rs; }) inputs.deploy-rs.packages)
-        ];
+      checks = lib.foldl' lib.recursiveUpdate blueprint.checks [
+        (mkDiskoChecks blueprint.nixosConfigurations)
+        (mkLxcChecks blueprint.nixosConfigurations)
+        (builtins.mapAttrs (system: packages: { inherit (packages) deploy-rs; }) inputs.deploy-rs.packages)
+      ];
 
       deploy.nodes =
         let
           inherit ((import inputs.self.commonModules.me).config.me) lanDomain;
-          inherit (inputs.nix-things.lib) mkDeployNodes;
         in
         mkDeployNodes lanDomain blueprint.nixosConfigurations;
 
