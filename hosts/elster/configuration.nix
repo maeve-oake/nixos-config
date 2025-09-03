@@ -7,6 +7,7 @@
 }:
 {
   imports = [
+    inputs.self.nixosModules.default
     ./hardware-configuration.nix
     ./network.nix
   ];
@@ -19,6 +20,8 @@
     ];
     powerButtonAction = "interactive";
   };
+
+  services.logind.extraConfig = "PowerKeyIgnoreInhibited=yes";
 
   # boot
   boot.secureboot.enable = true;
@@ -57,15 +60,6 @@
     ffmpeg
     easyeda-pro
   ];
-
-  programs.obs-studio = {
-    enable = true;
-    enableVirtualCamera = true;
-    plugins = with pkgs.obs-studio-plugins; [
-      obs-pipewire-audio-capture
-      obs-vkcapture
-    ];
-  };
 
   # lnxlink
   age.secrets.lnxlink-env.file = (inputs.self + /secrets/lnxlink-env.age);

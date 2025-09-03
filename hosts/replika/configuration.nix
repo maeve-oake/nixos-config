@@ -1,10 +1,12 @@
 {
+  inputs,
   pkgs,
   unstable,
   ...
 }:
 {
   imports = [
+    inputs.self.nixosModules.default
     ./hardware-configuration.nix
   ];
 

@@ -1,6 +1,6 @@
 {
   inputs,
-  hostname,
+  hostName,
   pkgs,
   ...
 }:
@@ -9,9 +9,6 @@
   # please see subdirectories for OS-specific configuration
 
   imports = [
-    ./fish.nix
-    ./me.nix
-    ./nix.nix
     inputs.agenix.nixosModules.default
     inputs.nix-things.commonModules.default
   ];
@@ -22,7 +19,7 @@
   ];
 
   # networking
-  networking.hostName = hostname;
+  networking.hostName = hostName;
 
   system.configurationRevision = inputs.self.rev or "dirty";
 }

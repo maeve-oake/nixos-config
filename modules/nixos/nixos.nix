@@ -1,7 +1,7 @@
 {
   pkgs,
   inputs,
-  hostname,
+  hostName,
   lib,
   onlyArm,
   onlyX86,
@@ -11,15 +11,10 @@
   # common configuration for x86_64 Linux machines
 
   imports = [
-    ./gnome.nix
-    ./localisation.nix
-    ./network.nix
-    ./samba.nix
-    ./user.nix
-    ./fish.nix
     inputs.nix-index-database.nixosModules.nix-index
     inputs.nix-flatpak.nixosModules.nix-flatpak
     inputs.nix-things.nixosModules.default
+    inputs.self.commonModules.default
   ];
 
   # boot
@@ -30,7 +25,7 @@
     theme = "1975";
   };
 
-  services.lnxlink.clientId = hostname;
+  services.lnxlink.clientId = hostName;
 
   hardware.magic-trackpad-quirks.enable = true;
 

@@ -1,6 +1,6 @@
 {
   pkgs,
-  hostname,
+  hostName,
   inputs,
   config,
   ...
@@ -9,14 +9,12 @@
   # common configuration for MacOS machines
 
   imports = [
-    ./user.nix
-    ./system-defaults.nix
-    ./fish.nix
     inputs.nix-homebrew.darwinModules.nix-homebrew
+    inputs.self.commonModules.default
   ];
 
   # networking
-  networking.computerName = hostname;
+  networking.computerName = hostName;
 
   # tailscale
   services.tailscale.enable = true;
