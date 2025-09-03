@@ -96,10 +96,15 @@ in
       QT_QPA_PLATFORMTHEME = "flatpak"; # fix telegram filepicker
     };
 
-    # remove gnome tour and web browser
-    environment.gnome.excludePackages = [
-      pkgs.epiphany
-      pkgs.gnome-tour
+    # remove redundant gnome packages
+    environment.gnome.excludePackages = with pkgs; [
+      epiphany
+      gnome-tour
+      geary
+      gnome-contacts
+      snapshot
+      simple-scan
+      yelp
     ];
 
     # profile picture
