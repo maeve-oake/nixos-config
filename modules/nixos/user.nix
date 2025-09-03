@@ -5,7 +5,7 @@
   ...
 }:
 {
-  age.secrets.maeve-password = {};
+  age.secrets.maeve-password = { };
 
   users.mutableUsers = false;
   users.users.${config.me.username} = {
