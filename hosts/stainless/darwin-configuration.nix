@@ -1,8 +1,11 @@
 {
+  inputs,
   ...
 }:
 {
-  imports = [ ];
+  imports = [
+    inputs.self.darwinModules.default
+  ];
 
   nixpkgs.hostPlatform = "aarch64-darwin";
 

@@ -4,7 +4,7 @@
 }:
 {
   imports = [
-    # Include the results of the hardware scan.
+    inputs.self.nixosModules.default
     ./hardware-configuration.nix
     inputs.apple-silicon-support.nixosModules.apple-silicon-support
   ];
