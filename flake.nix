@@ -60,11 +60,6 @@
       url = "github:nix-community/buildbot-nix";
       inputs.nixpkgs.follows = "nix-unstable";
     };
-
-    deploy-rs = {
-      url = "github:serokell/deploy-rs";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =

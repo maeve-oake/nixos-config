@@ -96,7 +96,7 @@
           "nix-things",
           "nixpkgs"
         ],
-        "systems": "systems_4"
+        "systems": "systems_3"
       },
       "locked": {
         "lastModified": 1755332143,
@@ -193,6 +193,7 @@
       "inputs": {
         "flake-compat": "flake-compat_3",
         "nixpkgs": [
+          "nix-things",
           "nixpkgs"
         ],
         "utils": "utils"
@@ -602,6 +603,7 @@
     "nix-things": {
       "inputs": {
         "blueprint": "blueprint_2",
+        "deploy-rs": "deploy-rs",
         "lanzaboote": "lanzaboote",
         "nix-unstable": [
           "nix-unstable"
@@ -611,11 +613,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1756937167,
-        "narHash": "sha256-z16/yx3qvCYH4M0hT41+iuUH/u8M5WKwFDnioIwnpOw=",
+        "lastModified": 1756978116,
+        "narHash": "sha256-G1POHGLyosGXbCv6tqYnzkLolzvxPk4kFvkDgjsjAUw=",
         "owner": "oake",
         "repo": "nix-things",
-        "rev": "500d1acd6acb6207595375fdc2c59c9afc08200e",
+        "rev": "9971c41bd2b58c5504caa0fa5d5288cfa240d0f7",
         "type": "github"
       },
       "original": {
@@ -783,7 +785,6 @@
         "apple-silicon-support": "apple-silicon-support",
         "blueprint": "blueprint",
         "buildbot-nix": "buildbot-nix",
-        "deploy-rs": "deploy-rs",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
         "nix-darwin": "nix-darwin",
@@ -959,7 +960,7 @@
     },
     "utils": {
       "inputs": {
-        "systems": "systems_3"
+        "systems": "systems_4"
       },
       "locked": {
         "lastModified": 1731533236,
