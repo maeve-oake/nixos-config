@@ -17,6 +17,8 @@
     inputs.self.commonModules.default
   ];
 
+  nix.settings.trusted-users = [ "@wheel" ];
+
   # boot
   boot.loader.timeout = 0;
   boot.splash = {
