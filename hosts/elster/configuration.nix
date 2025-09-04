@@ -9,7 +9,7 @@
   imports = [
     inputs.self.nixosModules.default
     ./hardware-configuration.nix
-    ./network.nix
+    # ./network.nix
   ];
 
   # DE
