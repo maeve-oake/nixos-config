@@ -55,12 +55,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nix-unstable.follows = "nix-unstable";
     };
+
+    buildbot-nix = {
+      url = "github:nix-community/buildbot-nix";
+      inputs.nixpkgs.follows = "nix-unstable";
+    };
   };
 
   outputs =
     inputs:
     let
       inherit (inputs.nixpkgs) lib;
+      inherit (inputs.nix-things.lib) mkDiskoChecks mkLxcChecks mkDeployNodes;
 
       blueprint = inputs.blueprint {
         inherit inputs;
@@ -80,12 +86,24 @@
       inherit (blueprint)
         nixosConfigurations
         darwinConfigurations
-        checks
         ;
 
       commonModules = mkModules blueprint.modules.common;
+      lxcModules = mkModules blueprint.modules.lxc;
       nixosModules = mkModules blueprint.nixosModules;
       darwinModules = mkModules blueprint.darwinModules;
+
+      checks = lib.foldl' lib.recursiveUpdate blueprint.checks [
+        (mkDiskoChecks blueprint.nixosConfigurations)
+        (mkLxcChecks blueprint.nixosConfigurations)
+        (builtins.mapAttrs (system: packages: { inherit (packages) deploy-rs; }) inputs.deploy-rs.packages)
+      ];
+
+      deploy.nodes =
+        let
+          inherit ((import inputs.self.commonModules.me).config.me) lanDomain;
+        in
+        mkDeployNodes lanDomain blueprint.nixosConfigurations;
 
       agenix-rekey = inputs.agenix-rekey.configure {
         userFlake = inputs.self;
