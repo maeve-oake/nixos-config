@@ -16,5 +16,5 @@
     ui.package = unstable.netbird-ui;
   };
 
-  lxc.pve.host = lib.mkDefault "mynah." + config.me.lanDomain;
+  lxc.pve.host = lib.mkDefault ("mynah." + config.me.lanDomain);
 }
