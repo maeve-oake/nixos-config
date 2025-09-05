@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+# ugly code by anna-oake
+
 set -Eeuo pipefail
 FLAKE="${FLAKE:-.}"
 NIX_FLAGS=(--extra-experimental-features nix-command --extra-experimental-features flakes)
