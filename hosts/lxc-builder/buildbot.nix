@@ -64,6 +64,9 @@
         registerGCRoots = false;
       };
     };
+
+    # avoid spam in GH checks list
+    jobReportLimit = 0;
   };
 
   services.buildbot-nix.worker = {
