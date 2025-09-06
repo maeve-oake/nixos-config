@@ -17,7 +17,7 @@
 
   # boot
   boot.secureboot.enable = true;
-  boot.kernelPackages = pkgs.linuxPackages_6_15;
+  boot.kernelPackages = pkgs.linuxPackages_6_16;
   boot.loader.systemd-boot.configurationLimit = 1;
 
   # power & sleep
