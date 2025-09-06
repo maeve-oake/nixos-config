@@ -25,7 +25,7 @@
 
   # boot
   boot.secureboot.enable = true;
-  boot.kernelPackages = pkgs.linuxPackages_6_15;
+  boot.kernelPackages = pkgs.linuxPackages_6_16;
 
   # power & sleep
   services.xserver.displayManager.gdm.autoSuspend = false;
