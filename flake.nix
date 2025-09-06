@@ -72,6 +72,7 @@
         mkDeployChecks
         mkDeployNodes
         mkBootstrapScripts
+        mkLxcScripts
         ;
 
       blueprint = inputs.blueprint {
@@ -105,7 +106,10 @@
         mkDeployChecks
       ];
 
-      packages = mkBootstrapScripts blueprint.nixosConfigurations;
+      packages = lib.foldl' lib.recursiveUpdate blueprint.packages [
+        (mkBootstrapScripts blueprint.nixosConfigurations)
+        (mkLxcScripts blueprint.nixosConfigurations)
+      ];
 
       deploy.nodes =
         let
