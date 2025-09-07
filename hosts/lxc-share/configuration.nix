@@ -14,10 +14,15 @@
     users = {
       maeve = {
         sshKey = config.me.sshKey;
+        allowedExtraShares = [ "media" ];
       };
       anna = {
         sshKey = config.me.wifeKey;
+        allowedExtraShares = [ "media" ];
       };
+    };
+    extraShares = {
+      "media" = "/storage/media";
     };
   };
 
