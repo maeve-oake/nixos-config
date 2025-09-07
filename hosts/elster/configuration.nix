@@ -2,7 +2,6 @@
   inputs,
   config,
   pkgs,
-  unstable,
   ...
 }:
 {
@@ -25,7 +24,7 @@
 
   # boot
   boot.secureboot.enable = true;
-  boot.kernelPackages = pkgs.linuxPackages_6_15;
+  boot.kernelPackages = pkgs.linuxPackages_6_16;
 
   # power & sleep
   services.xserver.displayManager.gdm.autoSuspend = false;
@@ -45,6 +44,15 @@
     powerManagement.finegrained = false;
     open = true;
     nvidiaSettings = true;
+
+    # TODO: figure this out once they fix it
+    package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
+      version = "580.82.07";
+      sha256_64bit = "sha256-Bh5I4R/lUiMglYEdCxzqm3GLolQNYFB0/yJ/zgYoeYw=";
+      openSha256 = "sha256-8/7ZrcwBMgrBtxebYtCcH5A51u3lAxXTCY00LElZz08=";
+      settingsSha256 = "sha256-lx1WZHsW7eKFXvi03dAML6BoC5glEn63Tuiz3T867nY=";
+      usePersistenced = false;
+    };
   };
 
   # camera
