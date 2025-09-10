@@ -5,9 +5,10 @@
   ...
 }:
 {
-  config = lib.mkIf config.programs.fish.enable {
+  config = lib.mkIf config.profiles.workstation.enable {
     environment.systemPackages = [ pkgs.clolcat ];
     programs.fish = {
+      enable = true;
       interactiveShellInit = ''
         function fish_greeting
           echo "      |\      _,,,---,,_

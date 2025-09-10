@@ -94,7 +94,6 @@
         ;
 
       commonModules = mkModules blueprint.modules.common;
-      lxcModules = mkModules blueprint.modules.lxc;
       nixosModules = mkModules blueprint.nixosModules;
       darwinModules = mkModules blueprint.darwinModules;
 
@@ -107,11 +106,7 @@
         (mkLxcScripts blueprint.nixosConfigurations)
       ];
 
-      deploy.nodes =
-        let
-          inherit ((import inputs.self.commonModules.me).config.me) lanDomain;
-        in
-        mkDeployNodes lanDomain blueprint.nixosConfigurations;
+      deploy.nodes = mkDeployNodes blueprint.nixosConfigurations;
 
       agenix-rekey = inputs.agenix-rekey.configure {
         userFlake = inputs.self;

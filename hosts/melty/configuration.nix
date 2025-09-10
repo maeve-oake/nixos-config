@@ -9,16 +9,23 @@
     inputs.apple-silicon-support.nixosModules.apple-silicon-support
   ];
 
+  profiles.workstation = {
+    enable = true;
+    wifi.enable = true;
+  };
+
   hardware.asahi.peripheralFirmwareDirectory = ./firmware;
 
   # DE
-  gnome.enable = true;
-  gnome.dockItems.left = [
-    "firefox.desktop"
-    "org.telegram.desktop.desktop"
-    "legcord.desktop"
-    "element-desktop.desktop"
-  ];
+  profiles.workstation.gnome = {
+    enable = true;
+    dockItems.left = [
+      "firefox.desktop"
+      "org.telegram.desktop.desktop"
+      "legcord.desktop"
+      "element-desktop.desktop"
+    ];
+  };
 
   boot.extraModprobeConfig = ''
     options hid_apple iso_layout=1

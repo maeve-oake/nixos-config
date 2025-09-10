@@ -9,11 +9,18 @@
     ./hardware-configuration.nix
   ];
 
+  profiles.workstation = {
+    enable = true;
+    wifi.enable = true;
+  };
+
   # DE
-  gnome.enable = true;
-  gnome.dockItems.middle = [
-    "teams-for-linux.desktop"
-  ];
+  profiles.workstation.gnome = {
+    enable = true;
+    dockItems.middle = [
+      "teams-for-linux.desktop"
+    ];
+  };
 
   # boot
   boot.secureboot.enable = true;

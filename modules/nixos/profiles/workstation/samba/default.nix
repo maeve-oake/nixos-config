@@ -24,9 +24,11 @@ let
     }) mounts;
 in
 {
-  options.maeve.samba.enable = lib.mkEnableOption "mounting of Samba shares";
+  options.profiles.workstation.samba.enable = lib.mkEnableOption "Samba mounts workstation profile";
 
-  config = lib.mkIf config.maeve.samba.enable {
+  config = lib.mkIf config.profiles.workstation.samba.enable {
+    profiles.workstation.enable = lib.mkForce true;
+
     age.secrets."samba-client/maeve-mynah" = { };
     age.secrets."samba-client/anna-mynah" = { };
     environment.systemPackages = with pkgs; [

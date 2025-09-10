@@ -5,12 +5,15 @@
 }:
 {
   imports = [
-    inputs.self.lxcModules.default
+    inputs.self.nixosModules.default
     ./buildbot.nix
     ./attic-watch.nix
   ];
 
+  profiles.server.enable = true;
+
   lxc = {
+    enable = true;
     cores = 10;
     memory = 32768;
     diskSize = 100;
