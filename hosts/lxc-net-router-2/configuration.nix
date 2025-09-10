@@ -4,13 +4,15 @@
 }:
 {
   imports = [
-    inputs.self.lxcModules.default
+    inputs.self.nixosModules.default
   ];
 
-  lxc.profiles.net-router = {
+  profiles.server.net-router = {
     enable = true;
     port = 30304;
   };
+
+  lxc.enable = true;
 
   system.stateVersion = "25.11";
 }

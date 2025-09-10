@@ -6,7 +6,7 @@
   ...
 }:
 let
-  cfg = config.gnome;
+  cfg = config.profiles.workstation.gnome;
 
   mkDockOption =
     default:
@@ -20,48 +20,47 @@ let
     );
 in
 {
-  options = {
-    gnome = {
-      enable = lib.mkEnableOption "GNOME";
-      dockItems = {
-        left = mkDockOption [
-          "microsoft-edge.desktop"
-          "org.telegram.desktop.desktop"
-          "discord.desktop"
-          "element-desktop.desktop"
-        ];
-        middle = mkDockOption [ ];
-        right = mkDockOption [
-          "1password.desktop"
-          "code.desktop"
-          "org.gnome.Console.desktop"
-          "org.gnome.Nautilus.desktop"
-        ];
-      };
+  options.profiles.workstation.gnome = {
+    enable = lib.mkEnableOption "GNOME workstation profile";
+    dockItems = {
+      left = mkDockOption [
+        "microsoft-edge.desktop"
+        "org.telegram.desktop.desktop"
+        "discord.desktop"
+        "element-desktop.desktop"
+      ];
+      middle = mkDockOption [ ];
+      right = mkDockOption [
+        "1password.desktop"
+        "code.desktop"
+        "org.gnome.Console.desktop"
+        "org.gnome.Nautilus.desktop"
+      ];
+    };
 
-      powerButtonAction = lib.mkOption {
-        type = lib.types.str;
-        default = "hibernate";
-        description = "Power button action";
-      };
+    powerButtonAction = lib.mkOption {
+      type = lib.types.str;
+      default = "hibernate";
+      description = "Power button action";
+    };
 
-      shellExtensions = lib.mkOption {
-        type = lib.types.listOf lib.types.package;
-        description = "List of packages containing GNOME Shell Extensions to install.";
-        default =
-          with pkgs;
-          with pkgs.gnomeExtensions;
-          [
-            user-themes
-            tailscale-gnome-qs
-            just-perfection
-            appindicator
-          ];
-      };
+    shellExtensions = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
+      description = "List of packages containing GNOME Shell Extensions to install.";
+      default =
+        with pkgs;
+        with pkgs.gnomeExtensions;
+        [
+          user-themes
+          tailscale-gnome-qs
+          just-perfection
+          appindicator
+        ];
     };
   };
 
   config = lib.mkIf cfg.enable {
+    profiles.workstation.enable = lib.mkForce true;
     services.xserver.desktopManager.gnome.enable = true;
     services.xserver.displayManager.gdm.enable = true;
     services.xserver.enable = true;

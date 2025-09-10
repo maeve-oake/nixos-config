@@ -10,17 +10,16 @@
     ./hardware-configuration.nix
   ];
 
-  # DE
-  gnome.enable = true;
+  profiles.workstation = {
+    enable = true;
+    samba.enable = true;
+    wifi.enable = true;
+    gnome.enable = true;
+  };
 
   # boot
   boot.secureboot.enable = true;
   boot.kernelPackages = pkgs.linuxPackages_6_16;
-
-  # networking
-  boot.extraModprobeConfig = ''
-    options cfg80211 ieee80211_regdom="GB"
-  '';
 
   # power & sleep
   systemd.sleep.extraConfig = ''
@@ -51,9 +50,6 @@
     darktable
     unstable.satdump
   ];
-
-  # misc
-  maeve.samba.enable = true;
 
   # Do not remove
   system.stateVersion = "24.05";

@@ -11,8 +11,14 @@
     # ./network.nix
   ];
 
+  profiles.workstation = {
+    enable = true;
+    samba.enable = true;
+    wifi.enable = true;
+  };
+
   # DE
-  gnome = {
+  profiles.workstation.gnome = {
     enable = true;
     dockItems.middle = [
       "steam.desktop"
@@ -85,9 +91,6 @@
       speaker_used.enable = true;
     };
   };
-
-  # misc
-  maeve.samba.enable = true;
 
   # Do not remove
   system.stateVersion = "24.05";
