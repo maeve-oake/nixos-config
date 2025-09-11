@@ -25,5 +25,10 @@
     config.me.wifeKey
   ];
 
+  deploy.sshKeys = [
+    config.me.deployKey
+    config.me.wifeKey # anya manages lxc-builder so needs to deploy to it
+  ];
+
   system.stateVersion = "25.11";
 }
