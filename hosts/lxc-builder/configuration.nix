@@ -6,8 +6,9 @@
 {
   imports = [
     inputs.self.nixosModules.default
-    ./buildbot.nix
     ./attic-watch.nix
+    ./buildbot.nix
+    ./remote-builders.nix
   ];
 
   profiles.server.enable = true;
