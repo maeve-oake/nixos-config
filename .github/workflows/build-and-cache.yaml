@@ -6,7 +6,7 @@ jobs:
   build-and-cache:
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-22.04-arm]
+        os: [macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -18,9 +18,9 @@ jobs:
       - name: Setup Attic cache
         uses: ryanccn/attic-action@v0
         with:
-            endpoint: ${{ secrets.ATTIC_SERVER }}
-            token: ${{ secrets.ATTIC_TOKEN }}
-            cache: nixos
+          endpoint: ${{ secrets.ATTIC_SERVER }}
+          token: ${{ secrets.ATTIC_TOKEN }}
+          cache: nixos
 
       - name: Install omnix
         run: nix profile install "github:juspay/omnix"
