@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 {
@@ -12,5 +13,9 @@
     lxc.pve.host = lib.mkDefault ("mynah." + config.me.lanDomain);
 
     programs.nix-index.enable = false;
+
+    environment.systemPackages = with pkgs; [
+      ghostty.terminfo
+    ];
   };
 }
