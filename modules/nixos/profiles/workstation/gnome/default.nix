@@ -154,6 +154,7 @@ in
             "org/gnome/settings-daemon/plugins/power" = {
               power-button-action = cfg.powerButtonAction;
               sleep-inactive-battery-type = "hibernate";
+              skeep-inactive-ac-type = "nothing";
             };
 
             # dock & extensions
