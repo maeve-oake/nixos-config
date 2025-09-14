@@ -2,19 +2,23 @@
 
 ```
 nixos-config
-┣━━ common                          # common modules for all hosts
-┃   ┣━━ darwin                      # modules for nix-darwin hosts
-┃   ┗━━ nixos                       # modules for NixOS hosts
-┣━━ hosts                           # host specific configuration
-┃   ┣━━ darwin                      # nix-darwin hosts
-┃   ┃   ┗━━ stainless               # 2021 MacBook Pro
-┃   ┗━━ nixos                       # NixOS hosts
-┃       ┣━━ aluminium               # Framework 13
-┃       ┣━━ elster                  # desktop gaming PC
-┃       ┣━━ melty                   # 2020 MacBook Air (M1)
-┃       ┗━━ replika                 # Framework 13
-┣━━ pkgs                            # package derivations
-┗━━ secrets                         # age encrypted secrets
+┣━━ assets                      # images and assets
+┣━━ hosts                       # host specific configuration
+┃   ┣━━ aluminium               # Framework 13
+┃   ┣━━ elster                  # desktop gaming PC
+┃   ┣━━ melty                   # 2020 MacBook Air (M1)
+┃   ┣━━ replika                 # Framework 13
+┃   ┣━━ stainless               # 2021 MacBook Pro
+┃   ┣━━ lxc-builder             # buildbot LXC
+┃   ┣━━ lxc-net-router          # netbird router
+┃   ┣━━ lxc-net-router-2        # netbird router (backup)
+┃   ┗━━ lxc-share               # SMB & SFTP server
+┣━━ modules                     # shared modules
+┃   ┗━━ common/darwin/nixos     # platform specific modules
+┃       ┗━━ profiles            
+┃           ┣━━ server          # for servers
+┃           ┗━━ workstation     # for personal workstations
+┗━━ secrets                     # age encrypted secrets
 ```
 
 ## flake
