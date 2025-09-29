@@ -47,10 +47,8 @@
 
     github = {
       enable = true;
-      authType.app = {
-        id = 1885778;
-        secretKeyFile = config.age.secrets."lxc-builder/gh-app-key".path;
-      };
+      appId = 1885778;
+      appSecretKeyFile = config.age.secrets."lxc-builder/gh-app-key".path;
       webhookSecretFile = config.age.secrets."lxc-builder/gh-webhook-secret".path;
       topic = "oake-builder";
     };
@@ -64,9 +62,6 @@
         registerGCRoots = false;
       };
     };
-
-    # avoid spam in GH checks list
-    jobReportLimit = 0;
   };
 
   services.buildbot-nix.worker = {
