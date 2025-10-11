@@ -5,6 +5,7 @@
 }:
 let
   wifiSecrets = [
+    "flat"
     "home"
     "hotspot"
     "anna"
@@ -28,6 +29,21 @@ in
       environmentFiles = map (name: config.age.secrets."wifi/${name}".path) wifiSecrets;
 
       profiles = {
+        Flat = {
+          connection = {
+            id = "$FLAT_SSID";
+            type = "wifi";
+          };
+          wifi = {
+            mode = "infrastructure";
+            ssid = "$FLAT_SSID";
+          };
+          wifi-security = {
+            key-mgmt = "wpa-psk";
+            psk = "$FLAT_PSK";
+          };
+        };
+
         Home = {
           connection = {
             id = "$HOME_SSID";
