@@ -39,7 +39,7 @@ in
             ssid = "$FLAT_SSID";
           };
           wifi-security = {
-            key-mgmt = "wpa-psk";
+            key-mgmt = "sae";
             psk = "$FLAT_PSK";
           };
         };
