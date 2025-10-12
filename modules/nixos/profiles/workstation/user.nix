@@ -25,6 +25,7 @@
       hashedPasswordFile = config.age.secrets.maeve-password.path;
       openssh.authorizedKeys.keys = [
         config.me.sshKey
+        config.me.wifeKey
       ];
     };
   };
