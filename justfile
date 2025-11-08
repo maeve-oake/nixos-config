@@ -16,3 +16,8 @@ export EDITOR := "nvim"
 #
 #  personal recipes go below
 #
+
+# run nixos-rebuild switch with always-allow-substitutes
+[group('tools')]
+@rebuild: _add
+    sudo nixos-rebuild switch --option always-allow-substitutes true
