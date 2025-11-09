@@ -88,6 +88,7 @@
         };
       bootstrapScripts = mkBootstrapScripts blueprint.nixosConfigurations;
       lxcScripts = mkLxcScripts blueprint.nixosConfigurations;
+      deployCfgs = mkDeployNodes blueprint.nixosConfigurations;
     in
     {
       inherit (blueprint)
@@ -103,13 +104,14 @@
         (mkDiskoChecks blueprint.nixosConfigurations)
         bootstrapScripts.checks
         lxcScripts.checks
+        deployCfgs.checks
       ];
 
       apps = lib.foldl' lib.recursiveUpdate bootstrapScripts.apps [
         lxcScripts.apps
       ];
 
-      deploy.nodes = mkDeployNodes blueprint.nixosConfigurations;
+      deploy.nodes = deployCfgs.nodes;
 
       agenix-rekey = inputs.agenix-rekey.configure {
         userFlake = inputs.self;
