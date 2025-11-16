@@ -27,7 +27,6 @@ in
         "microsoft-edge.desktop"
         "org.telegram.desktop.desktop"
         "discord.desktop"
-        "element-desktop.desktop"
       ];
       middle = mkDockOption [ ];
       right = mkDockOption [

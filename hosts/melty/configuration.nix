@@ -23,7 +23,6 @@
       "firefox.desktop"
       "org.telegram.desktop.desktop"
       "legcord.desktop"
-      "element-desktop.desktop"
     ];
   };
 
