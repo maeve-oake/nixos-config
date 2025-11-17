@@ -64,6 +64,9 @@ in
     services.xserver.displayManager.gdm.enable = true;
     services.xserver.enable = true;
 
+    # M365 sync
+    services.gnome.evolution-data-server.plugins = [ pkgs.evolution-ews ];
+
     # fix crash on fast login (nixpkgs/issues/103746)
     systemd.services."getty@tty1".enable = false;
     systemd.services."autovt@tty1".enable = false;
@@ -180,7 +183,7 @@ in
               picture-uri-dark = "file://${inputs.self + /assets/wallpaper.jpg}";
             };
             "org/gnome/shell/extensions/just-perfection" = {
-              events-button = false;
+              events-button = true;
               invert-calendar-column-items = true;
               quick-settings-dark-mode = false;
               quick-settings-night-light = false;
