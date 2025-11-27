@@ -19,6 +19,7 @@
     enable = true;
     dockItems.middle = [
       "teams-for-linux.desktop"
+      "org.gnome.Calendar.desktop"
     ];
   };
 
