@@ -26,7 +26,7 @@
     };
 
     apple-silicon-support = {
-      url = "github:nix-community/nixos-apple-silicon/release-25.05";
+      url = "github:nix-community/nixos-apple-silicon/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
