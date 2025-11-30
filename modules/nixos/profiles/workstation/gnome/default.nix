@@ -54,7 +54,8 @@ in
           tailscale-gnome-qs
           just-perfection
           appindicator
-          power-profile-switcher
+          # the following is broken on GNOME 48
+          # power-profile-switcher
         ];
     };
   };
