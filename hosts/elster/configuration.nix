@@ -26,7 +26,9 @@
     powerButtonAction = "interactive";
   };
 
-  services.logind.extraConfig = "PowerKeyIgnoreInhibited=yes";
+  services.logind.settings.Login = {
+    "PowerKeyIgnoreInhibited" = true;
+  };
 
   # boot
   boot.secureboot.enable = true;

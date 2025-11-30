@@ -22,10 +22,8 @@
   boot.kernelPackages = pkgs.linuxPackages_6_17;
 
   # power & sleep
-  systemd.sleep.extraConfig = ''
-    HibernateDelaySec=4h
-  '';
-  services.logind.lidSwitch = "suspend-then-hibernate";
+  systemd.sleep.extraConfig = "HibernateDelaySec=4h";
+  services.logind.settings.Login.HandleLidSwitch = "suspend-then-hibernate";
   networking.networkmanager.wifi.powersave = true;
 
   # udev rules
