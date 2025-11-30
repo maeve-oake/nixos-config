@@ -30,8 +30,8 @@
 
   # power & sleep
   systemd.sleep.extraConfig = ''
-    		HibernateDelaySec=30m
-    	'';
+    HibernateDelaySec=30m
+  '';
   services.logind.lidSwitch = "suspend-then-hibernate";
 
   environment.sessionVariables = {

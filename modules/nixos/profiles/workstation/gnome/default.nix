@@ -54,6 +54,7 @@ in
           tailscale-gnome-qs
           just-perfection
           appindicator
+          power-profile-switcher
         ];
     };
   };
@@ -156,7 +157,7 @@ in
             "org/gnome/settings-daemon/plugins/power" = {
               power-button-action = cfg.powerButtonAction;
               sleep-inactive-battery-type = "hibernate";
-              skeep-inactive-ac-type = "nothing";
+              sleep-inactive-ac-type = "nothing";
             };
 
             # dock & extensions
