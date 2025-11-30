@@ -23,9 +23,10 @@
 
   # power & sleep
   systemd.sleep.extraConfig = ''
-    		HibernateDelaySec=30m
-    	'';
+    HibernateDelaySec=4h
+  '';
   services.logind.lidSwitch = "suspend-then-hibernate";
+  networking.networkmanager.wifi.powersave = true;
 
   # udev rules
   services.udev.extraRules = ''

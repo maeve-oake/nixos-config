@@ -18,6 +18,9 @@
     "thunderbolt"
   ];
   boot.kernelModules = [ "kvm-amd" ];
+  boot.kernelParams = lib.mkAfter [
+    "amdgpu.dcdebugmask=0"
+  ];
 
   fileSystems = {
     "/" = {
