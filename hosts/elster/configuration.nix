@@ -35,7 +35,7 @@
   boot.kernelPackages = pkgs.linuxPackages_6_17;
 
   # power & sleep
-  services.xserver.displayManager.gdm.autoSuspend = false;
+  services.displayManager.gdm.autoSuspend = false;
 
   # fingerprint & login
   services.fprintd.enable = true;
