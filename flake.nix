@@ -1,8 +1,8 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nix-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.05";
+    nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
 
     blueprint = {
       url = "github:numtide/blueprint";
@@ -26,7 +26,7 @@
     };
 
     apple-silicon-support = {
-      url = "github:nix-community/nixos-apple-silicon/release-25.05";
+      url = "github:nix-community/nixos-apple-silicon/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

@@ -29,10 +29,8 @@
   boot.loader.systemd-boot.configurationLimit = 1;
 
   # power & sleep
-  systemd.sleep.extraConfig = ''
-    HibernateDelaySec=30m
-  '';
-  services.logind.lidSwitch = "suspend-then-hibernate";
+  systemd.sleep.extraConfig = "HibernateDelaySec=4h";
+  services.logind.settings.Login.HandleLidSwitch = "suspend-then-hibernate";
 
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1"; # fix electron blur

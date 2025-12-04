@@ -26,14 +26,16 @@
     powerButtonAction = "interactive";
   };
 
-  services.logind.extraConfig = "PowerKeyIgnoreInhibited=yes";
+  services.logind.settings.Login = {
+    "PowerKeyIgnoreInhibited" = true;
+  };
 
   # boot
   boot.secureboot.enable = true;
   boot.kernelPackages = pkgs.linuxPackages_6_17;
 
   # power & sleep
-  services.xserver.displayManager.gdm.autoSuspend = false;
+  services.displayManager.gdm.autoSuspend = false;
 
   # fingerprint & login
   services.fprintd.enable = true;
