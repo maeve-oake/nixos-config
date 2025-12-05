@@ -53,8 +53,6 @@
         nixfmt-rfc-style
         nixd
         nixpkgs-review
-        dotnet-sdk
-        dotnet-runtime
         (vscode-with-extensions.override {
           vscodeExtensions =
             with vscode-marketplace;
