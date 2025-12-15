@@ -51,7 +51,7 @@
       # apps
       discord
       raycast
-      gimp
+      gimp2 # 'gimp' (gimp 3) isn't available for darwin (yet?)
 
       # shell
       fzf
