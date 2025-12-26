@@ -6,7 +6,6 @@
 {
   imports = [
     inputs.self.nixosModules.default
-    ./attic-watch.nix
     ./buildbot.nix
     ./remote-builders.nix
   ];

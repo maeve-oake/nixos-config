@@ -10,6 +10,7 @@
   imports = [
     inputs.buildbot-nix.nixosModules.buildbot-master
     inputs.buildbot-nix.nixosModules.buildbot-worker
+    ./attic.nix
   ];
 
   age.secrets = {
@@ -18,6 +19,7 @@
     "lxc-builder/basic-auth-pwd" = {
       owner = "buildbot";
     };
+    "lxc-builder/attic-auth-token" = { };
   };
 
   services.buildbot-nix.packages = {
@@ -60,6 +62,20 @@
       all-branches = {
         matchGlob = "*";
         registerGCRoots = false;
+      };
+    };
+
+    attic.targets = {
+      buyan = {
+        host = "https://attic-buyan.oa.ke";
+        cacheName = "nixos";
+        authTokenFile = config.age.secrets."lxc-builder/attic-auth-token".path;
+        ignoreUpstreamCache = true;
+      };
+      kitezh = {
+        host = "https://attic-kitezh.oa.ke";
+        cacheName = "nixos";
+        authTokenFile = config.age.secrets."lxc-builder/attic-auth-token".path;
       };
     };
   };
