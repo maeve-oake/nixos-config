@@ -52,15 +52,6 @@
     powerManagement.finegrained = false;
     open = true;
     nvidiaSettings = true;
-
-    # TODO: figure this out once they fix it
-    package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
-      version = "580.82.07";
-      sha256_64bit = "sha256-Bh5I4R/lUiMglYEdCxzqm3GLolQNYFB0/yJ/zgYoeYw=";
-      openSha256 = "sha256-8/7ZrcwBMgrBtxebYtCcH5A51u3lAxXTCY00LElZz08=";
-      settingsSha256 = "sha256-lx1WZHsW7eKFXvi03dAML6BoC5glEn63Tuiz3T867nY=";
-      usePersistenced = false;
-    };
   };
 
   # camera
