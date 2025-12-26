@@ -19,7 +19,7 @@
 
   # boot
   boot.secureboot.enable = true;
-  boot.kernelPackages = pkgs.linuxPackages_6_17;
+  boot.kernelPackages = pkgs.linuxPackages_6_18;
 
   # power & sleep
   systemd.sleep.extraConfig = "HibernateDelaySec=4h";
