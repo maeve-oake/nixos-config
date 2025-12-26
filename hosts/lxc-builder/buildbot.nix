@@ -71,6 +71,7 @@
         cacheName = "nixos";
         authTokenFile = config.age.secrets."lxc-builder/attic-auth-token".path;
         ignoreUpstreamCache = true;
+        uploadJobs = 12;
       };
       kitezh = {
         host = "https://attic-kitezh.oa.ke";

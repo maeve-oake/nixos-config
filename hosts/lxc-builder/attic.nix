@@ -41,6 +41,11 @@ in
                 description = "Authentication token for the Attic server.";
               };
               ignoreUpstreamCache = mkEnableOption "ignore upstream cache option of attic push.";
+              uploadJobs = mkOption {
+                type = types.int;
+                default = 5;
+                description = "Number of upload jobs to run in parallel.";
+              };
             };
           }
         );
@@ -55,7 +60,7 @@ in
 
         extra=()
         [ "''${ATTIC_IGNORE_UPSTREAM:-0}" = "1" ] && extra+=(--ignore-upstream-cache-filter)
-        ${pkgs.attic-client}/bin/attic push "$ATTIC_NAME:$ATTIC_CACHE" ''${extra[@]} "$@"
+        ${pkgs.attic-client}/bin/attic push "$ATTIC_NAME:$ATTIC_CACHE" -j "$ATTIC_JOBS" ''${extra[@]} "$@"
       '')
     ];
 
@@ -69,6 +74,7 @@ in
         ATTIC_NAME = name;
         ATTIC_HOST = server.host;
         ATTIC_CACHE = server.cacheName;
+        ATTIC_JOBS = toString server.uploadJobs;
         ATTIC_IGNORE_UPSTREAM = if server.ignoreUpstreamCache then "1" else "0";
         ATTIC_TOKEN = interpolate "%(secret:attic-token-${name})s";
       };
