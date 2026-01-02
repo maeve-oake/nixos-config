@@ -1,7 +1,6 @@
 {
   inputs,
   pkgs,
-  unstable,
   ...
 }:
 {
@@ -47,7 +46,7 @@
     plex-desktop
     ollama
     darktable
-    unstable.satdump
+    satdump
   ];
 
   # Do not remove
