@@ -46,6 +46,11 @@ in
                 default = 5;
                 description = "Number of upload jobs to run in parallel.";
               };
+              skippedPathSubstrings = mkOption {
+                type = types.listOf types.str;
+                default = [ ];
+                description = "List of path substrings to skip during push.";
+              };
             };
           }
         );
@@ -61,6 +66,19 @@ in
         extra=()
         [ "''${ATTIC_IGNORE_UPSTREAM:-0}" = "1" ] && extra+=(--ignore-upstream-cache-filter)
         ${pkgs.attic-client}/bin/attic push "$ATTIC_NAME:$ATTIC_CACHE" -j "$ATTIC_JOBS" ''${extra[@]} "$@"
+      '')
+      (pkgs.writeShellScriptBin "attic-login-push-filter" ''
+        set -eu -o pipefail
+        path="$1"
+        shift
+        for skip in "$@"; do
+          if [[ "$path" == *"$skip"* ]]; then
+            echo "Skipping attic push for $path (matched $skip)" >&2
+            exit 0
+          fi
+        done
+
+        attic-login-push "$path"
       '')
     ];
 
@@ -79,9 +97,10 @@ in
         ATTIC_TOKEN = interpolate "%(secret:attic-token-${name})s";
       };
       command = [
-        "attic-login-push"
+        "attic-login-push-filter"
         (interpolate "result-%(prop:attr)s")
-      ];
+      ]
+      ++ server.skippedPathSubstrings;
       warnOnly = true;
     }) cfg.attic.targets;
   };

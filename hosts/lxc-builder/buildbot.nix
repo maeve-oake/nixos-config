@@ -77,6 +77,7 @@
         host = "https://attic-kitezh.oa.ke";
         cacheName = "nixos";
         authTokenFile = config.age.secrets."lxc-builder/attic-auth-token".path;
+        skippedPathSubstrings = [ "install-lxc" ];
       };
     };
   };
