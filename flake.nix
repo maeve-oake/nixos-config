@@ -60,6 +60,11 @@
       url = "github:nix-community/buildbot-nix";
       inputs.nixpkgs.follows = "nix-unstable";
     };
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
