@@ -32,10 +32,6 @@
   systemd.sleep.extraConfig = "HibernateDelaySec=4h";
   services.logind.settings.Login.HandleLidSwitch = "suspend-then-hibernate";
 
-  environment.sessionVariables = {
-    NIXOS_OZONE_WL = "1"; # fix electron blur
-  };
-
   # fingerprint & login
   security.polkit.enable = true;
 

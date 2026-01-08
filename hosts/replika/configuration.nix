@@ -31,10 +31,6 @@
     SUBSYSTEM=="block", KERNEL=="sd?", ATTRS{serial}=="071C435B161FE558", MODE="0660", GROUP="vboxusers", SYMLINK+="windows-module-disk"
   '';
 
-  environment.sessionVariables = {
-    NIXOS_OZONE_WL = "1"; # fix electron blur
-  };
-
   # fingerprint & login
   security.polkit.enable = true;
 

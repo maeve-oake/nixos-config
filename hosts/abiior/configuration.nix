@@ -24,10 +24,6 @@
   services.logind.settings.Login.HandleLidSwitch = "suspend-then-hibernate";
   networking.networkmanager.wifi.powersave = true;
 
-  environment.sessionVariables = {
-    NIXOS_OZONE_WL = "1"; # fix electron blur
-  };
-
   # fingerprint & login
   security.polkit.enable = true;
 
