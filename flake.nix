@@ -9,7 +9,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixos-hardware.url = "github:NixOS/nixos-hardware";
+    nixos-hardware.url = "github:anna-oake/nixos-hardware";
 
     nix-flatpak.url = "github:gmodena/nix-flatpak";
 
