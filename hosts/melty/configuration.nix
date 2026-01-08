@@ -11,6 +11,7 @@
 
   profiles.workstation = {
     enable = true;
+    laptop.enable = true;
     wifi.enable = true;
   };
 
