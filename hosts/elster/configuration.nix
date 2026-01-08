@@ -31,7 +31,6 @@
   };
 
   # boot
-  boot.secureboot.enable = true;
   boot.kernelPackages = pkgs.linuxPackages_6_18;
 
   # power & sleep

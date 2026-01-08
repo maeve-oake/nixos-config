@@ -38,6 +38,8 @@
       NIXOS_OZONE_WL = "1"; # fix electron blur
     };
 
+    boot.secureboot.enable = pkgs.stdenv.hostPlatform.isx86_64;
+
     # pkgs
     # virtualisation.virtualbox.host.enable = true;
     services.fwupd.enable = true;
