@@ -11,6 +11,7 @@
 
   profiles.workstation = {
     enable = true;
+    laptop.enable = true;
     wifi.enable = true;
   };
 
@@ -26,10 +27,6 @@
   # boot
   boot.kernelPackages = pkgs.linuxPackages_6_18;
   boot.loader.systemd-boot.configurationLimit = 1;
-
-  # power & sleep
-  systemd.sleep.extraConfig = "HibernateDelaySec=4h";
-  services.logind.settings.Login.HandleLidSwitch = "suspend-then-hibernate";
 
   # fingerprint & login
   security.polkit.enable = true;

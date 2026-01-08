@@ -13,6 +13,7 @@
     inputs.nix-index-database.nixosModules.nix-index
     inputs.nix-flatpak.nixosModules.nix-flatpak
     ./gnome
+    ./laptop
     ./samba
     ./wifi
     ./fish.nix
