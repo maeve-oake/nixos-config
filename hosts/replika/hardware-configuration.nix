@@ -8,6 +8,11 @@
     inputs.nixos-hardware.nixosModules.framework-13-7040-amd
   ];
 
+  disko.simple = {
+    device = "/dev/nvme0n1";
+    luks = true;
+  };
+
   hardware.enableRedistributableFirmware = lib.mkDefault true;
 
   boot.initrd.availableKernelModules = [
@@ -21,24 +26,6 @@
   boot.kernelParams = lib.mkAfter [
     "amdgpu.dcdebugmask=0"
   ];
-
-  fileSystems = {
-    "/" = {
-      device = "/dev/disk/by-uuid/acb6de3e-4f25-40fc-8deb-596e2d098cb9";
-      fsType = "ext4";
-    };
-    "/boot" = {
-      device = "/dev/disk/by-uuid/6CBA-4177";
-      fsType = "vfat";
-      options = [
-        "fmask=0077"
-        "dmask=0077"
-      ];
-    };
-  };
-
-  boot.initrd.luks.devices."luks-5c6568a1-e289-4c4a-ba8a-e9630a66124e".device =
-    "/dev/disk/by-uuid/5c6568a1-e289-4c4a-ba8a-e9630a66124e";
 
   swapDevices = [
     {

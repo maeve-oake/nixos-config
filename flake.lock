@@ -236,6 +236,7 @@
     "disko": {
       "inputs": {
         "nixpkgs": [
+          "nix-things",
           "nixpkgs"
         ]
       },
@@ -449,6 +450,28 @@
         "type": "github"
       }
     },
+    "home-manager_2": {
+      "inputs": {
+        "nixpkgs": [
+          "nix-things",
+          "impermanence",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1747978958,
+        "narHash": "sha256-pQQnbxWpY3IiZqgelXHIe/OAE/Yv4NSQq7fch7M6nXQ=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "7419250703fd5eb50e99bdfb07a86671939103ea",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
     "homebrew-cask": {
       "flake": false,
       "locked": {
@@ -478,6 +501,28 @@
       "original": {
         "owner": "homebrew",
         "repo": "homebrew-core",
+        "type": "github"
+      }
+    },
+    "impermanence": {
+      "inputs": {
+        "home-manager": "home-manager_2",
+        "nixpkgs": [
+          "nix-things",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1767822991,
+        "narHash": "sha256-iyrn9AcPZCoyxX4OT8eMkBsjG7SRUQXXS/V1JzxS7rA=",
+        "owner": "nix-community",
+        "repo": "impermanence",
+        "rev": "82e5bc4508cab9e8d5a136626276eb5bbce5e9c5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "impermanence",
         "type": "github"
       }
     },
@@ -582,6 +627,8 @@
       "inputs": {
         "blueprint": "blueprint_2",
         "deploy-rs": "deploy-rs",
+        "disko": "disko",
+        "impermanence": "impermanence",
         "lanzaboote": "lanzaboote",
         "nix-unstable": [
           "nix-unstable"
@@ -591,11 +638,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1767891160,
-        "narHash": "sha256-DF73SEQnvAJufwjTtMr/zLWpZDJ+5ZvyRb6FT6DlvWs=",
+        "lastModified": 1768070422,
+        "narHash": "sha256-mtEBQDBbF86iE6vW9MLUE3uj9OTSWoMG8cJ51WplLMk=",
         "owner": "oake",
         "repo": "nix-things",
-        "rev": "38fbdb8d87aa440e2aa607862deb6267b0ba814b",
+        "rev": "101d772da3cb089e98508958919b4fbea8c7f3cf",
         "type": "github"
       },
       "original": {
@@ -741,7 +788,6 @@
         "apple-silicon-support": "apple-silicon-support",
         "blueprint": "blueprint",
         "buildbot-nix": "buildbot-nix",
-        "disko": "disko",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
         "nix-darwin": "nix-darwin",

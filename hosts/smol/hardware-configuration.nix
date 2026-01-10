@@ -9,8 +9,12 @@
     inputs.nixos-hardware.nixosModules.microsoft-surface-common
     inputs.nixos-hardware.nixosModules.common-cpu-intel
     inputs.nixos-hardware.nixosModules.common-pc
-    ./disk.nix
   ];
+
+  disko.simple = {
+    device = "/dev/disk/by-id/mmc-DA4064_0x6b04e923";
+    luks = true;
+  };
 
   hardware.enableRedistributableFirmware = lib.mkDefault true;
 

@@ -10,8 +10,12 @@
     inputs.nixos-hardware.nixosModules.common-cpu-intel
     inputs.nixos-hardware.nixosModules.common-pc
     inputs.nixos-hardware.nixosModules.common-pc-ssd
-    ./disk.nix
   ];
+
+  disko.simple = {
+    device = "/dev/nvme0n1";
+    luks = true;
+  };
 
   hardware.enableRedistributableFirmware = lib.mkDefault true;
 
