@@ -8,8 +8,12 @@
     inputs.nixos-hardware.nixosModules.common-cpu-intel
     inputs.nixos-hardware.nixosModules.common-pc-laptop
     inputs.nixos-hardware.nixosModules.common-pc-ssd
-    ./disk.nix
   ];
+
+  disko.simple = {
+    device = "/dev/disk/by-id/nvme-WD_Blue_SN570_250GB_22395T802677";
+    luks = true;
+  };
 
   hardware.enableRedistributableFirmware = lib.mkDefault true;
 

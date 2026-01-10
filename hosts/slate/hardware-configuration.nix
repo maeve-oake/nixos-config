@@ -10,8 +10,12 @@
     inputs.nixos-hardware.nixosModules.common-cpu-intel
     inputs.nixos-hardware.nixosModules.common-pc
     inputs.nixos-hardware.nixosModules.common-pc-ssd
-    ./disk.nix
   ];
+
+  disko.simple = {
+    device = "/dev/disk/by-id/nvme-PM991a_NVMe_Samsung_1024GB__S661NE0T403479";
+    luks = true;
+  };
 
   hardware.enableRedistributableFirmware = lib.mkDefault true;
 
