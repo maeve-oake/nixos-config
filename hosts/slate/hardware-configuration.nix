@@ -13,7 +13,7 @@
   ];
 
   disko.simple = {
-    device = "/dev/nvme0n1";
+    device = "/dev/disk/by-id/nvme-PM991a_NVMe_Samsung_1024GB__S661NE0T403479";
     luks = true;
   };
 
