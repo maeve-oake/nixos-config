@@ -4,6 +4,11 @@
   ...
 }:
 {
+  disko.simple = {
+    device = "/dev/disk/by-id/nvme-Predator_SSD_GM7000_2TB_PSAG55030100310";
+    luks = true;
+  };
+
   hardware.enableRedistributableFirmware = lib.mkDefault true;
 
   boot.initrd.availableKernelModules = [
@@ -16,11 +21,6 @@
     "usbhid"
   ];
   boot.kernelModules = [ "kvm-amd" ];
-
-  disko.simple = {
-    device = "/dev/nvme0n1";
-    luks = true;
-  };
 
   swapDevices = [
     {

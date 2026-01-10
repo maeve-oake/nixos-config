@@ -12,7 +12,7 @@
   ];
 
   disko.simple = {
-    device = "/dev/mmcblk0";
+    device = "/dev/disk/by-id/mmc-DA4064_0x6b04e923";
     luks = true;
   };
 
