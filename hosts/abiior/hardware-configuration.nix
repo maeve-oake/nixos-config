@@ -11,7 +11,7 @@
   ];
 
   disko.simple = {
-    device = "/dev/nvme0n1";
+    device = "/dev/disk/by-id/nvme-WD_Blue_SN570_250GB_22395T802677";
     luks = true;
   };
 
