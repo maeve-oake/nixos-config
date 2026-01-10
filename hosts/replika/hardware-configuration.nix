@@ -9,7 +9,7 @@
   ];
 
   disko.simple = {
-    device = "/dev/nvme0n1";
+    device = "/dev/disk/by-id/nvme-Samsung_SSD_990_PRO_2TB_S7KHNU0X505977X";
     luks = true;
   };
 
