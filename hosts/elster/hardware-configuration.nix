@@ -17,23 +17,10 @@
   ];
   boot.kernelModules = [ "kvm-amd" ];
 
-  fileSystems = {
-    "/" = {
-      device = "/dev/disk/by-uuid/42a05164-1522-4459-b8fe-140b21233ea6";
-      fsType = "ext4";
-    };
-    "/boot" = {
-      device = "/dev/disk/by-uuid/A3F1-A498";
-      fsType = "vfat";
-      options = [
-        "fmask=0077"
-        "dmask=0077"
-      ];
-    };
+  disko.simple = {
+    device = "/dev/nvme0n1";
+    luks = true;
   };
-
-  boot.initrd.luks.devices."luks-5f494377-e88e-4937-bb16-b2f7dd6033bf".device =
-    "/dev/disk/by-uuid/5f494377-e88e-4937-bb16-b2f7dd6033bf";
 
   swapDevices = [
     {
