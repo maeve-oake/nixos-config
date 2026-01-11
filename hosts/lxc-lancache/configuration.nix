@@ -13,6 +13,7 @@
   age.secrets = {
     "lxc-lancache/steam-token-maeve" = { };
     "lxc-lancache/steam-token-maeve-2" = { };
+    "lxc-lancache/steam-token-beast" = { };
   };
 
   services.lancache = {
