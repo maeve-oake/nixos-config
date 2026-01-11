@@ -53,6 +53,7 @@
 
   lxc = {
     enable = true;
+    memory = 4096;
     mounts = [
       "/storage/lancache,mp=/lancache"
     ];
