@@ -38,6 +38,14 @@
             "linux"
           ];
         };
+        beast = {
+          tokenFile = config.age.secrets."lxc-lancache/steam-token-beast".path;
+          prefillAll = true;
+          systems = [
+            "windows"
+            "linux"
+          ];
+        };
       };
     };
   };
