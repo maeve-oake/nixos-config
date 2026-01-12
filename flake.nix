@@ -116,6 +116,17 @@
       agenix-rekey = inputs.agenix-rekey.configure {
         userFlake = inputs.self;
         nixosConfigurations = blueprint.nixosConfigurations // blueprint.darwinConfigurations;
+        agePackage =
+          p:
+          # TODO: remove this!
+          p.age.overrideAttrs (old: {
+            doCheck = false;
+            postPatch = (old.postPatch or "") + ''
+              substituteInPlace age.go \
+                --replace-fail $'\t\t\treturn nil, incompatibleLabelsError(labels, l)\n' \
+                ""
+            '';
+          });
       };
     };
 }
