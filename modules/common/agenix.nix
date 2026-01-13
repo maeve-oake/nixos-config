@@ -16,8 +16,10 @@
         pubkey = builtins.readFile (inputs.self.outPath + "/secrets/master-keys/agenix-master.pub");
       }
       {
-        identity = "/home/maeve/.ssh/agenix-master-pq";
-        pubkey = builtins.readFile (inputs.self.outPath + "/secrets/master-keys/agenix-master-pq.pub");
+        identity = inputs.self.outPath + "/secrets/master-keys/agenix-master-pq-identity.pub";
+        pubkey = builtins.readFile (
+          inputs.self.outPath + "/secrets/master-keys/agenix-master-pq-recipient.pub"
+        );
       }
     ];
   };
