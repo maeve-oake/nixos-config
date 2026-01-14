@@ -11,11 +11,6 @@
   config = {
     age.rekey.masterIdentities = [
       {
-        # TODO: remove this!
-        identity = "/home/maeve/.ssh/agenix-master";
-        pubkey = builtins.readFile (inputs.self.outPath + "/secrets/master-keys/agenix-master.pub");
-      }
-      {
         identity = inputs.self.outPath + "/secrets/master-keys/agenix-master-pq-identity.pub";
         pubkey = builtins.readFile (
           inputs.self.outPath + "/secrets/master-keys/agenix-master-pq-recipient.pub"
