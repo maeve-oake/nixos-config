@@ -71,6 +71,7 @@
               ms-vsliveshare.vsliveshare
               esphome.esphome-vscode
               mkhl.direnv
+              ms-vscode.cpptools
             ];
         })
 
