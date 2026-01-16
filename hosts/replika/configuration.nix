@@ -29,6 +29,12 @@
     SUBSYSTEM=="block", KERNEL=="sd?", ATTRS{serial}=="071C435B161FE558", MODE="0660", GROUP="vboxusers", SYMLINK+="windows-module-disk"
   '';
 
+  services.udev.extraHwdb = ''
+    # disable Framework F10 airplane mode key
+    evdev:input:b0018v32ACp0006*
+     KEYBOARD_KEY_100c6=rotate_display
+  '';
+
   # fingerprint & login
   security.polkit.enable = true;
 
