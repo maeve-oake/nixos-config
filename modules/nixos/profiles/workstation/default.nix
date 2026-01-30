@@ -16,6 +16,7 @@
     ./laptop
     ./samba
     ./wifi
+    ./work-vpn
     ./fish.nix
     ./localisation.nix
     ./network.nix

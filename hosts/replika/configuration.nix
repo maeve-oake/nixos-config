@@ -15,6 +15,7 @@
     samba.enable = true;
     wifi.enable = true;
     gnome.enable = true;
+    work-vpn.enable = true;
   };
 
   # boot
