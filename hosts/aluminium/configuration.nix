@@ -13,6 +13,7 @@
     enable = true;
     laptop.enable = true;
     wifi.enable = true;
+    work-vpn.enable = true;
   };
 
   # DE
