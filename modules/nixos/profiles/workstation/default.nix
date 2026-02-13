@@ -42,6 +42,11 @@
 
     boot.secureboot.enable = pkgs.stdenv.hostPlatform.isx86_64;
 
+    programs.nh = {
+      enable = true;
+      flake = "/etc/nixos";
+    };
+
     # pkgs
     # virtualisation.virtualbox.host.enable = true;
     services.fwupd.enable = true;
