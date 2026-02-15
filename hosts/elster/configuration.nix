@@ -33,7 +33,12 @@
 
   # boot
   boot.kernelPackages = pkgs.linuxPackages_6_18;
-  boot.loader.decider.enable = true;
+  boot.loader.decider = {
+    enable = true;
+    chainloadPaths = {
+      windows = "HD1c1:/EFI/Microsoft/Boot/bootmgfw.efi";
+    };
+  };
 
   # power & sleep
   services.displayManager.gdm.autoSuspend = false;
