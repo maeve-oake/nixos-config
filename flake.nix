@@ -60,6 +60,11 @@
       url = "github:nix-community/buildbot-nix";
       inputs.nixpkgs.follows = "nix-unstable";
     };
+
+    decider-efi = {
+      url = "github:anna-oake/decider.efi";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

@@ -154,6 +154,21 @@
     },
     "crane": {
       "locked": {
+        "lastModified": 1770419512,
+        "narHash": "sha256-o8Vcdz6B6bkiGUYkZqFwH3Pv1JwZyXht3dMtS7RchIo=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "2510f2cbc3ccd237f700bb213756a8f35c32d8d7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
+    "crane_2": {
+      "locked": {
         "lastModified": 1769287525,
         "narHash": "sha256-gABuYA6BzoRMLuPaeO5p7SLrpd4qExgkwEmYaYQY4bM=",
         "owner": "ipetkov",
@@ -186,6 +201,28 @@
         "owner": "lnl7",
         "ref": "master",
         "repo": "nix-darwin",
+        "type": "github"
+      }
+    },
+    "decider-efi": {
+      "inputs": {
+        "crane": "crane",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay"
+      },
+      "locked": {
+        "lastModified": 1771179877,
+        "narHash": "sha256-Up+iI4OsA75FNa0SikaHwuInCPMtKqPDOsZWRw7uABo=",
+        "owner": "anna-oake",
+        "repo": "decider.efi",
+        "rev": "08ce6b97d3edcc627efc928814ab4c59a7408e3e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anna-oake",
+        "repo": "decider.efi",
         "type": "github"
       }
     },
@@ -528,13 +565,13 @@
     },
     "lanzaboote": {
       "inputs": {
-        "crane": "crane",
+        "crane": "crane_2",
         "nixpkgs": [
           "nix-things",
           "nixpkgs"
         ],
         "pre-commit": "pre-commit",
-        "rust-overlay": "rust-overlay"
+        "rust-overlay": "rust-overlay_2"
       },
       "locked": {
         "lastModified": 1769417433,
@@ -788,6 +825,7 @@
         "apple-silicon-support": "apple-silicon-support",
         "blueprint": "blueprint",
         "buildbot-nix": "buildbot-nix",
+        "decider-efi": "decider-efi",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
         "nix-darwin": "nix-darwin",
@@ -802,6 +840,27 @@
       }
     },
     "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "decider-efi",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1770693064,
+        "narHash": "sha256-Pomhlz+3/6uRJUhKz/kJwmJUux8GTWbXlCX4/RxlXLo=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "a5f6d8a6a6868db2a3055cfe2b5dd01422780433",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_2": {
       "inputs": {
         "nixpkgs": [
           "nix-things",

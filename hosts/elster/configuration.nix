@@ -7,6 +7,7 @@
 {
   imports = [
     inputs.self.nixosModules.default
+    inputs.decider-efi.nixosModules.default
     ./hardware-configuration.nix
     # ./network.nix
   ];
@@ -32,6 +33,7 @@
 
   # boot
   boot.kernelPackages = pkgs.linuxPackages_6_18;
+  boot.loader.decider.enable = true;
 
   # power & sleep
   services.displayManager.gdm.autoSuspend = false;
