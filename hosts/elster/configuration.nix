@@ -2,6 +2,7 @@
   inputs,
   config,
   pkgs,
+  unstable,
   ...
 }:
 {
@@ -72,6 +73,7 @@
     darktable
     ffmpeg
     easyeda-pro
+    unstable.modrinth-app
   ];
 
   # lnxlink
