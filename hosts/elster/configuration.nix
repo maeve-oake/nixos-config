@@ -36,7 +36,7 @@
   boot.loader.decider = {
     enable = true;
     chainloadPaths = {
-      windows = "HD1c1:/EFI/Microsoft/Boot/bootmgfw.efi";
+      windows = "ce6a9709-944e-4496-9363-1706dac399ee:/EFI/Microsoft/Boot/bootmgfw.efi";
     };
   };
 

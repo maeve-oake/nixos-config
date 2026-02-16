@@ -213,11 +213,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1771185624,
-        "narHash": "sha256-m1touEBJ+aD6Q94/ixKYmfrjnNTwwN/BfwYUJtljvK4=",
+        "lastModified": 1771250458,
+        "narHash": "sha256-yS7mBEfNcK9/HXmuBiMlESxU5TdoYfL7DFXY779nxuQ=",
         "owner": "anna-oake",
         "repo": "decider.efi",
-        "rev": "1805f97ee4e1f62088f2af3816bab54d96292022",
+        "rev": "658588bc8b515bae185209a1973e21636f468886",
         "type": "github"
       },
       "original": {
