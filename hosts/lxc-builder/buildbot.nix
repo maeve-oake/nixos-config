@@ -22,12 +22,6 @@
     "lxc-builder/attic-auth-token" = { };
   };
 
-  services.buildbot-nix.packages = {
-    buildbot = unstable.buildbot;
-    buildbot-worker = unstable.buildbot-worker;
-    buildbot-plugins = unstable.buildbot-plugins;
-  };
-
   services.buildbot-nix.master = {
     enable = true;
 
