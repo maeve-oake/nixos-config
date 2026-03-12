@@ -45,7 +45,7 @@
   ];
 
   hardware.framework.laptop13.audioEnhancement = {
-    enable = true;
+    enable = false;
     rawDeviceName = "alsa_output.pci-0000_00_1f.3.analog-stereo";
   };
 

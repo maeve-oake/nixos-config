@@ -12,6 +12,7 @@
   profiles.workstation = {
     enable = true;
     laptop.enable = true;
+    samba.enable = true;
     wifi.enable = true;
     work-vpn.enable = true;
   };
