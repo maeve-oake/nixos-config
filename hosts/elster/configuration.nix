@@ -73,7 +73,14 @@
     darktable
     ffmpeg
     easyeda-pro
-    unstable.modrinth-app
+    (unstable.modrinth-app.overrideAttrs (old: {
+      buildCommand = ''
+        gappsWrapperArgs+=(
+          --set __NV_DISABLE_EXPLICIT_SYNC 1
+        )
+      ''
+      + old.buildCommand;
+    }))
   ];
 
   # lnxlink
