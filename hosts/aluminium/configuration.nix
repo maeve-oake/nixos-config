@@ -36,7 +36,19 @@
   # packages
   environment.systemPackages = with pkgs; [
     # apps
-    teams-for-linux
+    (teams-for-linux.overrideAttrs (old: {
+      installPhase =
+        builtins.replaceStrings
+          [
+            ''--add-flags "$out/share/teams-for-linux/app.asar" \''
+          ]
+          [
+            ''
+              --add-flags "$out/share/teams-for-linux/app.asar" \
+              --add-flags "--disable-pinch" \''
+          ]
+          old.installPhase;
+    }))
   ];
 
   # streamdeck
