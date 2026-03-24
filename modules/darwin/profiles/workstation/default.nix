@@ -74,9 +74,6 @@
         "microsoft-edge"
         "telegram"
         "autodesk-fusion"
-
-        # system
-        "ilya-birman-typography-layout"
       ];
     };
   };
