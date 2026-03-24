@@ -4,12 +4,7 @@
   ...
 }:
 {
-  /*
-    TODO: fix typography layout! right now, only the *last* in the EnabledThirdPartyInputSources list is actually "applied"
-          also look into pretty names (ask anya how she does it)
-
-          possibly create a nice dock setup and apply it? the mess with GUIDs doesnt look great
-  */
+  # TODO: possibly create a nice dock setup and apply it? the mess with GUIDs doesnt look great
 
   config = lib.mkIf config.profiles.workstation.enable {
 
@@ -26,41 +21,6 @@
 
       LaunchServices.LSQuarantine = false; # do not quarantine downloaded applications
 
-      CustomSystemPreferences = {
-        "com.apple.inputsources" = {
-          AppleEnabledThirdPartyInputSources = [
-            {
-              InputSourceKind = "Keyboard Layout";
-              "KeyboardLayout ID" = "-9876";
-              "KeyboardLayout Name" = "English \\U2013 Ilya Birman Typography";
-            }
-            {
-              InputSourceKind = "Keyboard Layout";
-              "KeyboardLayout ID" = "-31553";
-              "KeyboardLayout Name" = "Russian \\U2013 Ilya Birman Typography";
-            }
-          ];
-        };
-
-        "com.apple.HIToolbox" = {
-          AppleCurrentKeyboardLayoutInputSourceID = "com.apple.keylayout.British-PC";
-          AppleEnabledInputSources = [
-            {
-              InputSourceKind = "Keyboard Layout";
-              "KeyboardLayout ID" = 250;
-              "KeyboardLayout Name" = "British-PC";
-            }
-          ];
-          AppleSelectedInputSources = [
-            {
-              InputSourceKind = "Keyboard Layout";
-              "KeyboardLayout ID" = 250;
-              "KeyboardLayout Name" = "British-PC";
-            }
-          ];
-        };
-      };
-
       finder = {
         AppleShowAllFiles = true; # show hidden files
         NewWindowTarget = "Computer"; # default finder location
@@ -69,10 +29,6 @@
       };
 
       dock = {
-        autohide = true;
-        autohide-delay = 0.0;
-        largesize = 72; # magnification size
-        tilesize = 28; # unmagnified size
         orientation = "left";
         magnification = true;
         show-recents = false;
