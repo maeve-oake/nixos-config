@@ -28,9 +28,9 @@
 
   lxc = {
     enable = true;
-    mounts = [
-      "/storage,mp=/storage"
-    ];
+    recursiveMounts = {
+      "/storage" = "/storage";
+    };
   };
 
   system.stateVersion = "25.11";
