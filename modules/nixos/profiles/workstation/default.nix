@@ -52,9 +52,6 @@
     # virtualisation.virtualbox.host.enable = true;
     services.fwupd.enable = true;
     services.flatpak.enable = true;
-    programs.direnv.enable = true;
-    programs._1password.enable = true;
-    programs._1password-gui.enable = true;
     services.flatpak.packages = [ "com.bambulab.BambuStudio" ];
     environment.systemPackages =
       with pkgs;

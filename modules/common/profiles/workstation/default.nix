@@ -5,6 +5,7 @@
 }:
 {
   imports = [
+    ./personal
     ./fish.nix
   ];
 
