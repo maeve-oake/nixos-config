@@ -1,6 +1,7 @@
 {
   inputs,
   pkgs,
+  config,
   ...
 }:
 {
@@ -49,10 +50,21 @@
           ]
           old.installPhase;
     }))
+    xclip
   ];
+
+  age.secrets = {
+    streamdeck-vars = {
+      owner = "maeve";
+      group = "users";
+    };
+  };
+
+  services.streamdeck.configPath = "/home/maeve/Documents/streamdeck/config.yaml";
 
   # streamdeck
   services.streamdeck = {
+    user = config.me.username;
     enable = true;
     config = {
       defaultBrightness = 100;
@@ -63,14 +75,14 @@
           keys = {
             "0" = {
               display.text = {
-                text = "zero";
+                text = "0";
                 border = 20;
               };
             };
             "1" = {
               display.text = {
-                text = "weblinks";
-                image = "/home/maeve/Documents/streamdeck/icons/maeve_cat.jpg";
+                text = "1";
+                image = "/home/maeve/Documents/streamdeck/icons/BACK.png";
               };
               actions = [
                 {
@@ -82,7 +94,7 @@
             };
             "2" = {
               display.text = {
-                text = "edge";
+                text = "2";
               };
               actions = [
                 {
@@ -93,8 +105,32 @@
               ];
             };
             "3" = {
-              display.image = {
-                url = "https://les.bi/images/maeve.png";
+              display.text = {
+                text = "3";
+              };
+              actions = [
+                {
+                  page = {
+                    name = "weblinks";
+                  };
+                }
+              ];
+            };
+            "4" = {
+              display.text = {
+                text = "4";
+              };
+              actions = [
+                {
+                  page = {
+                    name = "weblinks";
+                  };
+                }
+              ];
+            };
+            "5" = {
+              display.text = {
+                text = "5";
               };
               actions = [
                 {
@@ -120,6 +156,11 @@
                 }
               ];
             };
+          };
+        };
+        scripts = {
+          keys = {
+
           };
         };
       };
