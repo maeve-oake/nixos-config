@@ -569,7 +569,9 @@
     },
     "nix-darwin": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": [
+          "nixpkgs-darwin"
+        ]
       },
       "locked": {
         "lastModified": 1772129556,
@@ -654,11 +656,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1774378069,
-        "narHash": "sha256-uAzFKNhy8RmmYObTw3XrT2pqc8g9XgQw8IOArKgYLWs=",
+        "lastModified": 1774465081,
+        "narHash": "sha256-yQrlkm1+TOBXsB8mULL9Yd21JzUuemAsYtejdhP0zKc=",
         "owner": "oake",
         "repo": "nix-things",
-        "rev": "f9778590f9fd66fe721198ceb4780b264ffee6ea",
+        "rev": "4ff166fe866251de230fb45b06e04c8ab008e68d",
         "type": "github"
       },
       "original": {
@@ -720,22 +722,6 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1764491476,
-        "narHash": "sha256-E4rtgPS7fntINb6fVJ5qQdkhfbZn8pzMYNdmiXqZmCo=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "54f09efd2ca0dd5bb9c5fafc89573ab3ac44701d",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-25.11-darwin",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
         "lastModified": 1773524153,
         "narHash": "sha256-Jms57zzlFf64ayKzzBWSE2SGvJmK+NGt8Gli71d9kmY=",
         "owner": "NixOS",
@@ -746,6 +732,22 @@
       "original": {
         "owner": "NixOS",
         "ref": "nixos-25.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-darwin": {
+      "locked": {
+        "lastModified": 1774216008,
+        "narHash": "sha256-Z/FO3AI2tL6pTJfGodMvNccEurAJJmWEbsv4psp90z4=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "98bf8103e311377ca1d648c22f56332756d89bb2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixpkgs-25.11-darwin",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -815,7 +817,8 @@
         "nix-unstable": "nix-unstable",
         "nix-vscode-extensions": "nix-vscode-extensions",
         "nixos-hardware": "nixos-hardware",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs",
+        "nixpkgs-darwin": "nixpkgs-darwin"
       }
     },
     "rust-overlay": {
