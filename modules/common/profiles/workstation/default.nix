@@ -6,11 +6,14 @@
 }:
 {
   imports = [
-    ./personal
     ./fish.nix
   ];
 
   config = lib.mkIf config.profiles.workstation.enable {
+    programs.direnv.enable = true;
+    programs._1password.enable = true;
+    programs._1password-gui.enable = true;
+
     environment.systemPackages = with pkgs; [
       # dev
       just
