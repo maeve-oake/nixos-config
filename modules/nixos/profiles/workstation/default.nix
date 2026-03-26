@@ -56,40 +56,10 @@
     environment.systemPackages =
       with pkgs;
       [
-        # dev
-        just
-        gh
-        git
-        neovim
-        nixfmt-rfc-style
-        nixd
-        nixpkgs-review
-        (vscode-with-extensions.override {
-          vscodeExtensions =
-            with vscode-marketplace;
-            with vscode-extensions;
-            [
-              ms-dotnettools.csharp
-              ms-dotnettools.vscode-dotnet-runtime
-              jnoortheen.nix-ide
-              ms-vsliveshare.vsliveshare
-              esphome.esphome-vscode
-              mkhl.direnv
-              ms-vscode.cpptools
-            ];
-        })
-
         # apps
         unstable.telegram-desktop # unstable because of build failure https://github.com/NixOS/nixpkgs/issues/497549
         element-desktop
         gimp
-
-        # shell
-        wget
-        p7zip
-        btop
-        usbutils
-        pciutils
       ]
       ++ onlyArm [
         legcord
