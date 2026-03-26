@@ -14,6 +14,10 @@
     gimp2
     spotify
     chatgpt
+
+    # shell
+    fzf
+    zoxide
   ];
 
   homebrew.casks = [
