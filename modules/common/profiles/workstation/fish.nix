@@ -6,11 +6,7 @@
 }:
 {
   config = lib.mkIf config.profiles.workstation.enable {
-    environment.systemPackages = with pkgs; [
-      clolcat
-      fzf
-      zoxide
-    ];
+    environment.systemPackages = [ pkgs.clolcat ];
     programs.fish = {
       enable = true;
       interactiveShellInit = ''
