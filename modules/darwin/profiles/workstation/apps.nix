@@ -14,6 +14,7 @@
     gimp2
     spotify
     chatgpt
+    ollama
 
     # shell
     fzf
