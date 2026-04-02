@@ -21,6 +21,8 @@
     zoxide
   ];
 
+  services.netbird.enable = true;
+
   homebrew.casks = [
     # apps
     "microsoft-edge"
@@ -29,5 +31,7 @@
     "windows-app"
     "telegram"
     "protonvpn"
+    "plex"
+    "affinity"
   ];
 }
