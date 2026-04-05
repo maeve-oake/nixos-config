@@ -5,6 +5,7 @@ nixos-config
 ┣━━ assets                      # images and assets
 ┣━━ hosts                       # host specific configuration
 ┃   ┣━━ aluminium               # Framework 13
+┃   ┣━━ blush                   # MacBook Neo
 ┃   ┣━━ elster                  # desktop gaming PC
 ┃   ┣━━ melty                   # 2020 MacBook Air (M1)
 ┃   ┣━━ replika                 # Framework 13
