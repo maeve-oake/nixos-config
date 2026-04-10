@@ -33,5 +33,6 @@
     "protonvpn"
     "plex"
     "affinity"
+    "bambu-studio"
   ];
 }
