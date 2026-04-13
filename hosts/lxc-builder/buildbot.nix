@@ -76,6 +76,11 @@
     };
   };
 
+  # workaround because they broke something
+  systemd.services.buildbot-master.serviceConfig.LoadCredential = [
+    "http-basic-auth-password:${config.age.secrets."lxc-builder/basic-auth-pwd".path}"
+  ];
+
   services.buildbot-nix.worker = {
     enable = true;
     name = hostName;
