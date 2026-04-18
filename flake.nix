@@ -9,11 +9,6 @@
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
 
-    blueprint = {
-      url = "github:numtide/blueprint";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     nixos-hardware.url = "github:nixos/nixos-hardware";
 
     nix-flatpak.url = "github:gmodena/nix-flatpak";
@@ -75,54 +70,15 @@
   outputs =
     inputs:
     let
-      inherit (inputs.nixpkgs) lib;
-      inherit (inputs.nix-things.lib)
-        mkDiskoChecks
-        mkDeployNodes
-        mkBootstrapScripts
-        mkLxcScripts
-        ;
-
-      blueprint = inputs.blueprint {
+      blueprint = inputs.nix-things.lib.mkFlake {
         inherit inputs;
-        nixpkgs.config.allowUnfree = true;
+        nixpkgs.overlays = [
+          inputs.nix-vscode-extensions.overlays.default
+        ];
       };
-
-      mkModules =
-        modules:
-        modules
-        // {
-          default = {
-            imports = lib.attrsets.attrValues modules;
-          };
-        };
-      bootstrapScripts = mkBootstrapScripts blueprint.nixosConfigurations;
-      lxcScripts = mkLxcScripts blueprint.nixosConfigurations;
-      deployCfgs = mkDeployNodes blueprint.nixosConfigurations;
     in
-    {
-      inherit (blueprint)
-        nixosConfigurations
-        darwinConfigurations
-        ;
-
-      commonModules = mkModules blueprint.modules.common;
-      nixosModules = mkModules blueprint.nixosModules;
-      darwinModules = mkModules blueprint.darwinModules;
-
-      checks = lib.foldl' lib.recursiveUpdate blueprint.checks [
-        (mkDiskoChecks blueprint.nixosConfigurations)
-        bootstrapScripts.checks
-        lxcScripts.checks
-        deployCfgs.checks
-      ];
-
-      apps = lib.foldl' lib.recursiveUpdate bootstrapScripts.apps [
-        lxcScripts.apps
-      ];
-
-      deploy.nodes = deployCfgs.nodes;
-
+    blueprint
+    // {
       agenix-rekey = inputs.agenix-rekey.configure {
         userFlake = inputs.self;
         nixosConfigurations = blueprint.nixosConfigurations // blueprint.darwinConfigurations;
