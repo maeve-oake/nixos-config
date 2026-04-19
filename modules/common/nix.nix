@@ -1,5 +1,4 @@
 {
-  inputs,
   config,
   ...
 }:
@@ -13,9 +12,4 @@
   ];
   age.secrets.attic-netrc = { };
   nix.settings.netrc-file = config.age.secrets.attic-netrc.path;
-
-  # overlays
-  nixpkgs.overlays = [
-    inputs.nix-vscode-extensions.overlays.default
-  ];
 }
