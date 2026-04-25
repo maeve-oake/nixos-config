@@ -17,6 +17,7 @@
         allowedExtraShares = [
           "media"
           "kittycraft"
+          "kittycraft-extra"
         ];
       };
       anna = {
@@ -24,12 +25,14 @@
         allowedExtraShares = [
           "media"
           "kittycraft"
+          "kittycraft-extra"
         ];
       };
     };
     extraShares = {
       "media" = "/storage/media";
       "kittycraft" = "/storage-fast/kittycraft";
+      "kittycraft-extra" = "/storage/kittycraft-extra";
     };
   };
 
