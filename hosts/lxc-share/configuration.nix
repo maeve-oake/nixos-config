@@ -14,15 +14,22 @@
     users = {
       maeve = {
         sshKey = config.me.sshKey;
-        allowedExtraShares = [ "media" ];
+        allowedExtraShares = [
+          "media"
+          "kittycraft"
+        ];
       };
       anna = {
         sshKey = config.me.wifeKey;
-        allowedExtraShares = [ "media" ];
+        allowedExtraShares = [
+          "media"
+          "kittycraft"
+        ];
       };
     };
     extraShares = {
       "media" = "/storage/media";
+      "kittycraft" = "/storage-fast/kittycraft";
     };
   };
 
@@ -30,6 +37,7 @@
     enable = true;
     recursiveMounts = {
       "/storage" = "/storage";
+      "/storage-fast" = "/storage-fast";
     };
   };
 
