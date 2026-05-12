@@ -12,7 +12,6 @@
     # apps
     discord
     spotify
-    chatgpt
     ollama
 
     # shell
@@ -33,5 +32,6 @@
     "plex"
     "affinity"
     "bambu-studio"
+    "chatgpt"
   ];
 }
