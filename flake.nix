@@ -1,7 +1,6 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nix-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin/master";
@@ -52,12 +51,11 @@
     nix-things = {
       url = "github:oake/nix-things";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nix-unstable.follows = "nix-unstable";
     };
 
     buildbot-nix = {
       url = "github:nix-community/buildbot-nix";
-      inputs.nixpkgs.follows = "nix-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     decider-efi = {
