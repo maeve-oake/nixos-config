@@ -11,7 +11,6 @@
   environment.systemPackages = with pkgs; [
     # apps
     discord
-    gimp2
     spotify
     chatgpt
     ollama
