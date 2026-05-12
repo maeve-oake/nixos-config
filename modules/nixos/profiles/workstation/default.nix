@@ -6,7 +6,6 @@
   pkgs,
   onlyArm,
   onlyX86,
-  unstable,
   ...
 }:
 {
@@ -57,7 +56,7 @@
       with pkgs;
       [
         # apps
-        unstable.telegram-desktop # unstable because of build failure https://github.com/NixOS/nixpkgs/issues/497549
+        telegram-desktop
         element-desktop
         gimp
       ]

@@ -2,7 +2,6 @@
   inputs,
   config,
   pkgs,
-  unstable,
   ...
 }:
 {
@@ -73,7 +72,7 @@
     darktable
     ffmpeg
     easyeda-pro
-    (unstable.modrinth-app.overrideAttrs (old: {
+    (modrinth-app.overrideAttrs (old: {
       buildCommand = ''
         gappsWrapperArgs+=(
           --set __NV_DISABLE_EXPLICIT_SYNC 1

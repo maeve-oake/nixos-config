@@ -11,9 +11,7 @@
   environment.systemPackages = with pkgs; [
     # apps
     discord
-    gimp2
     spotify
-    chatgpt
     ollama
 
     # shell
@@ -34,5 +32,6 @@
     "plex"
     "affinity"
     "bambu-studio"
+    "chatgpt"
   ];
 }
