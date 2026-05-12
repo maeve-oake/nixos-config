@@ -3,7 +3,6 @@
   pkgs,
   hostName,
   config,
-  unstable,
   ...
 }:
 {

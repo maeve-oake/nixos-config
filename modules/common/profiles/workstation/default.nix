@@ -20,7 +20,7 @@
       gh
       git
       neovim
-      nixfmt-rfc-style
+      nixfmt
       nixd
       nixpkgs-review
       (vscode-with-extensions.override {
