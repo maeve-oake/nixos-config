@@ -10,7 +10,6 @@
   # pkgs
   environment.systemPackages = with pkgs; [
     # apps
-    discord
     spotify
     ollama
 
@@ -33,5 +32,6 @@
     "affinity"
     "bambu-studio"
     "chatgpt"
+    "discord"
   ];
 }

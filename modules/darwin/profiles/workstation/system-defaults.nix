@@ -74,7 +74,7 @@
           "/Applications/Microsoft Outlook.app"
           "/Applications/Microsoft Teams.app"
           "/Applications/Telegram.app"
-          "/Applications/Nix Apps/Discord.app"
+          "/Applications/Discord.app"
           "/System/Applications/Messages.app"
           "/Applications/1Password.app"
           "/Applications/Nix Apps/Visual Studio Code.app"
