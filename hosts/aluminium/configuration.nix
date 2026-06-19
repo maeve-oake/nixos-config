@@ -53,6 +53,8 @@
     xclip
   ];
 
+  programs.framework-privacy-bar.enable = true;
+
   age.secrets = {
     streamdeck-vars = {
       owner = "maeve";

@@ -39,6 +39,8 @@
   # fingerprint & login
   security.polkit.enable = true;
 
+  programs.framework-privacy-bar.enable = true;
+
   # packages
   programs.steam.enable = true;
   environment.systemPackages = with pkgs; [
