@@ -35,6 +35,7 @@
             esphome.esphome-vscode
             mkhl.direnv
             ms-vscode.cpptools
+            openai.chatgpt
           ];
       })
 
