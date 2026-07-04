@@ -14,10 +14,6 @@
     # firewall
     networking.firewall.enable = false;
 
-    # tailscale
-    services.tailscale.enable = true;
-    services.tailscale.useRoutingFeatures = "both";
-
     # netbird
     age.secrets = {
       netbird-personal = {

@@ -51,7 +51,6 @@ in
         with pkgs.gnomeExtensions;
         [
           user-themes
-          tailscale-gnome-qs
           just-perfection
           appindicator
           # the following is broken on GNOME 48
