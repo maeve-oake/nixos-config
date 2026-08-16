@@ -121,7 +121,7 @@ in
       '';
 
     fonts.packages = with pkgs; [
-      cantarell-fonts
+      lato
     ];
 
     programs.dconf = {
@@ -140,7 +140,7 @@ in
             "org/gnome/desktop/wm/preferences" = {
               auto-raise = false;
               focus-mode = "sloppy";
-              titlebar-font = "Cantarell Bold 11";
+              titlebar-font = "Lato Bold 11";
             };
             "org/gnome/desktop/peripherals/mouse" = {
               accel-profile = "flat";
@@ -175,8 +175,8 @@ in
               gtk-enable-primary-paste = false;
               show-battery-percentage = true;
               clock-show-seconds = true;
-              font-name = "Cantarell 11";
-              document-font-name = "Cantarell 11";
+              font-name = "Lato 11";
+              document-font-name = "Lato 11";
             };
             "org/gnome/shell/extensions/user-theme" = {
               name = "Lion";

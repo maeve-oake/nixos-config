@@ -36,6 +36,16 @@
      KEYBOARD_KEY_100c6=rotate_display
   '';
 
+  environment.sessionVariables = {
+    MUTTER_DEBUG_FORCE_KMS_MODE = "simple";
+  };
+
+  hardware.rtl-sdr.enable = true;
+
+  users.users.maeve.extraGroups = [
+    "plugdev"
+  ];
+
   # fingerprint & login
   security.polkit.enable = true;
 
