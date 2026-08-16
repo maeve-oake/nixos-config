@@ -19,7 +19,14 @@
       owner = "buildbot";
     };
     "lxc-builder/attic-auth-token" = { };
+    "gh-miaow-linux" = {
+      owner = "buildbot";
+    };
   };
+
+  nix.extraOptions = ''
+    !include ${config.age.secrets.gh-miaow-linux.path}
+  '';
 
   services.buildbot-nix.master = {
     enable = true;
