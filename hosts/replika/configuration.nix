@@ -3,6 +3,9 @@
   pkgs,
   ...
 }:
+let
+  miaow = inputs.miaow.packages.${pkgs.system}.default;
+in
 {
   imports = [
     inputs.self.nixosModules.default
@@ -14,7 +17,11 @@
     laptop.enable = true;
     samba.enable = true;
     wifi.enable = true;
-    gnome.enable = true;
+    gnome = {
+      enable = true;
+      dockItems.middle = [ "ke.oa.miaow.desktop" ];
+      shellExtensions = [ miaow ];
+    };
     work-vpn.enable = true;
   };
 
@@ -55,6 +62,7 @@
   programs.steam.enable = true;
   environment.systemPackages = with pkgs; [
     # apps
+    miaow
     gqrx
     plex-desktop
     ollama
