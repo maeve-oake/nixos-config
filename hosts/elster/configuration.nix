@@ -44,7 +44,10 @@
   services.displayManager.gdm.autoSuspend = false;
 
   # fingerprint & login
-  services.fprintd.enable = true;
+  services.fprintd = {
+    enable = true;
+    cs9711 = true;
+  };
   security.polkit.enable = true;
 
   # graphics
