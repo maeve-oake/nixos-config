@@ -3,10 +3,6 @@
   ...
 }:
 {
-  # homebrew.masApps = {
-  #
-  # };
-
   # pkgs
   environment.systemPackages = with pkgs; [
     # apps

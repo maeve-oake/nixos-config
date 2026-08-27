@@ -8,8 +8,5 @@
     inputs.self.commonModules.default
   ];
 
-  services.openssh = {
-    enable = true;
-    settings.PasswordAuthentication = false;
-  };
+  services.openssh.settings.PasswordAuthentication = false;
 }
