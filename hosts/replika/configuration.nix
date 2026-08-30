@@ -63,6 +63,7 @@ in
   environment.systemPackages = with pkgs; [
     # apps
     miaow
+    calls
     gqrx
     plex-desktop
     ollama
