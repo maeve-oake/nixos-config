@@ -43,9 +43,10 @@ in
      KEYBOARD_KEY_100c6=rotate_display
   '';
 
-  environment.sessionVariables = {
-    MUTTER_DEBUG_FORCE_KMS_MODE = "simple";
-  };
+  # please stop crashing
+  boot.kernelParams = [
+    "amdgpu.dcdebugmask=0x10"
+  ];
 
   hardware.rtl-sdr.enable = true;
 
