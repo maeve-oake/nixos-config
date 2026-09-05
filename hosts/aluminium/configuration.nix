@@ -28,7 +28,7 @@
   };
 
   # boot
-  boot.kernelPackages = pkgs.linuxPackages_7_1;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.loader.systemd-boot.configurationLimit = 1;
 
   # fingerprint & login

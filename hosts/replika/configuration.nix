@@ -26,7 +26,7 @@ in
   };
 
   # boot
-  boot.kernelPackages = pkgs.linuxPackages_7_1;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # power & sleep
   networking.networkmanager.wifi.powersave = true;

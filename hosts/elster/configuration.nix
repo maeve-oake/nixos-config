@@ -32,7 +32,7 @@
   };
 
   # boot
-  boot.kernelPackages = pkgs.linuxPackages_7_1;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.loader.decider = {
     enable = true;
     chainloadPaths = {
