@@ -10,6 +10,7 @@
     inputs.buildbot-nix.nixosModules.buildbot-master
     inputs.buildbot-nix.nixosModules.buildbot-worker
     ./attic.nix
+    ./snapshots.nix
   ];
 
   age.secrets = {

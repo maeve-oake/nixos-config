@@ -1,0 +1,20 @@
+--- a/buildbot_nix/build_trigger.py
++++ b/buildbot_nix/build_trigger.py
+@@ -200,6 +200,8 @@
+         props.setProperty("status_name", f"nix-build {name}", source)
+         props.setProperty("virtual_builder_tags", "", source)
+         props.setProperty("attr", job.attr, source)
++        props.setProperty("snapshot_project", project.name, source)
++        props.setProperty("snapshot_revision", self.getProperty("got_revision"), source)
+         props.setProperty("default_branch", project.default_branch, source)
+
+         if isinstance(job, NixEvalJobSuccess):
+@@ -233,8 +235,7 @@
+         build_props.setProperty(f"{job.attr}-out_path", out_path, source)
+         build_props.setProperty(f"{job.attr}-drv_path", drv_path, source)
+
+-        # Schedule builds that need building or substituting
+-        if job.cacheStatus in {CacheStatus.notBuilt, CacheStatus.cached}:
++        if job.cacheStatus in {CacheStatus.notBuilt, CacheStatus.cached, CacheStatus.local}:
+             props = self.set_common_properties(Properties(), self.project, source, job)
+             return (self.trigger_config.builds_scheduler, props)

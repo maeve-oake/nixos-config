@@ -71,6 +71,11 @@ in
         set -eu -o pipefail
         path="$1"
         shift
+        if [[ "''${BUILDBOT_CACHE_STATUS:-}" == "local" ]]; then
+          echo "Skipping attic push for $path (already local at evaluation)" >&2
+          exit 0
+        fi
+
         for skip in "$@"; do
           if [[ "$path" == *"$skip"* ]]; then
             echo "Skipping attic push for $path (matched $skip)" >&2
@@ -89,6 +94,7 @@ in
     services.buildbot-nix.master.postBuildSteps = lib.mapAttrsToList (name: server: {
       name = "Push to attic - ${name}";
       environment = {
+        BUILDBOT_CACHE_STATUS = interpolate "%(prop:cacheStatus)s";
         ATTIC_NAME = name;
         ATTIC_HOST = server.host;
         ATTIC_CACHE = server.cacheName;
