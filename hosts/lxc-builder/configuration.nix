@@ -11,6 +11,7 @@
   ];
 
   profiles.server.enable = true;
+  services.nix-diffs.enable = true;
 
   lxc = {
     enable = true;
