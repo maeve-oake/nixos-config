@@ -47,14 +47,6 @@
       flake = "/etc/nixos";
     };
 
-    age.secrets.gh-miaow-linux = {
-      owner = config.me.username;
-    };
-
-    nix.extraOptions = ''
-      !include ${config.age.secrets.gh-miaow-linux.path}
-    '';
-
     # pkgs
     # virtualisation.virtualbox.host.enable = true;
     services.fwupd.enable = true;

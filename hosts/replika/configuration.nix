@@ -3,9 +3,6 @@
   pkgs,
   ...
 }:
-let
-  miaow = inputs.miaow.packages.${pkgs.system}.default;
-in
 {
   imports = [
     inputs.self.nixosModules.default
@@ -20,7 +17,7 @@ in
     gnome = {
       enable = true;
       dockItems.middle = [ "ke.oa.miaow.desktop" ];
-      shellExtensions = [ miaow ];
+      shellExtensions = [ pkgs.miaow ];
     };
     work-vpn.enable = true;
   };

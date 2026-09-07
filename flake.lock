@@ -124,21 +124,6 @@
     },
     "crane_2": {
       "locked": {
-        "lastModified": 1785782307,
-        "narHash": "sha256-MPaRdVkf6zZP5fCPxYCi8Dr4pZzgmXzg8T9nVEbp3Mw=",
-        "owner": "ipetkov",
-        "repo": "crane",
-        "rev": "2c71e194474d13de031d729b729c968ddbe3507f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ipetkov",
-        "repo": "crane",
-        "type": "github"
-      }
-    },
-    "crane_3": {
-      "locked": {
         "lastModified": 1781825982,
         "narHash": "sha256-SlXKwIRIhrOSAcTjCB3ftPLzJWZStQIPS7J1FlZPnKk=",
         "owner": "ipetkov",
@@ -468,7 +453,7 @@
     },
     "lanzaboote": {
       "inputs": {
-        "crane": "crane_3",
+        "crane": "crane_2",
         "nixpkgs": [
           "nix-things",
           "nixpkgs"
@@ -488,27 +473,6 @@
         "owner": "nix-community",
         "ref": "v1.1.0",
         "repo": "lanzaboote",
-        "type": "github"
-      }
-    },
-    "miaow": {
-      "inputs": {
-        "crane": "crane_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1786909753,
-        "narHash": "sha256-OrjOgdKbT3nuwMuVKuZsMHMQbo0P10jNCRRRwqdpxvo=",
-        "owner": "oake",
-        "repo": "miaow-linux",
-        "rev": "24ce18fbf1d73e3e9ca751141125e98b997599d4",
-        "type": "github"
-      },
-      "original": {
-        "owner": "oake",
-        "repo": "miaow-linux",
         "type": "github"
       }
     },
@@ -597,11 +561,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788720311,
-        "narHash": "sha256-zTmNJ7RyE1ZxYvPcCwXsoaoIu3Gw4b/mb5P9+hvetn0=",
+        "lastModified": 1788792862,
+        "narHash": "sha256-9ehlLbmjgnutIFUQR3408Oo2olCl2cdRmG6U8JfUB+s=",
         "owner": "oake",
         "repo": "nix-things",
-        "rev": "40a9b1adea48b4964b1094a16ed289c18e3d0fbb",
+        "rev": "78904f727e4968ecb3d16ed2ea3dd76cd9cd9c29",
         "type": "github"
       },
       "original": {
@@ -717,7 +681,6 @@
         "decider-efi": "decider-efi",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
-        "miaow": "miaow",
         "nix-darwin": "nix-darwin",
         "nix-flatpak": "nix-flatpak",
         "nix-homebrew": "nix-homebrew",
