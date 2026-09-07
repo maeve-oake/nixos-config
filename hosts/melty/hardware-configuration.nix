@@ -5,6 +5,8 @@
 {
   hardware.enableRedistributableFirmware = lib.mkDefault true;
 
+  hardware.asahi.enable = true;
+
   boot.initrd.availableKernelModules = [ "usb_storage" ];
 
   fileSystems = {
