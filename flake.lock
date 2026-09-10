@@ -561,11 +561,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788792862,
-        "narHash": "sha256-9ehlLbmjgnutIFUQR3408Oo2olCl2cdRmG6U8JfUB+s=",
+        "lastModified": 1789073410,
+        "narHash": "sha256-FmaGMiZYBptDZkKdawyrpBPu0OKkXOOCJXLdtLuTFeU=",
         "owner": "oake",
         "repo": "nix-things",
-        "rev": "78904f727e4968ecb3d16ed2ea3dd76cd9cd9c29",
+        "rev": "d7bb91a0107d80b63b542290c34e61bc9714c7d5",
         "type": "github"
       },
       "original": {
