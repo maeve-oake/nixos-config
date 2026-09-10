@@ -16,15 +16,15 @@
     enable = true;
     samba.enable = true;
     wifi.enable = true;
-  };
-
-  # DE
-  profiles.workstation.gnome = {
-    enable = true;
-    dockItems.middle = [
-      "steam.desktop"
-    ];
-    powerButtonAction = "interactive";
+    gnome = {
+      enable = true;
+      dockItems.middle = [
+        "ke.oa.miaow.desktop"
+        "steam.desktop"
+      ];
+      shellExtensions = [ pkgs.miaow ];
+      powerButtonAction = "interactive";
+    };
   };
 
   services.logind.settings.Login = {
