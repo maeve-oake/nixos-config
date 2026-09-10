@@ -1,4 +1,6 @@
 {
+  dateTime.timeZone = "GMT Standard/Daylight Time";
+
   callManagers = [
     {
       address = "$SIP_DOMAIN";
