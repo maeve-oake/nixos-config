@@ -34,6 +34,12 @@
         speedDialNumber = "100";
       }
       {
+        button = 5;
+        kind = "blf-speed-dial";
+        label = "Anya DECT";
+        speedDialNumber = "201";
+      }
+      {
         button = 6;
         kind = "blf-speed-dial";
         label = "Maeve mobile";
