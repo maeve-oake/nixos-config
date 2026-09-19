@@ -23,11 +23,12 @@
         "steam.desktop"
       ];
       shellExtensions = [ pkgs.miaow ];
-      powerButtonAction = "interactive";
+      powerButtonAction = "suspend";
     };
   };
 
   services.logind.settings.Login = {
+    HandlePowerKey = "suspend";
     "PowerKeyIgnoreInhibited" = true;
   };
 
