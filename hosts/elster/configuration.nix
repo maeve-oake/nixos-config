@@ -102,6 +102,11 @@
     };
   };
 
+  monitoring = {
+    metrics.enable = true;
+    metrics.gpu = "nvidia";
+  };
+
   # Do not remove
   system.stateVersion = "24.05";
 }

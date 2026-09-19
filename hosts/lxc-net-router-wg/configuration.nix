@@ -1,5 +1,6 @@
 {
   inputs,
+  lib,
   ...
 }:
 {
@@ -18,6 +19,11 @@
   };
 
   deploy.fqdn = "10.64.3.6";
+
+  monitoring.metrics.namePrefixes = lib.mkForce [
+    "vineta"
+    "prox-wg"
+  ];
 
   system.stateVersion = "25.11";
 }

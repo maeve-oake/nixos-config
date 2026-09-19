@@ -26,5 +26,14 @@
       useSettings = false;
       usePersistenced = false;
     };
+
+    monitoring.metrics = {
+      enable = true;
+      namePrefixes = lib.mkIf config.lxc.enable (
+        lib.mkAfter [
+          (builtins.head (lib.splitString "." config.lxc.pve.host))
+        ]
+      );
+    };
   };
 }
