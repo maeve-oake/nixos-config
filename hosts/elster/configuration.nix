@@ -56,11 +56,8 @@
     enable = true;
   };
   hardware.nvidia = {
-    modesetting.enable = true;
-    powerManagement.enable = false;
-    powerManagement.finegrained = false;
     open = true;
-    nvidiaSettings = true;
+    powerManagement.enable = true;
   };
 
   # camera
