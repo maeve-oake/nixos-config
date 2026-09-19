@@ -67,7 +67,10 @@
       ++ onlyX86 [
         (microsoft-edge.override {
           commandLineArgs = [
-            "--enable-features=TouchpadOverscrollHistoryNavigation,Vulkan,VaapiVideoDecoder,VaapiIgnoreDriverChecks,DefaultANGLEVulkan,VulkanFromANGLE"
+            (
+              "--enable-features=TouchpadOverscrollHistoryNavigation,VaapiVideoDecoder,VaapiIgnoreDriverChecks"
+              + lib.optionalString (!config.hardware.nvidia.enabled) ",Vulkan,DefaultANGLEVulkan,VulkanFromANGLE"
+            )
             "--disable-features=GlobalShortcutsPortal,msFeatureGroupNewLookAndFeelHoldout" # https://issues.chromium.org/issues/404298968
           ];
         })
