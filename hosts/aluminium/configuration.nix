@@ -2,6 +2,7 @@
   inputs,
   pkgs,
   config,
+  lib,
   ...
 }:
 {
@@ -33,6 +34,9 @@
 
   # fingerprint & login
   security.polkit.enable = true;
+
+  # decouple gnome keyring from pam
+  security.pam.services.login.enableGnomeKeyring = lib.mkForce false;
 
   # packages
   environment.systemPackages = with pkgs; [
