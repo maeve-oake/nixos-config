@@ -1,0 +1,7 @@
+<CiscoIPPhoneMenu>
+  <Title>Site Directory</Title>
+  <Prompt>Select a destination</Prompt>
+  <MenuItem><Name>TOUCH.XML</Name><URL>http://elster.lan.ci:8000/touch.xml</URL></MenuItem>
+  <SoftKeyItem><Name>Select</Name><URL>SoftKey:Select</URL><Position>1</Position></SoftKeyItem>
+  <SoftKeyItem><Name>Exit</Name><URL>SoftKey:Exit</URL><Position>4</Position></SoftKeyItem>
+</CiscoIPPhoneMenu>

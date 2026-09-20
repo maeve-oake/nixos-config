@@ -59,4 +59,6 @@
       }
     ];
   };
+
+  urls.services = "http://elster.lan.ci:8000/app.xml";
 }
