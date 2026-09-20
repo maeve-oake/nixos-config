@@ -1,0 +1,12 @@
+<CiscoIPPhoneGraphicFileMenu WindowMode="Normal">
+  <Title>title</Title>
+  <Prompt>Prompt</Prompt>
+  <LocationX>0</LocationX>
+  <LocationY>0</LocationY>
+  <URL>http://elster.lan.ci:8000/bliss.png</URL>
+  <MenuItem>
+    <Name>off</Name>
+    <URL>Display:Off:0</URL>
+    <TouchArea X1="0" Y1="0" X2="32" Y2="32"/>
+  </MenuItem>
+</CiscoIPPhoneGraphicFileMenu>
