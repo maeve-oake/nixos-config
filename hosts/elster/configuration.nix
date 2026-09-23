@@ -62,7 +62,7 @@
   };
 
   # camera
-  hardware.isight.enable = true;
+  # hardware.isight.enable = true;
 
   # packages
   programs.steam.enable = true;
