@@ -45,6 +45,8 @@
       btop
       usbutils
       pciutils
+
+      plezy
     ];
   };
 }
