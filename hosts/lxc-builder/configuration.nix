@@ -13,6 +13,21 @@
   profiles.server.enable = true;
   services.nix-diffs.enable = true;
 
+  age.secrets = {
+    "lxc-builder/deploy-ssh-key" = { };
+    "lxc-builder/deploy-attic-token" = { };
+  };
+
+  services.deployer = {
+    enable = true;
+    githubRepo = "maeve-oake/nixos-config";
+    atticServer = "attic.oa.ke";
+    atticCache = "nixos";
+    upstreamCaches = [ ];
+    atticTokenFile = config.age.secrets."lxc-builder/deploy-attic-token".path;
+    sshKeyFile = config.age.secrets."lxc-builder/deploy-ssh-key".path;
+  };
+
   lxc = {
     enable = true;
     cores = 10;
