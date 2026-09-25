@@ -7,6 +7,12 @@
 }:
 let
   cfg = config.profiles.workstation.gnome;
+  asset =
+    name:
+    builtins.path {
+      path = inputs.self + "/assets/${name}";
+      inherit name;
+    };
 
   defaultShellExtensions = with pkgs.gnomeExtensions; [
     user-themes
@@ -114,7 +120,7 @@ in
     boot.postBootCommands =
       let
         username = config.me.username;
-        pfp = inputs.self + /assets/pfp.jpg;
+        pfp = asset "pfp.jpg";
       in
       ''
         echo -e "[User]\nIcon=${pfp}\n" > /var/lib/AccountsService/users/${username}
@@ -182,7 +188,7 @@ in
               name = "Lion";
             };
             "org/gnome/desktop/background" = {
-              picture-uri-dark = "file://${inputs.self + /assets/wallpaper.jpg}";
+              picture-uri-dark = "file://${asset "wallpaper.jpg"}";
             };
             "org/gnome/shell/extensions/just-perfection" = {
               events-button = true;
