@@ -1,3 +1,19 @@
+--- a/buildbot_nix/nix_eval.py
++++ b/buildbot_nix/nix_eval.py
+@@ -259,6 +259,12 @@
+                 "--gc-roots-dir",
+                 str(self.drv_gcroots_dir),
+                 "--force-recurse",
+                 "--check-cache-status",
++                "--option",
++                "substituters",
++                "",
++                "--option",
++                "extra-substituters",
++                "",
+                 *(["--show-trace"] if self.nix_eval_config.show_trace else []),
+                 "--flake",
+                 f"{branch_config.flake_dir}#{branch_config.attribute}",
 --- a/buildbot_nix/build_trigger.py
 +++ b/buildbot_nix/build_trigger.py
 @@ -200,6 +200,8 @@
