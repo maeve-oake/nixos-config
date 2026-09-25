@@ -8,7 +8,7 @@
 let
   interpolate = inputs.buildbot-nix.lib.interpolate;
   packages = config.services.buildbot-nix.packages;
-  saveSnapshots = pkgs.writeShellScript "save-build-snapshots" ''
+  saveSnapshots = pkgs.writeShellScriptBin "save-build-snapshots" ''
     set -euo pipefail
     project="$1"
     revision="$2"
@@ -36,6 +36,8 @@ in
         patches = (old.patches or [ ]) ++ [ ./buildbot-snapshots.patch ];
       });
 
+  systemd.services.buildbot-worker.path = [ saveSnapshots ];
+
   systemd.tmpfiles.rules = [
     "d /var/lib/nix-diffs 0755 root root - -"
     "d /var/lib/nix-diffs/snapshots 0755 buildbot-worker buildbot-worker - -"
@@ -45,7 +47,7 @@ in
     {
       name = "Save closure snapshots";
       command = [
-        "${saveSnapshots}"
+        "save-build-snapshots"
         (interpolate "%(prop:snapshot_project)s")
         (interpolate "%(prop:snapshot_revision)s")
         (interpolate "%(prop:attr)s")

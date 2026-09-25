@@ -49,8 +49,8 @@
       topic = "oake-builder";
     };
 
-    evalWorkerCount = 4;
-    evalMaxMemorySize = 4096; # MB per evalWorker
+    evalWorkerCount = 6;
+    evalMaxMemorySize = 3072; # MB per evalWorker
 
     branches = {
       all-branches = {
