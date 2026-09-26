@@ -12,7 +12,7 @@
   config = lib.mkIf config.profiles.server.enable {
     lxc.pve.host = lib.mkDefault ("mynah." + config.me.lanDomain);
 
-    deploy.auto.enable = lib.mkDefault true;
+    infra.deploy.auto = lib.mkDefault true;
 
     programs.nix-index.enable = false;
 

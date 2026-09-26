@@ -46,11 +46,6 @@ in
                 default = 5;
                 description = "Number of upload jobs to run in parallel.";
               };
-              skippedPathSubstrings = mkOption {
-                type = types.listOf types.str;
-                default = [ ];
-                description = "List of path substrings to skip during push.";
-              };
             };
           }
         );
@@ -67,24 +62,6 @@ in
         [ "''${ATTIC_IGNORE_UPSTREAM:-0}" = "1" ] && extra+=(--ignore-upstream-cache-filter)
         ${pkgs.attic-client}/bin/attic push "$ATTIC_NAME:$ATTIC_CACHE" -j "$ATTIC_JOBS" ''${extra[@]} "$@"
       '')
-      (pkgs.writeShellScriptBin "attic-login-push-filter" ''
-        set -eu -o pipefail
-        path="$1"
-        shift
-        if [[ "''${BUILDBOT_CACHE_STATUS:-}" == "local" ]]; then
-          echo "Skipping attic push for $path (already local at evaluation)" >&2
-          exit 0
-        fi
-
-        for skip in "$@"; do
-          if [[ "$path" == *"$skip"* ]]; then
-            echo "Skipping attic push for $path (matched $skip)" >&2
-            exit 0
-          fi
-        done
-
-        attic-login-push "$path"
-      '')
     ];
 
     systemd.services.buildbot-master.serviceConfig.LoadCredential = lib.mapAttrsToList (
@@ -94,7 +71,6 @@ in
     services.buildbot-nix.master.postBuildSteps = lib.mapAttrsToList (name: server: {
       name = "Push to attic - ${name}";
       environment = {
-        BUILDBOT_CACHE_STATUS = interpolate "%(prop:cacheStatus)s";
         ATTIC_NAME = name;
         ATTIC_HOST = server.host;
         ATTIC_CACHE = server.cacheName;
@@ -103,10 +79,9 @@ in
         ATTIC_TOKEN = interpolate "%(secret:attic-token-${name})s";
       };
       command = [
-        "attic-login-push-filter"
+        "attic-login-push"
         (interpolate "result-%(prop:attr)s")
-      ]
-      ++ server.skippedPathSubstrings;
+      ];
       warnOnly = true;
     }) cfg.attic.targets;
   };
