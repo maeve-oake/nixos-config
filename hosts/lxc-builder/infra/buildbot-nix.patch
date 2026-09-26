@@ -1,0 +1,239 @@
+--- a/buildbot_nix/nix_eval.py
++++ b/buildbot_nix/nix_eval.py
+@@ -60,6 +60,7 @@
+     cache_failed_builds: bool = False
+ 
+     show_trace: bool = False
++    infra_uploads: list[Any] | None = None
+ 
+ 
+ class GitLocalPrMerge(steps.Git):
+@@ -149,6 +150,9 @@
+             return await self.parseCommitDescription()
+         finally:
+             await self._git_auth.remove_auth_files_if_needed(auth_workdir)
++
++
++from .infra_hooks import evaluation, evaluation_failures
+ 
+ 
+ class NixEvalCommand(buildstep.ShellMixin, steps.BuildStep):
+@@ -188,39 +192,13 @@
+         event_key = ("builds", str(self.build.buildid), event)
+         self.master.mq.produce(event_key, copy.deepcopy(build))
+ 
++    @evaluation_failures
+     async def run(self) -> int:
+         await self.produce_event(CombinedBuildEvent.STARTED_NIX_EVAL.value, None)
+ 
+         branch_config: BranchConfig = await BranchConfig.extract_during_step(self)
+ 
+-        # Check if this is a rebuild and try to reuse evaluation from original build
+-        if not self.build or not self.build.requests:
+-            log.info("No build requests available, skipping rebuild check")
+-        else:
+-            buildset_id = self.build.requests[0].bsid
+-            if buildset_id is not None:
+-                buildset = await self.master.data.get(("buildsets", str(buildset_id)))
+-                if (
+-                    buildset
+-                    and (rebuilt_buildid := buildset.get("rebuilt_buildid")) is not None
+-                ):
+-                    # This is a rebuild - try to reuse evaluation from original build
+-                    jobs = await self._reconstruct_jobs_from_rebuild(rebuilt_buildid)
+-                    if jobs is not None:
+-                        # Successfully reconstructed jobs, process them
+-                        await self._process_jobs_and_trigger_builds(jobs, branch_config)
+-                        result = util.SUCCESS
+-                        if self.build:
+-                            await CombinedBuildEvent.produce_event_for_build(
+-                                self.master,
+-                                CombinedBuildEvent.FINISHED_NIX_EVAL,
+-                                self.build,
+-                                result,
+-                                warnings_count=self.warnings_count,
+-                            )
+-                        return result
+-
+-        # Either not a rebuild or reconstruction failed - run full evaluation
++        # Always evaluate the complete jobset, including already-local host checks.
+         result = await self._run_nix_eval_jobs(branch_config)
+ 
+         if self.build:
+@@ -260,6 +238,7 @@
+                 str(self.drv_gcroots_dir),
+                 "--force-recurse",
+                 "--check-cache-status",
++                "--meta",
+                 *(["--show-trace"] if self.nix_eval_config.show_trace else []),
+                 "--flake",
+                 f"{branch_config.flake_dir}#{branch_config.attribute}",
+@@ -300,6 +279,8 @@
+         self, jobs: list[NixEvalJob], branch_config: BranchConfig
+     ) -> None:
+         """Process jobs and trigger builds. Used by both normal eval and rebuild paths."""
++        await evaluation(self, jobs, branch_config)
++
+         failed_jobs: list[NixEvalJobError] = []
+         successful_jobs: list[NixEvalJobSuccess] = []
+ 
+@@ -334,6 +315,7 @@
+                         project=self.project,
+                         trigger_config=trigger_config,
+                         jobs_config=jobs_config,
++                        infra_uploads=self.nix_eval_config.infra_uploads,
+                         nix_attr_prefix=branch_config.attribute,
+                         name="build flake",
+                     ),
+--- a/buildbot_nix/nix_build.py
++++ b/buildbot_nix/nix_build.py
+@@ -70,12 +70,16 @@
+ 
+     post_build_steps: list[steps.BuildStep] | list[models.PostBuildStep]
+     branch_config_dict: models.BranchConfigDict
++    infra_upload_steps: list[str] | None = None
+     outputs_path: Path | None = None
+     max_silent_time: int = 60 * 20  # stop stuck builds after 20 minutes
+     timeout: int = 60 * 60 * 3  # 3 hours, defaults to 20 minutes
+     # We increase this over the default since the build output might end up in a different `nix build`.
+ 
+ 
++from .infra_hooks import built, ReportUploads
++
++
+ class NixBuildCommand(buildstep.ShellMixin, steps.BuildStep):
+     """Builds a nix derivation."""
+ 
+@@ -85,10 +89,15 @@
+ 
+     async def run(self) -> int:
+         # run `nix build`
+-        cmd: remotecommand.RemoteCommand = await self.makeRemoteShellCommand()
+-        await self.runCommand(cmd)
+-
+-        return cmd.results()
++        cmd: remotecommand.RemoteCommand = await self.makeRemoteShellCommand(collectStderr=True)
++        try:
++            await self.runCommand(cmd)
++        except Exception as exc:
++            await built(self, util.EXCEPTION, str(exc))
++            raise
++        result = cmd.results()
++        await built(self, result, getattr(cmd, "stderr", ""))
++        return result
+ 
+ 
+ class UpdateBuildOutput(steps.BuildStep):
+@@ -272,6 +281,13 @@
+             logEnviron=False,
+         ),
+         *build_config.post_build_steps,
++        ReportUploads(
++            upload_steps=build_config.infra_upload_steps or [],
++            name="Report upload readiness",
++            alwaysRun=True,
++            warnOnFailure=True,
++            flunkOnFailure=False,
++        ),
+         Trigger(
+             name="Register gcroot",
+             waitForFinish=True,
+--- a/buildbot_nix/build_trigger.py
++++ b/buildbot_nix/build_trigger.py
+@@ -53,6 +53,8 @@
+     cache_failed_builds: bool
+     failed_build_report_limit: int
+ 
++
++from .infra_hooks import skipped, synthetic_failure, cancelled, finish_skipped
+ 
+ class BuildTrigger(buildstep.ShellMixin, steps.BuildStep):
+     """Dynamic trigger that creates a build for every attribute."""
+@@ -102,8 +104,10 @@
+         trigger_config: TriggerConfig,
+         jobs_config: JobsConfig,
+         nix_attr_prefix: str = "checks",
++        infra_uploads: list[Any] | None = None,
+         **kwargs: Any,
+     ) -> None:
++        self.infra_uploads = infra_uploads or []
+         self.project = project
+         self.trigger_config = trigger_config
+         self.jobs_config = jobs_config
+@@ -127,6 +131,7 @@
+         super().__init__(**kwargs)
+ 
+     def interrupt(self, reason: str | Failure) -> None:  # noqa: ARG002
++        defer.ensureDeferred(cancelled(self))
+         # We cancel the buildrequests, as the data api handles
+         # both cases:
+         # - build started: stop is sent,
+@@ -200,6 +205,16 @@
+         props.setProperty("status_name", f"nix-build {name}", source)
+         props.setProperty("virtual_builder_tags", "", source)
+         props.setProperty("attr", job.attr, source)
++        props.setProperty("infra_repository", project.name, source)
++        props.setProperty("infra_revision", self.getProperty("got_revision"), source)
++        props.setProperty("infra_outputs", getattr(job, "outputs", {}), source)
++        props.setProperty("infra_enabled", self.getProperty("infra_enabled", False), source)
++        props.setProperty(
++            "infra_mappings",
++            [m for m in (self.getProperty("infra_mappings") or [])
++             if set(m["checks"]) & set(getattr(job, "outputs", {}).values())],
++            source,
++        )
+         props.setProperty("default_branch", project.default_branch, source)
+ 
+         if isinstance(job, NixEvalJobSuccess):
+@@ -491,6 +506,8 @@
+         if not isinstance(job, NixEvalJobSuccess):
+             return
+ 
++        await synthetic_failure(self, job, brids, result)
++
+         # Handle failure-specific logic
+         if result != SUCCESS:
+             # Update failed builds cache if needed
+@@ -689,6 +706,8 @@
+ 
+         # Schedule ready jobs and get list of skipped jobs
+         skipped_jobs = await self._schedule_ready_jobs(ctx, build_props)
++
++        await skipped(self, skipped_jobs)
+ 
+         # Update closures for all skipped jobs (they're done and don't need building)
+         for job in skipped_jobs:
+@@ -783,6 +802,7 @@
+                 self.build,
+                 overall_result,
+             )
++        finish_skipped(self)
+         ctx.scheduler_log.addStdout("Done!\n")
+         return overall_result
+ 
+--- a/buildbot_nix/models.py
++++ b/buildbot_nix/models.py
+@@ -424,6 +424,7 @@
+ 
+ 
+ class NixEvalJobSuccess(BaseModel):
++    meta: dict[str, Any] = Field(default_factory=dict)
+     attr: str
+     attrPath: list[str]  # noqa: N815
+     cacheStatus: CacheStatus | None = None  # noqa: N815
+--- a/buildbot_nix/__init__.py
++++ b/buildbot_nix/__init__.py
+@@ -153,11 +153,13 @@
+                             or multiprocessing.cpu_count(),
+                             max_memory_size=self.config.eval_max_memory_size,
+                             eval_lock=eval_lock,
++                            infra_uploads=self.config.post_build_steps,
+                             gcroots_user=self.config.gcroots_user,
+                             cache_failed_builds=self.config.cache_failed_builds,
+                             show_trace=self.config.show_trace_on_failure,
+                         ),
+                         build_config=BuildConfig(
++                            infra_upload_steps=[x.name for x in self.config.post_build_steps if "ATTIC_HOST" in x.environment],
+                             post_build_steps=[
+                                 x.to_buildstep() for x in self.config.post_build_steps
+                             ],

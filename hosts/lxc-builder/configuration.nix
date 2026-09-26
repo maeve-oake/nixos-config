@@ -11,21 +11,18 @@
   ];
 
   profiles.server.enable = true;
-  services.nix-diffs.enable = true;
 
   age.secrets = {
     "lxc-builder/deploy-ssh-key" = { };
-    "lxc-builder/deploy-attic-token" = { };
   };
 
-  services.deployer = {
-    enable = true;
-    githubRepo = "maeve-oake/nixos-config";
-    atticServer = "attic.oa.ke";
-    atticCache = "nixos";
-    upstreamCaches = [ ];
-    atticTokenFile = config.age.secrets."lxc-builder/deploy-attic-token".path;
-    sshKeyFile = config.age.secrets."lxc-builder/deploy-ssh-key".path;
+  infra = {
+    deployer = {
+      enable = true;
+      sshKeyFile = config.age.secrets."lxc-builder/deploy-ssh-key".path;
+    };
+    hub.enable = true;
+    hubUrl = "http://localhost:${toString config.infra.hub.httpPort}";
   };
 
   lxc = {
@@ -40,7 +37,7 @@
     config.me.wifeKey
   ];
 
-  deploy.sshKeys = [
+  infra.deploy.sshKeys = [
     config.me.deployKey
     config.me.wifeKey # anya manages lxc-builder so needs to deploy to it
   ];
