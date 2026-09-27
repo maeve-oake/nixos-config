@@ -18,7 +18,10 @@
     pve.host = "10.64.0.2";
   };
 
-  infra.deploy.fqdn = "wg-router.me.ow";
+  infra.deploy.fqdn = [
+    "10.64.3.6"
+    "wg-router.me.ow"
+  ];
 
   monitoring.metrics.namePrefixes = lib.mkForce [
     "vineta"

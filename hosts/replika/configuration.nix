@@ -10,6 +10,11 @@
     ./hardware-configuration.nix
   ];
 
+  infra.deploy = {
+    auto = true;
+    fqdn = lib.mkOptionDefault (lib.mkAfter [ "replika.me.ow" ]);
+  };
+
   profiles.workstation = {
     enable = true;
     laptop.enable = true;

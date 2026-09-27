@@ -11,6 +11,11 @@
     ./hardware-configuration.nix
   ];
 
+  infra.deploy = {
+    auto = true;
+    fqdn = lib.mkOptionDefault (lib.mkAfter [ "aluminium.me.ow" ]);
+  };
+
   profiles.workstation = {
     enable = true;
     laptop.enable = true;
