@@ -12,6 +12,8 @@
     # ./network.nix
   ];
 
+  infra.deploy.auto = true;
+
   profiles.workstation = {
     enable = true;
     samba.enable = true;
