@@ -12,6 +12,7 @@ in
   age.secrets = {
     "lxc-builder/deploy-ssh-key" = { };
     "lxc-builder/github-public-token" = { };
+    "lxc-builder/infra-oai-token" = { };
   };
 
   infra = {
@@ -22,6 +23,7 @@ in
     hub = {
       enable = true;
       githubTokenFile = config.age.secrets."lxc-builder/github-public-token".path;
+      oaiTokenFile = config.age.secrets."lxc-builder/infra-oai-token".path;
     };
     hubUrl = "http://localhost:${toString config.infra.hub.httpPort}";
   };
