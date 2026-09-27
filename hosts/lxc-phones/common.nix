@@ -2,17 +2,7 @@
   dateTime.timeZone = "GMT Standard/Daylight Time";
 
   vendor.display = {
-    onTime = "10:00";
-    onDuration = "12:00";
     idleTimeout = "00:15";
-    # yes, i want the phones ONLY on during weekends.
-    inactiveDays = [
-      1
-      2
-      3
-      4
-      5
-    ];
   };
 
   callManagers = [
