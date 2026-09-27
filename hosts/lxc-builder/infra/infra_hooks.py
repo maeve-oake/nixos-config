@@ -32,6 +32,34 @@ async def context(step, repo=None):
     return repo, rev, url
 
 
+async def failure_log(step, build, recorded):
+    """Return the actual step log URL and its last 100 kB."""
+    logs = await step.master.data.get(("steps", str(recorded["stepid"]), "logs"))
+    logs = sorted(logs, key=lambda log: log["name"] not in ("nix_error", "stdio"))
+    if not logs:
+        return "", ""
+    log = logs[0]
+    url = getURLForBuild(step.master, build["builderid"], build["number"])
+    url += f'/steps/{recorded["number"]}/logs/{log["slug"]}'
+    end, data = log["num_lines"], b""
+    while end > 0 and len(data) < 100000:
+        start = max(0, end - 1000)
+        chunk = await step.master.db.logs.getLogLines(log["logid"], start, end - 1)
+        if log["type"] == "s":
+            chunk = "".join(line[1:] for line in chunk.splitlines(keepends=True))
+        data = chunk.encode() + data
+        end = start
+    return url, data[-100000:].decode("utf-8", errors="ignore")
+
+
+async def current_failure_log(step):
+    for log in step.logs.values():
+        await log.flush()
+    build = await step.master.data.get(("builds", str(step.build.buildid)))
+    recorded = {"stepid": step.stepid, "number": step.number}
+    return await failure_log(step, build, recorded)
+
+
 async def evaluation(step, jobs, branch_config):
     try:
         repo, rev, url = await context(step, step.project.name)
@@ -105,14 +133,9 @@ async def failed_evaluation(step):
         return
     try:
         repo, rev, url = await context(step, step.project.name)
+        url, detail = await current_failure_log(step)
         await threads.deferToThread(
-            Reporter().evaluation,
-            repo,
-            rev,
-            {},
-            [],
-            {"Evaluation": "Evaluation failed; see Buildbot log"},
-            url,
+            Reporter().evaluation, repo, rev, {}, [], {"Evaluation": detail}, url,
         )
     except Exception as exc:
         await warning(step, exc)
@@ -124,6 +147,9 @@ async def built(step, result, detail=""):
         if not step.getProperty("infra_enabled"):
             return
         step.setProperty("infra_build_succeeded", result == util.SUCCESS, "infra")
+        if result != util.SUCCESS:
+            url, logged = await current_failure_log(step)
+            detail = logged or detail
         paths = [p for p in (step.getProperty("infra_outputs") or {}).values() if p]
         if not repo or not rev or not paths:
             raise RuntimeError("Missing infra build context")
@@ -166,10 +192,28 @@ async def skipped(step, jobs):
 async def synthetic_failure(step, job, brids, result):
     """Cached/dependency/cancelled builds never run NixBuildCommand."""
     step.infra_done = getattr(step, "infra_done", set()) | {job.attr}
-    if (
-        result in (util.SUCCESS, util.WARNINGS)
-        or not hasattr(job, "outputs")
-    ):
+    if result in (util.SUCCESS, util.WARNINGS):
+        return
+    if hasattr(job, "error"):
+        try:
+            repo, rev, _ = await context(step, step.project.name)
+            for brid in brids.values():
+                for build in await step.master.db.builds.getBuilds(buildrequestid=brid):
+                    recorded = await step.master.data.get(("builds", str(build.id), "steps"))
+                    for failed in recorded:
+                        if failed.get("results") not in (util.FAILURE, util.EXCEPTION):
+                            continue
+                        url, _ = await failure_log(step, {"builderid": build.builderid, "number": build.number}, failed)
+                        if url:
+                            await threads.deferToThread(
+                                Reporter().event, repo, rev, "evaluation-log", "failed",
+                                errors={step.nix_attr_prefix + "." + job.attr: job.error}, log_url=url,
+                            )
+                            return
+        except Exception as exc:
+            await warning(step, exc)
+        return
+    if not hasattr(job, "outputs"):
         return
     try:
         repo, rev, url = await context(step, step.project.name)
@@ -183,7 +227,11 @@ async def synthetic_failure(step, job, brids, result):
                     s["name"] == "Build flake attr" and s.get("complete") for s in steps
                 ):
                     return  # actual Nix result already reported, separately from post-build warnings
-                url = getURLForBuild(step.master, build.builderid, build.number)
+                for failed in steps:
+                    if failed.get("results") in (util.FAILURE, util.EXCEPTION):
+                        url, _ = await failure_log(step, {"builderid": build.builderid, "number": build.number}, failed)
+                        if url:
+                            break
         await threads.deferToThread(
             Reporter().build,
             repo,

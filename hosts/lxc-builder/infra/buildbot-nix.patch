@@ -112,14 +112,14 @@
 -        await self.runCommand(cmd)
 -
 -        return cmd.results()
-+        cmd: remotecommand.RemoteCommand = await self.makeRemoteShellCommand(collectStderr=True)
++        cmd: remotecommand.RemoteCommand = await self.makeRemoteShellCommand()
 +        try:
 +            await self.runCommand(cmd)
 +        except Exception as exc:
 +            await built(self, util.EXCEPTION, str(exc))
 +            raise
 +        result = cmd.results()
-+        await built(self, result, getattr(cmd, "stderr", ""))
++        await built(self, result)
 +        return result
  
  
@@ -186,11 +186,11 @@
  
          if isinstance(job, NixEvalJobSuccess):
 @@ -491,6 +506,8 @@
++        await synthetic_failure(self, job, brids, result)
++
          if not isinstance(job, NixEvalJobSuccess):
              return
  
-+        await synthetic_failure(self, job, brids, result)
-+
          # Handle failure-specific logic
          if result != SUCCESS:
              # Update failed builds cache if needed

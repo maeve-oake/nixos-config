@@ -80,7 +80,7 @@ class Reporter:
                 "build",
                 "success" if success else "failed",
                 artifact=path,
-                detail=detail[-32768:],
+                detail=detail.encode()[-100000:].decode("utf-8", errors="ignore"),
                 log_url=log_url,
             )
         if not success:
@@ -111,7 +111,7 @@ class Reporter:
         for root in sorted(roots):
             self.event(
                 repo, rev, "ready", "success" if success else "failed",
-                artifact=root, log_url=log_url, detail=detail[-32768:],
+                artifact=root, log_url=log_url, detail=detail.encode()[-100000:].decode("utf-8", errors="ignore"),
             )
 
     def command(self, args, **kwargs):

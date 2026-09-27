@@ -9,6 +9,25 @@ let
 
 in
 {
+  age.secrets = {
+    "lxc-builder/deploy-ssh-key" = { };
+    "lxc-builder/github-public-token" = { };
+    "lxc-builder/infra-oai-token" = { };
+  };
+
+  infra = {
+    deployer = {
+      enable = true;
+      sshKeyFile = config.age.secrets."lxc-builder/deploy-ssh-key".path;
+    };
+    hub = {
+      enable = true;
+      githubTokenFile = config.age.secrets."lxc-builder/github-public-token".path;
+      oaiTokenFile = config.age.secrets."lxc-builder/infra-oai-token".path;
+    };
+    hubUrl = "http://localhost:${toString config.infra.hub.httpPort}";
+  };
+
   services.buildbot-nix.packages.buildbot-nix =
     (packages.python.pkgs.callPackage "${inputs.buildbot-nix}/packages/buildbot-nix.nix" {
       buildbot-gitea = packages.buildbot-gitea;

@@ -12,19 +12,6 @@
 
   profiles.server.enable = true;
 
-  age.secrets = {
-    "lxc-builder/deploy-ssh-key" = { };
-  };
-
-  infra = {
-    deployer = {
-      enable = true;
-      sshKeyFile = config.age.secrets."lxc-builder/deploy-ssh-key".path;
-    };
-    hub.enable = true;
-    hubUrl = "http://localhost:${toString config.infra.hub.httpPort}";
-  };
-
   lxc = {
     enable = true;
     cores = 10;
