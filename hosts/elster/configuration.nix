@@ -46,6 +46,11 @@
   # power & sleep
   services.displayManager.gdm.autoSuspend = false;
 
+  # re-enumerate UMC204HD on resume instead of reset-resume (breaks audio)
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="1397", ATTR{idProduct}=="0508", ATTR{power/persist}="0"
+  '';
+
   # fingerprint & login
   services.fprintd = {
     enable = true;
