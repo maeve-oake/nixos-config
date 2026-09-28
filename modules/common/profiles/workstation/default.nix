@@ -36,6 +36,7 @@
             mkhl.direnv
             ms-vscode.cpptools
             openai.chatgpt
+            openai.codex-audio
           ];
       })
 
