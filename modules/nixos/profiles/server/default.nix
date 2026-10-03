@@ -29,13 +29,19 @@
       usePersistenced = false;
     };
 
-    monitoring.metrics = {
-      enable = true;
-      namePrefixes = lib.mkIf config.lxc.enable (
-        lib.mkAfter [
-          (builtins.head (lib.splitString "." config.lxc.pve.host))
-        ]
-      );
+    monitoring = {
+      logs = {
+        system.enable = lib.mkDefault true;
+        docker.enable = lib.mkDefault config.virtualisation.docker.enable;
+      };
+      metrics = {
+        enable = true;
+        namePrefixes = lib.mkIf config.lxc.enable (
+          lib.mkAfter [
+            (builtins.head (lib.splitString "." config.lxc.pve.host))
+          ]
+        );
+      };
     };
   };
 }
