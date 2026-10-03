@@ -46,6 +46,18 @@
         label = "Zoë mobile";
         speedDialNumber = "$SPEEDDIAL_ZOE";
       }
+      {
+        button = 9;
+        kind = "blf-speed-dial";
+        label = "Saul Goodman";
+        speedDialNumber = "67";
+      }
+      {
+        button = 32;
+        kind = "blf-speed-dial";
+        label = "Saul Badman";
+        speedDialNumber = "67";
+      }
     ];
   };
 }
