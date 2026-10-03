@@ -2,6 +2,13 @@
   macAddress = "$MAC_LIVING_ROOM";
   wallpaperFile = ../wallpapers/bliss.png;
 
+  addOnModules = [
+    {
+      index = 1;
+      deviceType = "7916";
+    }
+  ];
+
   sip = {
     phoneLabel = "Sofa";
     buttons = [
