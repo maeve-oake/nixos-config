@@ -108,6 +108,7 @@
   };
 
   monitoring = {
+    logs.system.enable = true;
     metrics.enable = true;
     metrics.gpu = "nvidia";
   };
