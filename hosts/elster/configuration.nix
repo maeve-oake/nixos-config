@@ -9,6 +9,7 @@
     inputs.self.nixosModules.default
     inputs.decider-efi.nixosModules.default
     ./hardware-configuration.nix
+    ./streaming.nix
     # ./network.nix
   ];
 
