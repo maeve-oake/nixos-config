@@ -1,8 +1,9 @@
 {
+  ip = "10.0.4.84";
   macAddress = "$MAC_LIVING_ROOM";
   wallpaperFile = ../wallpapers/bliss.png;
 
-  urls.services = "http://replika.lan.ci:5220/app.xml";
+  urls.services = "http://phones.lan.ci:6971/app.xml";
 
   addOnModules = [
     {
@@ -59,7 +60,7 @@
         button = 10;
         kind = "service-url";
         label = "Floor lamp menu";
-        serviceURI = "http://replika.lan.ci:5220/ha/touch.xml";
+        serviceURI = "http://phones.lan.ci:6971/ha/touch.xml";
       }
       {
         button = 11;
@@ -72,7 +73,7 @@
         button = 12;
         kind = "service-url";
         label = "Air conditioner menu";
-        serviceURI = "http://replika.lan.ci:5220/ha/aircon.xml";
+        serviceURI = "http://phones.lan.ci:6971/ha/aircon.xml";
       }
       {
         button = 32;

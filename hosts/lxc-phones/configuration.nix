@@ -28,12 +28,39 @@ in
 
   profiles.server.enable = true;
 
-  age.secrets."cisco-secrets" = { };
+  age.secrets."lxc-phones/cisco-secrets" = { };
+  age.secrets."lxc-phones/beesly-ha-token" = { };
+  age.secrets."lxc-phones/beesly-ami-password" = { };
+
+  services.beesly = {
+    enable = true;
+    homeAssistant = {
+      url = "https://ha.birb.cc";
+      tokenFile = config.age.secrets."lxc-phones/beesly-ha-token".path;
+      entities = [
+        "light.living_room_floor_lamp"
+        "climate.aircon"
+      ];
+    };
+    ami = {
+      host = "h.koteeq.me";
+      username = "beesly";
+      passwordFile = config.age.secrets."lxc-phones/beesly-ami-password".path;
+      slots = {
+        "01" = "light.living_room_floor_lamp";
+        "02" = "climate.aircon";
+      };
+    };
+  };
 
   services.cisco = {
     enable = true;
+    extraAllowedClients = [
+      "10.0.0.11" # replika
+      "10.0.0.10" # elster
+    ];
 
-    secretsPath = config.age.secrets."cisco-secrets".path;
+    secretsPath = config.age.secrets."lxc-phones/cisco-secrets".path;
 
     ringtones = {
       "Penis" = ./ringtones/penis.raw;
