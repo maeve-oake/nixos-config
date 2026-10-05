@@ -24,7 +24,9 @@
     };
 
     apple-silicon-support = {
-      url = "github:nix-community/nixos-apple-silicon/main";
+      # Temporary pin for the U-Boot DTC fix; return to main once merged.
+      # https://github.com/nix-community/nixos-apple-silicon/pull/559
+      url = "github:nix-community/nixos-apple-silicon/54795b299afbc62bc3e77a1d3526211a99e4e703";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
