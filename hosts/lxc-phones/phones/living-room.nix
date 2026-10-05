@@ -1,6 +1,9 @@
 {
+  ip = "10.0.4.84";
   macAddress = "$MAC_LIVING_ROOM";
   wallpaperFile = ../wallpapers/bliss.png;
+
+  urls.services = "http://phones.lan.ci:6971/app.xml";
 
   addOnModules = [
     {
@@ -49,8 +52,28 @@
       {
         button = 9;
         kind = "blf-speed-dial";
-        label = "Saul Goodman";
-        speedDialNumber = "67";
+        label = "Floor lamp";
+        speedDialNumber = "***1337*01";
+        featureOptionMask = "presence-only";
+      }
+      {
+        button = 10;
+        kind = "service-url";
+        label = "Floor lamp menu";
+        serviceURI = "http://phones.lan.ci:6971/ha/touch.xml";
+      }
+      {
+        button = 11;
+        kind = "blf-speed-dial";
+        label = "Air conditioner";
+        speedDialNumber = "***1337*02";
+        featureOptionMask = "presence-only";
+      }
+      {
+        button = 12;
+        kind = "service-url";
+        label = "Air conditioner menu";
+        serviceURI = "http://phones.lan.ci:6971/ha/aircon.xml";
       }
       {
         button = 32;

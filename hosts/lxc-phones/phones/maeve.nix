@@ -1,4 +1,5 @@
 {
+  ip = "10.0.4.82";
   macAddress = "$MAC_MAEVE";
   wallpaperFile = ../wallpapers/dunder-mifflin.png;
 
@@ -59,4 +60,6 @@
       }
     ];
   };
+
+  urls.services = "http://elster.lan.ci:8000/app.xml";
 }
