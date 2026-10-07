@@ -46,7 +46,7 @@ in
       ];
       middle = mkDockOption [ ];
       right = mkDockOption [
-        "1password.desktop"
+        "com.onepassword.OnePassword.desktop"
         "code.desktop"
         "org.gnome.Console.desktop"
         "org.gnome.Nautilus.desktop"
