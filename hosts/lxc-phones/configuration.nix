@@ -69,6 +69,11 @@ in
     inherit devices;
   };
 
+  infra.deploy.sshKeys = [
+    config.me.deployKey
+    config.me.wifeKey # anya is helping out here
+  ];
+
   lxc.enable = true;
 
   system.stateVersion = "25.11";
