@@ -41,6 +41,47 @@ in
         "light.living_room_floor_lamp"
         "climate.aircon"
       ];
+      views = {
+        floor-lamp = {
+          title = "Floor lamp";
+          type = "lamp";
+          entity = "light.living_room_floor_lamp";
+          swatch = {
+            enable = true;
+            entities = [ "light.living_room_floor_lamp" ];
+          };
+        };
+        aircon = {
+          title = "Air conditioner";
+          type = "aircon";
+          entity = "climate.aircon";
+        };
+        maeve-bedroom = {
+          title = "Maeve bedroom lighting";
+          type = "multiple";
+          entities = [
+            {
+              entityId = "light.desk_led";
+              name = "Desk LED";
+            }
+            {
+              entityId = "light.rack_led";
+              name = "Rack LED";
+            }
+            {
+              entityId = "light.maeve_room_ceiling_light";
+              name = "Ceiling light";
+            }
+          ];
+          swatch = {
+            enable = true;
+            entities = [
+              "light.desk_led"
+              "light.rack_led"
+            ];
+          };
+        };
+      };
     };
     ami = {
       host = "h.koteeq.me";

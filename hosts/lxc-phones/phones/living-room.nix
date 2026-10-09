@@ -60,7 +60,7 @@
         button = 10;
         kind = "service-url";
         label = "Floor lamp menu";
-        serviceURI = "http://phones.lan.ci:6971/ha/touch.xml";
+        serviceURI = "http://phones.lan.ci:6971/ha/touch.xml?view=floor-lamp";
       }
       {
         button = 11;
@@ -73,7 +73,7 @@
         button = 12;
         kind = "service-url";
         label = "Air conditioner menu";
-        serviceURI = "http://phones.lan.ci:6971/ha/aircon.xml";
+        serviceURI = "http://phones.lan.ci:6971/ha/touch.xml?view=aircon";
       }
       {
         button = 32;

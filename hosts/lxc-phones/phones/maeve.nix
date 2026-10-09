@@ -2,6 +2,7 @@
   ip = "10.0.4.82";
   macAddress = "$MAC_MAEVE";
   wallpaperFile = ../wallpapers/dunder-mifflin.png;
+  urls.services = "http://phones.lan.ci:6971/ha/views.xml";
 
   sip = {
     phoneLabel = "Maeve";
@@ -22,11 +23,17 @@
         label = "Living room";
         speedDialNumber = "351";
       }
+      # {
+      #   button = 3;
+      #   kind = "blf-speed-dial";
+      #   label = "Anya Raccoon";
+      #   speedDialNumber = "300";
+      # }
       {
         button = 3;
-        kind = "blf-speed-dial";
-        label = "Anya Raccoon";
-        speedDialNumber = "300";
+        kind = "service-url";
+        label = "Bedroom lighting";
+        serviceURI = "http://phones.lan.ci:6971/ha/touch.xml?view=maeve-bedroom";
       }
       {
         button = 4;
