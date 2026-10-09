@@ -2,7 +2,7 @@
   dateTime.timeZone = "GMT Standard/Daylight Time";
 
   vendor.display = {
-    idleTimeout = "00:15";
+    idleTimeout = "00:03";
   };
 
   callManagers = [
