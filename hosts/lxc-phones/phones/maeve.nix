@@ -32,14 +32,14 @@
       {
         button = 3;
         kind = "service-url";
-        label = "Bedroom lighting";
+        label = "Lights";
         serviceURI = "http://phones.lan.ci:6971/ha/touch.xml?view=maeve-bedroom";
       }
       {
         button = 4;
         kind = "blf-speed-dial";
-        label = "Anya macOS";
-        speedDialNumber = "100";
+        label = "Work";
+        speedDialNumber = "360";
       }
       {
         button = 5;
