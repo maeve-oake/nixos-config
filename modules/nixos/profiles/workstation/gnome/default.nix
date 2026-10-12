@@ -18,6 +18,7 @@ let
     user-themes
     just-perfection
     appindicator
+    caffeine
     # the following is broken on GNOME 48
     # power-profile-switcher
   ];
