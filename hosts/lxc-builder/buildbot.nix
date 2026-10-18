@@ -9,8 +9,9 @@
   imports = [
     inputs.buildbot-nix.nixosModules.buildbot-master
     inputs.buildbot-nix.nixosModules.buildbot-worker
-    ./attic.nix
-    ./infra.nix
+    ./attic/generic-post-build-steps.nix
+    ./attic
+    ./infra
   ];
 
   age.secrets = {
@@ -71,6 +72,7 @@
         host = "https://attic-kitezh.oa.ke";
         cacheName = "nixos";
         authTokenFile = config.age.secrets."lxc-builder/attic-auth-token".path;
+        uploadJobs = 2;
       };
     };
   };

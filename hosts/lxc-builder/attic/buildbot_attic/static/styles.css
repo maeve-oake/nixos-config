@@ -1,0 +1,16 @@
+/* Only style the upload panel mounted inside a native Buildbot step. */
+.bb-attic-marker{display:none!important}
+.bb-attic-upload-log .bb-log-preview-download{display:none!important}
+.bb-attic-upload-log .attic-ready{display:block;text-align:right;font:inherit;color:inherit}
+.bb-attic-uploads{font-size:12px}
+.bb-attic-uploads .attic-muted{color:var(--bs-secondary-color,#777)}
+.bb-attic-uploads .attic-path{display:grid;grid-template-columns:minmax(0,1.3fr) 10ch minmax(32px,1fr) 4ch;gap:8px;align-items:center;padding:1px 0}
+.bb-attic-uploads .attic-name{font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.bb-attic-uploads .attic-size{text-align:right;font-family:inherit;color:var(--bs-secondary-color,#777);white-space:nowrap;font-size:11px;}
+.bb-attic-uploads .attic-progress{height:4px;background:#eee;border-radius:2px;overflow:hidden;margin:0}
+.bb-attic-uploads .attic-fill{height:100%;background:var(--bs-primary,#337ab7);transition:width .5s ease}
+.bb-attic-uploads [data-state=failed] .attic-fill{background:var(--bs-danger,#d9534f)}
+.bb-attic-uploads .attic-percentage{text-align:right;font-size:11px;color:var(--bs-secondary-color,#777)}
+.bb-attic-uploads .attic-error{color:var(--bs-danger,#b94a48);overflow-wrap:anywhere}
+.bb-attic-uploads [hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.bb-attic-uploads .attic-fill{transition:none}}

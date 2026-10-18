@@ -1,0 +1,70 @@
+--- a/buildbot_nix/models.py
++++ b/buildbot_nix/models.py
+@@ -7,6 +7,7 @@
+ from collections.abc import Callable, Mapping  # noqa: TC003
+ from dataclasses import dataclass
+ from enum import StrEnum
++from importlib.metadata import entry_points
+ from pathlib import Path
+ from typing import Any, Self
+
+@@ -193,21 +194,51 @@
+
+ class PostBuildStep(BaseModel):
+     name: str
+-    environment: Mapping[str, str | Interpolate]
+-    command: list[str | Interpolate]
++    environment: Mapping[str, str | Interpolate] = Field(default_factory=dict)
++    command: list[str | Interpolate] = Field(default_factory=list)
++    type: str = "shell"
++    options: dict[str, Any] = Field(default_factory=dict)
+     warn_only: bool = False
+
+     def to_buildstep(self) -> steps.BuildStep:
+-        return steps.ShellCommand(
++        common = dict(
+             name=self.name,
+-            env={
+-                k: Interpolate.to_buildbot(self.environment[k])
+-                for k in self.environment
+-            },
+-            command=[Interpolate.to_buildbot(x) for x in self.command],
+             warnOnFailure=self.warn_only,
+             flunkOnFailure=not self.warn_only,
+         )
++        options = self.options
++        if self.command or self.environment:
++            if self.type != "shell" or options:
++                raise ValueError("Custom post-build steps use options, not command/environment")
++            # Adapt the existing postBuildSteps schema to the same factory API.
++            options = dict(command=self.command, environment=self.environment)
++        if self.type == "shell":
++            factory = shell_step_factory
++        else:
++            factories = list(
++                entry_points(group="buildbot_nix.post_build_steps", name=self.type)
++            )
++            if len(factories) != 1:
++                raise ValueError(
++                    f"Expected one post-build step factory for {self.type!r}, "
++                    f"found {len(factories)}"
++                )
++            factory = factories[0].load()
++        return factory(options=options, **common)
++
++
++def shell_step_factory(*, options: dict[str, Any], **kwargs: Any) -> steps.BuildStep:
++    class ShellOptions(BaseModel):
++        model_config = ConfigDict(extra="forbid")
++        command: list[str | Interpolate] = Field(min_length=1)
++        environment: dict[str, str | Interpolate] = Field(default_factory=dict)
++
++    config = ShellOptions.model_validate(options)
++    return steps.ShellCommand(
++        command=[Interpolate.to_buildbot(x) for x in config.command],
++        env={k: Interpolate.to_buildbot(v) for k, v in config.environment.items()},
++        **kwargs,
++    )
+
+
+ def glob_to_regex(glob: str) -> re.Pattern:

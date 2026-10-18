@@ -233,7 +233,7 @@
                              show_trace=self.config.show_trace_on_failure,
                          ),
                          build_config=BuildConfig(
-+                            infra_upload_steps=[x.name for x in self.config.post_build_steps if "ATTIC_HOST" in x.environment],
++                            infra_upload_steps=[x.name for x in self.config.post_build_steps if x.type == "attic-upload"],
                              post_build_steps=[
                                  x.to_buildstep() for x in self.config.post_build_steps
                              ],

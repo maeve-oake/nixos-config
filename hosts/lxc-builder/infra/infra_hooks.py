@@ -322,7 +322,14 @@ class FinishSkippedBuilds(buildstep.ShellMixin, steps.BuildStep):
         )
 
     async def run(self):
-        from .models import Interpolate
+        from buildbot_attic.steps import submit as submit_uploads
+
+        # Already-local jobs are all ready now. Enqueue them together rather than
+        # waiting for the first host's remote upload before submitting the next.
+        for job in self.jobs:
+            roots = [p for p in job.outputs.values() if p]
+            if roots and not self.stopped:
+                await submit_uploads(self, roots=roots, attr=job.attr)
 
         failed = False
         for job in self.jobs:
@@ -349,24 +356,12 @@ class FinishSkippedBuilds(buildstep.ShellMixin, steps.BuildStep):
                 continue
             try:
                 upload_failures = []
-                uploads = [u for u in self.uploads if "ATTIC_HOST" in u.environment]
+                uploads = [u for u in self.uploads if u.type == "attic-upload"]
                 for upload in uploads:
-                    command = await self.render(
-                        [Interpolate.to_buildbot(x) for x in upload.command]
-                    )
-                    env = await self.render(
-                        {
-                            k: Interpolate.to_buildbot(v)
-                            for k, v in upload.environment.items()
-                        }
-                    )
-                    cmd = await self.makeRemoteShellCommand(
-                        command=command,
-                        env=env,
-                        logEnviron=False,
-                    )
-                    await self.runCommand(cmd)
-                    if cmd.didFail():
+                    from buildbot_attic.steps import upload as shared_upload
+
+                    result = await shared_upload(self, upload.options["target"])
+                    if result != util.SUCCESS:
                         upload_failures.append(upload.name)
                 if uploads:
                     await threads.deferToThread(

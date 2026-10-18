@@ -33,10 +33,10 @@ in
       buildbot-gitea = packages.buildbot-gitea;
     }).overrideAttrs
       (old: {
-        patches = (old.patches or [ ]) ++ [ ./infra/buildbot-nix.patch ];
+        patches = (old.patches or [ ]) ++ [ ./buildbot-nix.patch ];
         postPatch = (old.postPatch or "") + ''
-          cp ${./infra/infra_hooks.py} buildbot_nix/infra_hooks.py
-          cp ${./infra/infra_buildbot.py} buildbot_nix/infra_buildbot.py
+          cp ${./infra_hooks.py} buildbot_nix/infra_hooks.py
+          cp ${./infra_buildbot.py} buildbot_nix/infra_buildbot.py
         '';
       });
   users.groups.infra-inbox = { };

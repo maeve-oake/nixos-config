@@ -1,0 +1,123 @@
+diff --git a/client/src/command/push.rs b/client/src/command/push.rs
+index d2857a7..ac045d9 100644
+--- a/client/src/command/push.rs
++++ b/client/src/command/push.rs
+@@ -42,6 +42,10 @@ pub struct Push {
+     #[clap(short = 'j', long, default_value = "5")]
+     jobs: usize,
+
++    /// Print the missing-path plan as JSON without uploading anything.
++    #[clap(long, hide = true)]
++    plan_json: bool,
++
+     /// Always send the upload info as part of the payload.
+     #[clap(long, hide = true)]
+     force_preamble: bool,
+@@ -54,6 +58,7 @@ struct PushContext {
+     pusher: Pusher,
+     no_closure: bool,
+     ignore_upstream_cache_filter: bool,
++    plan_json: bool,
+ }
+
+ impl PushContext {
+@@ -78,6 +83,21 @@ impl PushContext {
+             .plan(roots, self.no_closure, self.ignore_upstream_cache_filter)
+             .await?;
+
++        if self.plan_json {
++            let paths = plan.store_path_map.values().map(|info| {
++                serde_json::json!({
++                    "path": self.store.get_full_path(&info.path),
++                    "size": info.nar_size,
++                })
++            }).collect::<Vec<_>>();
++            println!("{}", serde_json::json!({
++                "paths": paths,
++                "cached": plan.num_already_cached,
++                "upstream": plan.num_upstream,
++            }));
++            return Ok(());
++        }
++
+         if plan.store_path_map.is_empty() {
+             if plan.num_all_paths == 0 {
+                 eprintln!("🤷 Nothing selected.");
+@@ -180,6 +200,7 @@ pub async fn run(opts: Opts) -> Result<()> {
+         pusher,
+         no_closure: sub.no_closure,
+         ignore_upstream_cache_filter: sub.ignore_upstream_cache_filter,
++        plan_json: sub.plan_json,
+     };
+
+     if sub.stdin {
+@@ -189,7 +210,18 @@ pub async fn run(opts: Opts) -> Result<()> {
+             ));
+         }
+
+-        push_ctx.push_stdin().await?;
++        if sub.plan_json {
++            let mut lines = BufReader::new(io::stdin()).lines();
++            let mut paths = Vec::new();
++            while let Some(line) = lines.next_line().await? {
++                if !line.is_empty() {
++                    paths.push(PathBuf::from(line));
++                }
++            }
++            push_ctx.push_static(paths).await?;
++        } else {
++            push_ctx.push_stdin().await?;
++        }
+     } else {
+         push_ctx.push_static(sub.paths.clone()).await?;
+     }
+diff --git a/client/src/push.rs b/client/src/push.rs
+index 1329f30..27f7401 100644
+--- a/client/src/push.rs
++++ b/client/src/push.rs
+@@ -17,6 +17,8 @@
+
+ use std::collections::{HashMap, HashSet};
+ use std::fmt::Write;
++use std::fs::OpenOptions;
++use std::io::Write as IoWrite;
+ use std::pin::Pin;
+ use std::sync::Arc;
+ use std::task::{Context, Poll};
+@@ -562,10 +564,32 @@ pub async fn upload_path(
+         .map_ok(Bytes::from);
+
+     let start = Instant::now();
+-    match api
+-        .upload_path(upload_info, nar_stream, force_preamble)
+-        .await
+-    {
++    // Optional side channel for the Buildbot upload view. stdout/stderr retain
++    // their original behaviour. Failure to write telemetry must not fail uploads.
++    let mut events = std::env::var_os("ATTIC_PROGRESS_FILE")
++        .and_then(|path| OpenOptions::new().append(true).open(path).ok());
++    let upload = api.upload_path(upload_info, nar_stream, force_preamble);
++    tokio::pin!(upload);
++    let mut progress = time::interval(Duration::from_secs(1));
++    progress.set_missed_tick_behavior(time::MissedTickBehavior::Skip);
++    let result = loop {
++        tokio::select! {
++            biased;
++            result = &mut upload => break result,
++            _ = progress.tick(), if events.is_some() => {
++                if let Some(file) = events.as_mut() {
++                    let event = serde_json::json!({
++                        "sent": bar.position(),
++                        "total": path_info.nar_size,
++                    });
++                    if writeln!(file, "{}", event).is_err() {
++                        events = None;
++                    }
++                }
++            }
++        }
++    };
++    match result {
+         Ok(r) => {
+             let r = r.unwrap_or(UploadPathResult {
+                 kind: UploadPathResultKind::Uploaded,
