@@ -167,7 +167,9 @@
       if (!cards.some(card => logToggle(card)?.textContent.trim() === 'stdio')) continue;
       for (const card of cards) {
         const name = logToggle(card)?.textContent.trim();
-        if (name === 'stdio') defaultLogState(card, false);
+        if (name === 'stdio' && step.querySelector('.bb-badge-round.results_PENDING')) {
+          defaultLogState(card, false);
+        }
         if (name !== 'uploads') continue;
         card.classList.add('bb-attic-upload-log');
         defaultLogState(card, true);
