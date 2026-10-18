@@ -18,6 +18,22 @@
     if (text !== undefined) node.textContent = text;
     return node;
   };
+  let toastTimer;
+  function showToast(message) {
+    let toast = document.getElementById('bb-attic-toast');
+    if (!toast) {
+      toast = element('div', 'bb-attic-toast toast show');
+      toast.id = 'bb-attic-toast';
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+      toast.setAttribute('aria-atomic', 'true');
+      document.body.append(toast);
+    }
+    toast.replaceChildren(element('div', 'toast-body', message));
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.hidden = true; }, 2500);
+  }
   function bytes(value) {
     if (value >= 1024 ** 3) return `${(value / 1024 ** 3).toFixed(2)} GiB`;
     if (value >= 1024 ** 2) return `${Math.round(value / 1024 ** 2)} MiB`;
@@ -26,8 +42,21 @@
   function pathRow(job) {
     const row = element('div', 'attic-path'); row.dataset.state = job.state;
     if (job.error) row.title = job.error;
-    const name = element('span', 'attic-name', job.path.split('/').pop().replace(/^[^-]+-/, ''));
+    const name = element('button', 'attic-name', job.path.split('/').pop().replace(/^[^-]+-/, ''));
+    name.type = 'button';
     name.title = job.path;
+    name.setAttribute('aria-label', `Copy ${job.path}`);
+    name.addEventListener('click', async event => {
+      event.stopPropagation();
+      try {
+        await navigator.clipboard.writeText(job.path);
+        name.title = `Copied: ${job.path}`;
+        showToast('Copied to clipboard');
+      } catch {
+        name.title = `Could not copy to clipboard: ${job.path}`;
+        showToast('Could not copy to clipboard');
+      }
+    });
     const size = element('span', 'attic-size', bytes(job.size));
     row.append(name, size);
     if (job.state === 'queued') return row;
@@ -46,8 +75,8 @@
     if (!publication) return;
     const tickets = publication.targets.filter(t => !panel.target || t.target === panel.target);
     panel.counts = tickets.some(t => t.state === 'planning') ? null : {
-      done: tickets.reduce((sum, t) => sum + t.cached + t.upstream + t.complete, 0),
-      total: tickets.reduce((sum, t) => sum + t.cached + t.upstream + t.paths, 0),
+      done: tickets.reduce((sum, t) => sum + t.complete, 0),
+      total: tickets.reduce((sum, t) => sum + t.paths, 0),
     };
     const related = [...panels.values()].filter(p => p.card === panel.card);
     const counts = related.every(p => p.counts) ? related.reduce(
@@ -73,6 +102,7 @@
     }
     panel.content.replaceChildren(fragment);
     panel.root.hidden = !panel.content.querySelector('.attic-path, .attic-error, .attic-muted');
+    panel.card.hidden = related.every(p => p.root.hidden);
     panel.finished = publication.targets.filter(t => !panel.target || t.target === panel.target)
       .every(t => ['complete','failed','cancelled'].includes(t.state));
   }
@@ -96,6 +126,7 @@
     root.append(content);
     placeholder.replaceChildren(root);
     const card = placeholder.closest('.logpreview');
+    card.hidden = false;
     let counter = card.querySelector('.attic-ready');
     if (!counter) {
       counter = element('span', 'attic-ready');
@@ -168,6 +199,8 @@
       } catch (error) {
         for (const current of panels.values()) if (current.url.searchParams.get('publication') === ident) {
           current.content.replaceChildren(element('span', 'attic-error', error.message || 'Connection lost; retrying…'));
+          current.root.hidden = false;
+          current.card.hidden = false;
         }
       } finally {
         clearTimeout(timeout);
