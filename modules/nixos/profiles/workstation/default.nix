@@ -60,9 +60,6 @@
         element-desktop
         gimp
         t3code
-        claude-code
-        codex
-        grok-build
       ]
       ++ onlyArm [
         legcord

@@ -40,6 +40,10 @@
           ];
       })
 
+      claude-code
+      codex
+      grok-build
+
       # shell
       wget
       p7zip
