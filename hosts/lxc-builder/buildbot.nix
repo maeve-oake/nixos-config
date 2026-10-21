@@ -1,5 +1,6 @@
 {
   inputs,
+  lib,
   pkgs,
   hostName,
   config,
@@ -13,6 +14,20 @@
     ./attic
     ./infra
   ];
+
+  services.buildbot-nix.packages.buildbot-effects =
+    (config.services.buildbot-nix.packages.python.pkgs.callPackage
+      "${inputs.buildbot-nix}/packages/buildbot-effects.nix"
+      { }
+    ).overrideAttrs
+      {
+        makeWrapperArgs = [
+          "--prefix"
+          "PATH"
+          ":"
+          (lib.makeBinPath [ pkgs.bubblewrap ])
+        ];
+      };
 
   age.secrets = {
     "lxc-builder/gh-app-key" = { };
