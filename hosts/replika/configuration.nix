@@ -30,6 +30,7 @@
 
   # boot
   boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.lanzaboote.configurationLimit = 3;
 
   # power & sleep
   networking.networkmanager.wifi.powersave = true;

@@ -161,6 +161,11 @@ in
               enabled = true;
             };
 
+            # file browser detailed date
+            "org/gnome/nautilus/preferences" = {
+              date-time-format = "detailed";
+            };
+
             # power & sleep
             "org/gnome/settings-daemon/plugins/power" = {
               power-button-action = cfg.powerButtonAction;
@@ -172,6 +177,7 @@ in
             "org/gnome/shell" = {
               favorite-apps = with cfg.dockItems; left ++ middle ++ right;
               enabled-extensions = map (p: p.extensionUuid) shellExtensions;
+              disable-user-extensions = false;
             };
 
             # appearance
