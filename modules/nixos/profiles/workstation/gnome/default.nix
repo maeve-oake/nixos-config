@@ -15,7 +15,7 @@ let
     };
 
   defaultShellExtensions = with pkgs.gnomeExtensions; [
-    user-themes
+    pkgs.gnome50Extensions.${user-themes.extensionUuid}
     just-perfection
     appindicator
     caffeine
