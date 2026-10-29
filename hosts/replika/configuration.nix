@@ -74,6 +74,11 @@
   ];
 
   # packages
+  services.ollama = {
+    enable = true;
+    package = pkgs.ollama-vulkan;
+  };
+
   programs.steam.enable = true;
   environment.systemPackages = with pkgs; [
     # apps
@@ -83,6 +88,7 @@
     plex-desktop
     darktable
     satdump
+    opencode
   ];
 
   # Do not remove
