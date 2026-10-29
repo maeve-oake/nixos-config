@@ -67,6 +67,7 @@
   hardware.nvidia = {
     open = true;
     powerManagement.enable = true;
+    gpuUnlock.enable = true;
   };
 
   # camera
