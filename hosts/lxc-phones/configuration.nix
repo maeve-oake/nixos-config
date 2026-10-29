@@ -90,6 +90,9 @@ in
       slots = {
         "01" = "light.living_room_floor_lamp";
         "02" = "climate.aircon";
+        "03" = "light.kitchen_ceiling_light";
+        "04" = "light.living_room_ceiling_light";
+        "05" = "scene.living_room_darkness";
       };
     };
   };

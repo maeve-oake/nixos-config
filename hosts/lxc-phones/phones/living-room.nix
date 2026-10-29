@@ -52,34 +52,48 @@
       {
         button = 9;
         kind = "blf-speed-dial";
+        label = "Kitchen ceiling";
+        speedDialNumber = "***1337*03";
+        featureOptionMask = "presence-only";
+      }
+      {
+        button = 10;
+        kind = "blf-speed-dial";
+        label = "Living room ceiling";
+        speedDialNumber = "***1337*04";
+        featureOptionMask = "presence-only";
+      }
+      {
+        button = 11;
+        kind = "blf-speed-dial";
         label = "Floor lamp";
         speedDialNumber = "***1337*01";
         featureOptionMask = "presence-only";
       }
       {
-        button = 10;
+        button = 12;
         kind = "service-url";
         label = "Floor lamp menu";
         serviceURI = "http://phones.lan.ci:6971/ha/touch.xml?view=floor-lamp";
       }
       {
-        button = 11;
+        button = 13;
         kind = "blf-speed-dial";
         label = "Air conditioner";
         speedDialNumber = "***1337*02";
         featureOptionMask = "presence-only";
       }
       {
-        button = 12;
+        button = 14;
         kind = "service-url";
         label = "Air conditioner menu";
         serviceURI = "http://phones.lan.ci:6971/ha/touch.xml?view=aircon";
       }
       {
-        button = 32;
-        kind = "blf-speed-dial";
-        label = "Saul Badman";
-        speedDialNumber = "67";
+        button = 20;
+        kind = "speed-dial";
+        label = "All lights off";
+        speedDialNumber = "***1337*05";
       }
     ];
   };
