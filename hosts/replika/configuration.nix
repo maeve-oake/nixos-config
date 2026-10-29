@@ -81,7 +81,6 @@
     calls
     gqrx
     plex-desktop
-    ollama
     darktable
     satdump
   ];

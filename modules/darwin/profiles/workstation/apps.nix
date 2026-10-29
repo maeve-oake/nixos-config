@@ -7,7 +7,6 @@
   environment.systemPackages = with pkgs; [
     # apps
     spotify
-    ollama
 
     # shell
     fzf

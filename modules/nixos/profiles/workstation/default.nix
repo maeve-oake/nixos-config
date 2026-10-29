@@ -32,8 +32,6 @@
       theme = "1975";
     };
 
-    services.lnxlink.clientId = hostName;
-
     hardware.magic-trackpad-quirks.enable = true;
 
     environment.sessionVariables = lib.optionalAttrs (!config.hardware.nvidia.enabled) {

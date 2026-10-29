@@ -77,8 +77,8 @@
   programs.steam.enable = true;
   environment.systemPackages = with pkgs; [
     # apps
+    opencode
     plex-desktop
-    ollama
     darktable
     ffmpeg
     easyeda-pro
@@ -92,21 +92,9 @@
     }))
   ];
 
-  # lnxlink
-  age.secrets.lnxlink-env = { };
-  services.lnxlink = {
+  services.ollama = {
     enable = true;
-    envFile = config.age.secrets.lnxlink-env.path;
-    addons = {
-      cpu.enable = true;
-      memory.enable = true;
-      shutdown.enable = true;
-      restart.enable = true;
-      suspend.enable = true;
-      microphone_used.enable = true;
-      camera_used.enable = true;
-      speaker_used.enable = true;
-    };
+    package = pkgs.ollama-cuda;
   };
 
   monitoring = {
