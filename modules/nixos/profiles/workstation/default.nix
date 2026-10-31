@@ -67,7 +67,6 @@
         (microsoft-edge.override {
           commandLineArgs = [
             "--enable-features=TouchpadOverscrollHistoryNavigation${lib.optionalString config.hardware.nvidia.enabled ",Vulkan,VulkanFromANGLE"}"
-            "--enable-unsafe-webgpu"
             "--disable-features=GlobalShortcutsPortal,msFeatureGroupNewLookAndFeelHoldout" # https://issues.chromium.org/issues/404298968
           ]
           ++ lib.optionals config.hardware.nvidia.enabled [
