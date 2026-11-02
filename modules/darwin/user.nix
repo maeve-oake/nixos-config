@@ -15,5 +15,7 @@
   };
   system.primaryUser = config.me.username;
 
+  programs.fish.enable = true; # temporary - server profile on nix-things doesn't import fish.nix here
+
   security.pam.services.sudo_local.touchIdAuth = true;
 }
