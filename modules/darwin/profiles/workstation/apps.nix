@@ -1,34 +1,38 @@
 {
   pkgs,
+  lib,
+  config,
   ...
 }:
 {
-  # pkgs
-  environment.systemPackages = with pkgs; [
-    # apps
-    spotify
+  config = lib.mkIf config.profiles.workstation.enable {
+    # pkgs
+    environment.systemPackages = with pkgs; [
+      # apps
+      spotify
 
-    # shell
-    fzf
-    zoxide
-  ];
+      # shell
+      fzf
+      zoxide
+    ];
 
-  services.netbird.enable = true;
+    services.netbird.enable = true;
 
-  homebrew.casks = [
-    # apps
-    "microsoft-edge"
-    "microsoft-outlook"
-    "microsoft-teams"
-    "windows-app"
-    "telegram"
-    "protonvpn"
-    "plex"
-    "affinity"
-    "bambu-studio"
-    "chatgpt"
-    "discord"
-    "t3-code"
-    "grok-bot"
-  ];
+    homebrew.casks = [
+      # apps
+      "microsoft-edge"
+      "microsoft-outlook"
+      "microsoft-teams"
+      "windows-app"
+      "telegram"
+      "protonvpn"
+      "plex"
+      "affinity"
+      "bambu-studio"
+      "chatgpt"
+      "discord"
+      "t3-code"
+      "grok-bot"
+    ];
+  };
 }
