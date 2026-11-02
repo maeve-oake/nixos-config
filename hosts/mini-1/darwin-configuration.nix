@@ -13,6 +13,8 @@
 
   profiles.server.enable = true;
 
+  infra.deploy.fqdn = [ "mini-1.me.ow" ];
+
   services.netbird.enable = true;
 
   nixpkgs.hostPlatform = "aarch64-darwin";
