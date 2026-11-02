@@ -13,6 +13,8 @@
 
   profiles.server.enable = true;
 
+  services.netbird.enable = true;
+
   nixpkgs.hostPlatform = "aarch64-darwin";
 
   # Do not remove
