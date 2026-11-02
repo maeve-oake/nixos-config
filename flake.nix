@@ -2,8 +2,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Keep Exo's own nixpkgs and Python dependency pins.
-    exo.url = "github:exo-explore/exo";
+    exo = {
+      url = "github:exo-explore/exo";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin/master";
