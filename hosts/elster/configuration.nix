@@ -15,6 +15,16 @@
 
   infra.deploy.auto = true;
 
+  # wife <3
+  age.secrets.anna-password = { };
+  users.users.anna = {
+    isNormalUser = true;
+    extraGroups = [ "wheel" ];
+    openssh.authorizedKeys.keys = [ config.me.wifeKey ];
+    hashedPasswordFile = config.age.secrets.anna-password.path;
+    shell = pkgs.zsh;
+  };
+
   profiles.workstation = {
     enable = true;
     samba.enable = true;
