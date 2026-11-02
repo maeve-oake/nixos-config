@@ -1,6 +1,5 @@
 {
   inputs,
-  pkgs,
   ...
 }:
 {
@@ -8,13 +7,8 @@
     inputs.self.darwinModules.default
   ];
 
-  nixpkgs.config.permittedInsecurePackages = [
-    # safe for private text-only use
-    "exo-1.0.71"
-  ];
-
-  environment.systemPackages = with pkgs; [
-    exo
+  environment.systemPackages = [
+    inputs.exo.packages.aarch64-darwin.exo
   ];
 
   profiles.server.enable = true;
