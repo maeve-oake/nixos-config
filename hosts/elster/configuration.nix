@@ -24,6 +24,7 @@
     hashedPasswordFile = config.age.secrets.anna-password.path;
     shell = pkgs.zsh;
   };
+  programs.zsh.enable = true;
 
   profiles.workstation = {
     enable = true;
