@@ -86,6 +86,10 @@
 
   # packages
   programs.steam.enable = true;
+  services.steam-lancache-beacon = {
+    enable = true;
+    baseUrl = "https://lancache.lan.ci";
+  };
   environment.systemPackages = with pkgs; [
     # apps
     opencode
