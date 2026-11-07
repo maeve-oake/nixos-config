@@ -89,6 +89,7 @@
   services.steam-lancache-beacon = {
     enable = true;
     baseUrl = "https://lancache.lan.ci";
+    user = config.me.username;
   };
   environment.systemPackages = with pkgs; [
     # apps
