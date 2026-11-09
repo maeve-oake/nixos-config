@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 from datetime import datetime, timezone
 
-PRODUCER = "dix-69f91d6-schema1"
+PRODUCER = "dix-3-v1"
 
 
 def encoded(value):
@@ -130,14 +130,8 @@ class Reporter:
         # The hub owns permanent snapshot storage and content deduplication.
         self.inbox.mkdir(parents=True, exist_ok=True)
         key = hashlib.sha256((PRODUCER + "\0" + path).encode()).hexdigest()
-        fd, tmp = tempfile.mkstemp(prefix=".snapshot-", dir=self.inbox)
-        os.close(fd)
-        try:
-            self.command(["dix", "snapshot", path, "--file", tmp])
-            data = Path(tmp).read_bytes()
-            value = json.loads(data)
-            if value.get("schema_version") != 1 or value.get("root") != path:
-                raise ValueError("unexpected dix snapshot schema/root")
-            atomic_file(self.inbox / (key + ".snapshot.json"), data, mode=0o660)
-        finally:
-            Path(tmp).unlink(missing_ok=True)
+        data = self.command(["dix", "snapshot", path]).encode()
+        value = json.loads(data)
+        if value.get("version") != 1 or value.get("path") != path:
+            raise ValueError("unexpected dix snapshot version/path")
+        atomic_file(self.inbox / (key + ".snapshot.json"), data, mode=0o660)
