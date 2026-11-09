@@ -47,7 +47,7 @@ in
     "d /var/lib/infra-hub/inbox 2770 infra-hub infra-inbox - -"
   ];
   systemd.services.infra-hub.serviceConfig.StateDirectoryMode = "0711";
-  systemd.services.buildbot-master.path = [ pkgs.dix-snapshots ];
+  systemd.services.buildbot-master.path = [ pkgs.dix ];
   systemd.services.buildbot-master.serviceConfig.ReadWritePaths = [
     "/var/lib/infra-hub/inbox"
   ];
