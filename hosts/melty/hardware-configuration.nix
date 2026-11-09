@@ -1,11 +1,15 @@
 {
   lib,
+  pkgs,
   ...
 }:
 {
   hardware.enableRedistributableFirmware = lib.mkDefault true;
 
   hardware.asahi.enable = true;
+
+  # TODO: watch nixos-apple-silicon fix this
+  boot.kernelPatches = [ pkgs.kernelPatches.tools_128bit_types ];
 
   boot.initrd.availableKernelModules = [ "usb_storage" ];
 
