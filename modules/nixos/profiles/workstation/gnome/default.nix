@@ -15,7 +15,8 @@ let
     };
 
   defaultShellExtensions = with pkgs.gnomeExtensions; [
-    pkgs.gnome50Extensions.${user-themes.extensionUuid}
+    # follow the shell this system actually runs:
+    pkgs."gnome${lib.versions.major pkgs.gnome-shell.version}Extensions".${user-themes.extensionUuid}
     just-perfection
     appindicator
     caffeine
