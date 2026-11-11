@@ -40,9 +40,11 @@
           ];
       })
 
+      # ai
       claude-code
       codex
       grok-build
+      t3code
 
       # shell
       wget

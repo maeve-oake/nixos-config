@@ -56,7 +56,6 @@
         telegram-desktop
         element-desktop
         gimp
-        t3code
         grok-bot
       ]
       ++ onlyArm [

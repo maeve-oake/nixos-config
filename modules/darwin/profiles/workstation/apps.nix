@@ -28,7 +28,6 @@
     "bambu-studio"
     "chatgpt"
     "discord"
-    "t3-code"
     "grok-bot"
   ];
 }
