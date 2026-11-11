@@ -2,7 +2,6 @@
   inputs,
   config,
   lib,
-  hostName,
   pkgs,
   onlyArm,
   onlyX86,
