@@ -36,6 +36,24 @@ in
       gocryptfs
     ];
 
+    services.rsync = {
+      enable = true;
+      jobs.screenshots = {
+        sources = [ "${config.users.users.${config.me.username}.home}/Pictures/Screenshots/" ];
+        destination = "/mnt/mynah/maeve/pictures/screenshots/${config.networking.hostName}/";
+        settings = {
+          recursive = true;
+          times = true;
+        };
+        user = config.me.username;
+        group = "users";
+        timerConfig = {
+          OnCalendar = "hourly";
+          Persistent = true;
+        };
+      };
+    };
+
     fileSystems =
       (mkMounts "share.lan.ci" config.age.secrets."samba-client/maeve-mynah".path {
         "/mnt/mynah/maeve" = "maeve";
