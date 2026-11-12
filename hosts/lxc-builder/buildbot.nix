@@ -13,6 +13,7 @@
     ./attic/generic-post-build-steps.nix
     ./attic
     ./infra
+    ./flake-fixer
   ];
 
   # Upstream passes the wrapper flags as one argument; Python wrapping needs separate arguments.
