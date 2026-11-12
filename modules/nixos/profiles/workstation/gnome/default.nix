@@ -77,10 +77,6 @@ in
     # M365 sync
     services.gnome.evolution-data-server.plugins = [ pkgs.evolution-ews ];
 
-    # fix crash on fast login (nixpkgs/issues/103746)
-    systemd.services."getty@tty1".enable = false;
-    systemd.services."autovt@tty1".enable = false;
-
     environment.systemPackages =
       with pkgs;
       [

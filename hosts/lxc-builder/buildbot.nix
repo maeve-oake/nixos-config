@@ -15,6 +15,7 @@
     ./infra
   ];
 
+  # Upstream passes the wrapper flags as one argument; Python wrapping needs separate arguments.
   services.buildbot-nix.packages.buildbot-effects =
     (config.services.buildbot-nix.packages.python.pkgs.callPackage
       "${inputs.buildbot-nix}/packages/buildbot-effects.nix"

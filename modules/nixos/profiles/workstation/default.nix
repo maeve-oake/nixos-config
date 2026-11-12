@@ -31,8 +31,6 @@
       theme = "1975";
     };
 
-    hardware.magic-trackpad-quirks.enable = true;
-
     environment.sessionVariables = lib.optionalAttrs (!config.hardware.nvidia.enabled) {
       NIXOS_OZONE_WL = "1"; # fix electron blur
     };
