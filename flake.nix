@@ -7,7 +7,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixos-hardware.url = "github:anna-oake/nixos-hardware";
+    nixos-hardware.url = "github:NixOS/nixos-hardware";
 
     nix-flatpak.url = "github:gmodena/nix-flatpak";
 
@@ -24,9 +24,7 @@
     };
 
     apple-silicon-support = {
-      # Temporary pin for the U-Boot DTC fix; return to main once merged.
-      # https://github.com/nix-community/nixos-apple-silicon/pull/559
-      url = "github:nix-community/nixos-apple-silicon/54795b299afbc62bc3e77a1d3526211a99e4e703";
+      url = "github:nix-community/nixos-apple-silicon";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
