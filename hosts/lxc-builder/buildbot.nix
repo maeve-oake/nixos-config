@@ -15,6 +15,21 @@
     ./infra
   ];
 
+  # Upstream passes the wrapper flags as one argument; Python wrapping needs separate arguments.
+  services.buildbot-nix.packages.buildbot-effects =
+    (config.services.buildbot-nix.packages.python.pkgs.callPackage
+      "${inputs.buildbot-nix}/packages/buildbot-effects.nix"
+      { }
+    ).overrideAttrs
+      {
+        makeWrapperArgs = [
+          "--prefix"
+          "PATH"
+          ":"
+          (lib.makeBinPath [ pkgs.bubblewrap ])
+        ];
+      };
+
   age.secrets = {
     "lxc-builder/gh-app-key" = { };
     "lxc-builder/gh-webhook-secret" = { };
