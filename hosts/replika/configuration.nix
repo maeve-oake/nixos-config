@@ -66,13 +66,6 @@
 
   programs.framework-privacy-bar.enable = true;
 
-  # soapyuhd (bundled in soapysdr-with-plugins) is broken against uhd 4.11; only RTL-SDR is used anyway
-  nixpkgs.overlays = [
-    (final: prev: {
-      soapysdr-with-plugins = prev.soapysdr.override { extraPackages = [ prev.soapyrtlsdr ]; };
-    })
-  ];
-
   # packages
   services.ollama = {
     enable = true;
