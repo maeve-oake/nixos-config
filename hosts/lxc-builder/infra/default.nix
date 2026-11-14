@@ -33,7 +33,10 @@ in
       buildbot-gitea = packages.buildbot-gitea;
     }).overrideAttrs
       (old: {
-        patches = (old.patches or [ ]) ++ [ ./buildbot-nix.patch ];
+        patches = (old.patches or [ ]) ++ [
+          ./buildbot-nix.patch
+          ../buildbot-nix-any-branch-scheduler.patch
+        ];
         postPatch = (old.postPatch or "") + ''
           cp ${./infra_hooks.py} buildbot_nix/infra_hooks.py
           cp ${./infra_buildbot.py} buildbot_nix/infra_buildbot.py

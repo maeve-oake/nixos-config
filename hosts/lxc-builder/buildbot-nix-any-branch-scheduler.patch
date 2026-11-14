@@ -1,0 +1,11 @@
+--- a/buildbot_nix/project_config.py
++++ b/buildbot_nix/project_config.py
+@@ -63,7 +63,7 @@
+     config["projects"].append(Project(project.name))
+     config["schedulers"].extend(
+         [
+-            schedulers.SingleBranchScheduler(
++            schedulers.AnyBranchScheduler(
+                 name=f"{project.project_id}-primary",
+                 change_filter=util.ChangeFilter(
+                     repository=project.url,
