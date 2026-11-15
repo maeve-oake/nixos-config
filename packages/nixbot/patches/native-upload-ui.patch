@@ -1,5 +1,5 @@
 diff --git a/nixbot/web/app.py b/nixbot/web/app.py
-index 4341b50..70de1ff 100644
+index 4341b50..eef8e34 100644
 --- a/nixbot/web/app.py
 +++ b/nixbot/web/app.py
 @@ -41,6 +41,7 @@ from ..auth import User, can_control_build, is_admin  # noqa: TID252
@@ -27,7 +27,7 @@ index 4341b50..70de1ff 100644
          self.env = make_env()
          self.signer = signer
          self.visibility = visibility
-@@ -135,6 +139,41 @@ class WebContext:
+@@ -135,6 +139,45 @@ class WebContext:
          # Wired by bootstrap. Effects post PR comments through it.
          self.forge_pr: ForgePrClient | None = None
  
@@ -47,8 +47,12 @@ index 4341b50..70de1ff 100644
 +            title = self._queue_titles.get(key)
 +            if title is None:
 +                repo = (
-+                    self.state_dir / "clones" / build["forge"]
-+                    / build["owner"] / build["project_name"] / "clone.git"
++                    self.state_dir
++                    / "clones"
++                    / build["forge"]
++                    / build["owner"]
++                    / build["project_name"]
++                    / "clone.git"
 +                )
 +                if repo.exists():
 +                    try:
@@ -69,9 +73,19 @@ index 4341b50..70de1ff 100644
      async def can_control(self, request: Request, build: dict[str, Any]) -> bool:
          """Whether the requester may restart/cancel this build (drives
          both the buttons and the control routes): instance admin, PR
-@@ -311,6 +350,10 @@ class _PageRoutes:
+@@ -309,8 +352,19 @@ class _PageRoutes:
+             request=request,
+             q=q,
              toggleable=toggleable,
-             projects=await ctx.queries.repo_overview(project_ids=visible, q=q or None),
+-            projects=await ctx.queries.repo_overview(project_ids=visible, q=q or None),
++            projects=sorted(
++                await ctx.queries.repo_overview(project_ids=visible, q=q or None),
++                key=lambda project: (
++                    project["last_created_at"] is not None,
++                    project["last_created_at"],
++                ),
++                reverse=True,
++            ),
              disabled_projects=disabled,
 +            queue=await ctx.queue_cards(visible),
 +            can_cancel_queue=ctx.authz is not None
@@ -80,7 +94,7 @@ index 4341b50..70de1ff 100644
          )
  
      async def activity(self, request: Request) -> HTMLResponse:
-@@ -324,8 +367,6 @@ class _PageRoutes:
+@@ -324,8 +378,6 @@ class _PageRoutes:
          return await ctx.render(
              "activity.html",
              request=request,
@@ -89,7 +103,7 @@ index 4341b50..70de1ff 100644
              builds=builds[:PAGE_SIZE],
              has_more=len(builds) > PAGE_SIZE,
              more_url="/builds/rows",
-@@ -356,15 +397,9 @@ class _PageRoutes:
+@@ -356,15 +408,9 @@ class _PageRoutes:
          return await ctx.render(
              "_queue.html",
              request=request,
@@ -108,15 +122,73 @@ index 4341b50..70de1ff 100644
          )
  
      async def _schedules(self, project_id: int) -> list[Any]:
-@@ -528,6 +563,7 @@ class _PageRoutes:
+@@ -506,7 +552,7 @@ class _PageRoutes:
+             project["id"], number
+         )
+         group_counts, warned_counts, inline = await self._grouped_attributes(
+-            build["id"], q
++            build["id"], q, request
+         )
+         # The progress bar covers the whole build, not the search result.
+         progress = (
+@@ -528,7 +574,9 @@ class _PageRoutes:
              request=request,
              project=project,
              build=build,
 +            uploads=await overview(ctx, request, build["id"]),
              attrs_total=total,
++            attr_page=ATTR_PAGE,
              attrs_done=total - progress["pending"] - progress["building"],
              progress=progress,
-@@ -948,6 +984,7 @@ def create_app(
+             group_counts=group_counts,
+@@ -657,18 +705,35 @@ class _PageRoutes:
+         )
+ 
+     async def _grouped_attributes(
+-        self, build_id: int, q: str | None
++        self, build_id: int, q: str | None, request: Request | None = None
+     ) -> tuple[dict[str, int], dict[str, int], dict[str, Any]]:
+         """Per-group counts plus eagerly loaded first pages: the inline
+         groups normally, every matching group under a search query."""
+         counts, warned = await self.ctx.queries.attribute_counts(build_id, q)
+         group_counts = _by_group(counts)
+         warned_counts = _by_group(warned)
++        loaded = {}
++        if request is not None:
++            for group in ATTR_GROUPS:
++                value = request.query_params.get(f"attrs_{group}", "0")
++                if value.isascii() and value.isdecimal() and len(value) < 10:
++                    loaded[group] = min(int(value), group_counts[group])
+         # Groups with eval warnings open eagerly so they are not buried.
+-        eager = [g for g in ATTR_GROUPS if q or g in INLINE_GROUPS or warned_counts[g]]
++        eager = [
++            g
++            for g in ATTR_GROUPS
++            if q or g in INLINE_GROUPS or warned_counts[g] or loaded.get(g)
++        ]
+         inline = {
+             group: await self.ctx.queries.attribute_page(
+-                build_id, ATTR_GROUPS[group], ATTR_PAGE, 1, q
++                build_id,
++                ATTR_GROUPS[group],
++                max(
++                    ATTR_PAGE,
++                    ((loaded.get(group, 0) + ATTR_PAGE - 1) // ATTR_PAGE) * ATTR_PAGE,
++                ),
++                1,
++                q,
+             )
+             for group in eager
+             if group_counts[group]
+@@ -690,6 +755,7 @@ class _PageRoutes:
+         return await self.ctx.render(
+             "_attributes.html",
+             request=request,
++            attr_page=ATTR_PAGE,
+             project=project,
+             build=build,
+             group_counts=group_counts,
+@@ -948,6 +1014,7 @@ def create_app(
      if task_tokens is not None:
          app.include_router(create_task_router(ctx, task_tokens))
      app.include_router(create_api_router(ctx))
@@ -137,6 +209,72 @@ index 1ffa8f4..b102113 100644
  
      async def _require_repo_writer(self, request: Request, project_id: int) -> str:
          """Instance admins or forge-side writers. Deliberately not the
+diff --git a/nixbot/web/static/build.js b/nixbot/web/static/build.js
+new file mode 100644
+index 0000000..9a5bc98
+--- /dev/null
++++ b/nixbot/web/static/build.js
+@@ -0,0 +1,60 @@
++document.addEventListener("htmx:config:request", (event) => {
++  const ctx = event.detail.ctx;
++  if (ctx.sourceElement.id !== "main") return;
++  for (const group of document.querySelectorAll(".attr-group")) {
++    ctx.request.body.set(
++      `attrs_${group.dataset.group}`,
++      group.querySelectorAll("tr[data-attr]").length,
++    );
++  }
++});
++
++const buildViews = new WeakMap();
++
++document.addEventListener("htmx:before:swap", (event) => {
++  const ctx = event.detail.ctx;
++  if (ctx.sourceElement.id !== "main") return;
++  const groups = [...document.querySelectorAll(".attr-group")];
++  const anchor = window.scrollY > 0 && groups.find((group) => {
++    const rect = group.getBoundingClientRect();
++    return rect.bottom > 0 && rect.top < window.innerHeight;
++  });
++  buildViews.set(ctx, {
++    y: window.scrollY,
++    anchor,
++    offset: anchor ? anchor.getBoundingClientRect().top : 0,
++    panes: [...document.querySelectorAll(".attr-scroll")].map((pane) => {
++      const row = [...pane.querySelectorAll("tr[data-attr]")].find(
++        (row) => row.getBoundingClientRect().bottom > pane.getBoundingClientRect().top,
++      );
++      return {
++        id: pane.id,
++        top: pane.scrollTop,
++        row: row?.id,
++        offset: row
++          ? row.getBoundingClientRect().top - pane.getBoundingClientRect().top
++          : 0,
++      };
++    }),
++  });
++});
++
++document.addEventListener("htmx:after:swap", (event) => {
++  const saved = buildViews.get(event.detail.ctx);
++  if (!saved) return;
++  buildViews.delete(event.detail.ctx);
++  for (const state of saved.panes) {
++    const pane = document.getElementById(state.id);
++    if (!pane) continue;
++    pane.scrollTop = state.top;
++    const row = state.row && document.getElementById(state.row);
++    if (row && pane.contains(row)) {
++      pane.scrollTop += row.getBoundingClientRect().top
++        - pane.getBoundingClientRect().top - state.offset;
++    }
++  }
++  window.scrollTo(window.scrollX, saved.y);
++  if (saved.anchor?.isConnected) {
++    window.scrollBy(0, saved.anchor.getBoundingClientRect().top - saved.offset);
++  }
++});
 diff --git a/nixbot/web/static/style.css b/nixbot/web/static/style.css
 index 9ff1b26..419c91f 100644
 --- a/nixbot/web/static/style.css
@@ -276,6 +414,39 @@ index 0000000..f2dcc93
 +}
 +
 +customElements.define("nixbot-upload-path", NixbotUploadPath);
+diff --git a/nixbot/web/templates/_attr_rows.html b/nixbot/web/templates/_attr_rows.html
+index 76bd2c1..03744a0 100644
+--- a/nixbot/web/templates/_attr_rows.html
++++ b/nixbot/web/templates/_attr_rows.html
+@@ -1,7 +1,7 @@
+ {% from "_macros.html" import error_row, status_icon %}
+ {% for a in attributes %}
+   {% set aw = a.eval_warnings | fromjson %}
+-  <tr data-attr="{{ a.attr | lower }}">
++  <tr id="attr-{{ group }}-{{ a.attr | urlencode }}" data-attr="{{ a.attr | lower }}">
+     <td class="attr-status">{{ status_icon(a.status) }}</td>
+     <td class="attr-name">
+       {% if a.log_size or a.status in RUNNING_STATUSES or (a.status == "failed_eval" and a.error) %}
+diff --git a/nixbot/web/templates/_attributes.html b/nixbot/web/templates/_attributes.html
+index b8e347f..075f6f5 100644
+--- a/nixbot/web/templates/_attributes.html
++++ b/nixbot/web/templates/_attributes.html
+@@ -19,13 +19,13 @@
+           <span class="attr-warn-badge" title="attributes with evaluation warnings">⚠ {{ warned_counts[group] }}</span>
+         {% endif %}
+       </summary>
+-      <div class="attr-scroll">
++      <div class="attr-scroll" id="attrs-scroll-{{ group }}">
+         <table class="attrs">
+           <caption class="visually-hidden">{{ group }} attributes</caption>
+           {% include "_attr_head.html" %}
+           {% if eager %}
+             {% with attributes = inline[group].items,
+-              group = group, page = 1, has_next = inline[group].has_next %}
++              group = group, page = ((inline[group].items | length + attr_page - 1) // attr_page), has_next = inline[group].has_next %}
+               {% include "_attr_rows.html" %}
+             {% endwith %}
+           {% else %}
 diff --git a/nixbot/web/templates/_queue.html b/nixbot/web/templates/_queue.html
 index 62a9545..e3091fb 100644
 --- a/nixbot/web/templates/_queue.html
@@ -411,10 +582,18 @@ index 63f5fac..02ae98a 100644
      <script src="/static/vendor/htmx.min.js?v={{ static_v }}"></script>
      <script src="/static/vendor/hx-sse.min.js?v={{ static_v }}"></script>
 diff --git a/nixbot/web/templates/build.html b/nixbot/web/templates/build.html
-index 105dfd9..38a8a23 100644
+index 105dfd9..c703c20 100644
 --- a/nixbot/web/templates/build.html
 +++ b/nixbot/web/templates/build.html
-@@ -72,6 +72,9 @@
+@@ -8,6 +8,7 @@
+   hx-sse:connect="/events?build={{ build.id }}"
+ {% endblock bodyattrs %}
+ {% block body %}
++  <script src="/static/build.js?v={{ static_v }}" defer></script>
+   {# sse:after:connection re-checks state rendered before the stream
+      connected. A status change in that gap (eval start, attr restart)
+      would otherwise be lost. #}
+@@ -72,6 +73,9 @@
            {% endif %}
          </div>
        </div>
@@ -425,7 +604,7 @@ index 105dfd9..38a8a23 100644
        {% if build.eval_queue %}
          <p class="build-meta">
 diff --git a/nixbot/web/templates/index.html b/nixbot/web/templates/index.html
-index 6c4d71d..4597692 100644
+index 6c4d71d..5f31913 100644
 --- a/nixbot/web/templates/index.html
 +++ b/nixbot/web/templates/index.html
 @@ -11,6 +11,10 @@
@@ -439,7 +618,7 @@ index 6c4d71d..4597692 100644
        <h2 class="section">Repositories</h2>
        <p class="filters">
          <input type="search"
-@@ -31,7 +35,8 @@
+@@ -31,14 +35,15 @@
                  hx-target="#main"
                  hx-swap="outerMorph">
              <input type="hidden" name="q" value="{{ q }}">
@@ -449,6 +628,14 @@ index 6c4d71d..4597692 100644
            </form>
          {% endif %}
        </p>
+       <div class="pipelines">
+         {% for p in projects %}
+           {% set max_secs = p.history | map(attribute='secs') | select | max | default(1, true) %}
+-          <div class="pipeline-row">
++          <div class="pipeline-row" id="repo-{{ p.id }}">
+             <a class="pipeline{% if p.last_status %} {{ p.last_status }}{% endif %}"
+                href="{{ repo_path(p) }}">
+               {{ status_icon(p.last_status or "", labelled=false) }}
 diff --git a/nixbot/web/uploads.py b/nixbot/web/uploads.py
 new file mode 100644
 index 0000000..9ad49b0

@@ -1,9 +1,9 @@
 diff --git a/nixbot/publication.py b/nixbot/publication.py
 new file mode 100644
-index 0000000..1948194
+index 0000000..0bb0f14
 --- /dev/null
 +++ b/nixbot/publication.py
-@@ -0,0 +1,386 @@
+@@ -0,0 +1,414 @@
 +from __future__ import annotations
 +
 +import asyncio
@@ -75,7 +75,33 @@ index 0000000..1948194
 +
 +    async def _enqueue(self, paths, owner=None, *, recursive=True):
 +        closure = await self._closure(paths, recursive=recursive)
-+        roots = set(paths)
++        if self.config.plan_command is not None:
++            missing = set()
++            _, env = self._command()
++            for chunk in chunk_args(sorted(closure)):
++                stdin = (
++                    ("\n".join(chunk) + "\n").encode()
++                    if self.config.paths_via == "stdin"
++                    else None
++                )
++                rc, out = await _run(
++                    self.config.plan_command
++                    if stdin
++                    else [*self.config.plan_command, *chunk],
++                    stdin=stdin,
++                    env=env,
++                    timeout=self.timeout,
++                    merge_stderr=False,
++                )
++                if rc:
++                    raise RuntimeError("Unable to plan cache upload: " + out[-4000:])
++                missing.update(item["path"] for item in json.loads(out)["paths"])
++            if not missing <= closure.keys():
++                raise RuntimeError(
++                    "Upload plan contains paths outside the requested closure"
++                )
++            closure = {path: size for path, size in closure.items() if path in missing}
++        roots = set(closure) if self.config.plan_command is not None else set(paths)
 +        created = []
 +        async with self._lock:
 +            try:
@@ -111,7 +137,9 @@ index 0000000..1948194
 +                                self.destination,
 +                                path,
 +                                size,
-+                                float(self.config.success_ttl),
++                                0.0
++                                if self.config.plan_command is not None
++                                else float(self.config.success_ttl),
 +                                path in roots,
 +                            )
 +                            for path, size in closure.items()

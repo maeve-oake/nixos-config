@@ -36,6 +36,7 @@ let
         jobs
         ;
       paths_via = u.pathsVia;
+      plan_command = u.planCommand;
     }) cfg.uploaders;
   };
 in
@@ -56,9 +57,15 @@ in
     uploaders = lib.mkOption {
       type = lib.types.listOf (
         lib.types.submodule {
-          options.jobs = lib.mkOption {
-            type = lib.types.ints.positive;
-            default = 1;
+          options = {
+            jobs = lib.mkOption {
+              type = lib.types.ints.positive;
+              default = 1;
+            };
+            planCommand = lib.mkOption {
+              type = lib.types.nullOr (lib.types.listOf lib.types.str);
+              default = null;
+            };
           };
         }
       );

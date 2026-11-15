@@ -24,7 +24,7 @@
     packages.nixbot = pkgs.nixbot;
     domain = "builder.oa.ke";
     useHTTPS = true;
-    proxyAuthHeader = "X-Oake-User";
+    proxyAuthHeader = "X-Oake-Username";
     admins = [
       "proxy:anna"
       "proxy:maeve"
@@ -59,4 +59,17 @@
       ];
     }
   ];
+
+  systemd.mounts = [
+    {
+      what = "proc";
+      where = "/run/nixbot-proc";
+      type = "proc";
+      options = "nosuid,nodev,noexec";
+    }
+  ];
+  systemd.services.nixbot = {
+    unitConfig.RequiresMountsFor = [ "/run/nixbot-proc" ];
+    serviceConfig.ReadWritePaths = [ "/run/nixbot-proc" ];
+  };
 }
