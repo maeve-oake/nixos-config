@@ -54,3 +54,27 @@ index 3fbe079..2b2f828 100644
  AND status <> 'cancelled' ORDER BY id DESC LIMIT 1;
  
  -- name: DetachBuildFromPr :one
+diff --git a/nixbot/service.py b/nixbot/service.py
+index f95c6d9..c4be5ae 100644
+--- a/nixbot/service.py
++++ b/nixbot/service.py
+@@ -507,7 +507,7 @@ class CIService:
+             info.key, f"{commit}^{{tree}}"
+         )
+         build = await builds_q.find_reusable_build(
+-            self.pool, project_id=project_id, tree_hash=tree_hash
++            self.pool, project_id=project_id, tree_hash=tree_hash, commit_sha=commit
+         )
+         return build is not None
+ 
+@@ -796,7 +796,9 @@ class CIService:
+         settled_effects = await fail_interrupted_effects(self.pool, self._started_at)
+         await self._report_interrupted_effects(settled_effects)
+         for resumable in await find_unfinished_builds(self.pool):
+-            remaining, settled = await settle_already_built(self.pool, resumable)
++            remaining, settled = await settle_already_built(
++                self.pool, resumable, finalize=True
++            )
+             if settled:
+                 # Recovered results still need gcroots/outputs updates.
+                 event = await restart_dispatch.change_event_for(self, resumable)

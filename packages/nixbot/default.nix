@@ -9,13 +9,11 @@ let
 in
 package.overrideAttrs (old: {
   patches = (old.patches or [ ]) ++ [
-    ./patches/persistent-finalization-schema.patch
     ./patches/revision-identity.patch
     ./patches/shared-publications.patch
     ./patches/awaited-lifecycle.patch
-    ./patches/build-finished-context.patch
     ./patches/native-upload-ui.patch
     ./patches/live-log-state.patch
-    ./patches/ci-fixes.patch
+    ./patches/existing-checks.patch
   ];
 })

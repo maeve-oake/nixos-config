@@ -1,73 +1,8 @@
-diff --git a/nixbot/build_run.py b/nixbot/build_run.py
---- a/nixbot/build_run.py
-+++ b/nixbot/build_run.py
-@@ -868,6 +868,21 @@
-                         outcome = await self._after_success(job, writer)
-                         if outcome == BuildOutcome.post_build_failure:
-                             failure_phase = "publication"
-+                        else:
-+                            try:
-+                                await self.o.post_process_skipped(
-+                                    self.event, [(job.attr, job.outputs.get("out") or "")]
-+                                )
-+                            except Exception as error:
-+                                logger.exception("post-processing failed")
-+                                await writer.write(str(error).encode())
-+                                await self.o.pool.execute(
-+                                    "UPDATE builds SET error=$2 WHERE id=$1",
-+                                    self.build_record.id_,
-+                                    str(error),
-+                                )
-+                                outcome = BuildOutcome.post_build_failure
-+                                failure_phase = "post_processing"
-                     ok = await lifecycle.attribute(
-                         self.o,
-                         self.event,
-@@ -953,16 +968,4 @@
-             log_size=writer.bytes_seen,
-             log_truncated=writer.truncated,
-         )
--        if outcome == BuildOutcome.success:
--            try:
--                await self.o.post_process_skipped(
--                    self.event, [(job.attr, job.outputs.get("out") or "")]
--                )
--            except Exception:
--                # Must not overwrite the recorded success or poison
--                # the failed-build cache.
--                logger.exception(
--                    "post-processing failed",
--                    extra={"build_id": self.build_record.id_, "attr": job.attr},
--                )
-         return outcome
-diff --git a/nixbot/rerun_exec.py b/nixbot/rerun_exec.py
---- a/nixbot/rerun_exec.py
-+++ b/nixbot/rerun_exec.py
-@@ -125,7 +125,7 @@
-                     else j
-                     for j in pending_jobs
-                 ]
--            else:
-+            elif o.config.evaluation_finished or o.config.attribute_finished:
-                 await o.run_build(event, build, worktree_path, credentials)
-                 return
-             # No re-eval on this path: re-post the eval context green,
-diff --git a/nixbot/service.py b/nixbot/service.py
---- a/nixbot/service.py
-+++ b/nixbot/service.py
-@@ -507,7 +507,7 @@
-             info.key, f"{commit}^{{tree}}"
-         )
-         build = await builds_q.find_reusable_build(
--            self.pool, project_id=project_id, tree_hash=tree_hash
-+            self.pool, project_id=project_id, tree_hash=tree_hash, commit_sha=commit
-         )
-         return build is not None
- 
 diff --git a/nixbot/tests/e2e/test_browse.py b/nixbot/tests/e2e/test_browse.py
+index 57af95e..18ebb7c 100644
 --- a/nixbot/tests/e2e/test_browse.py
 +++ b/nixbot/tests/e2e/test_browse.py
-@@ -21,7 +21,7 @@
+@@ -21,7 +21,7 @@ def test_homepage_lists_project_and_recent_builds(page: Page) -> None:
  
  def test_navigate_sidebar_to_failed_build(page: Page) -> None:
      page.goto("/")
@@ -77,9 +12,10 @@ diff --git a/nixbot/tests/e2e/test_browse.py b/nixbot/tests/e2e/test_browse.py
  
      page.locator('a[href$="/builds/2"]').first.click()
 diff --git a/nixbot/tests/support.py b/nixbot/tests/support.py
+index 0b1e72c..2e35d1e 100644
 --- a/nixbot/tests/support.py
 +++ b/nixbot/tests/support.py
-@@ -43,6 +43,7 @@
+@@ -43,6 +43,7 @@ from nixbot.models import CacheStatus, NixEvalJobSuccess
  def make_config(dsn: str, state_dir: Path, **kwargs: Any) -> Config:
      """A minimal valid Config for service-level tests."""
      kwargs.setdefault("work_retry_backoff", 0)
@@ -88,9 +24,10 @@ diff --git a/nixbot/tests/support.py b/nixbot/tests/support.py
          db_url=dsn,
          build_systems=["x86_64-linux"],
 diff --git a/nixbot/tests/test_control.py b/nixbot/tests/test_control.py
+index c2d73d0..f881f8c 100644
 --- a/nixbot/tests/test_control.py
 +++ b/nixbot/tests/test_control.py
-@@ -326,7 +326,7 @@
+@@ -326,7 +326,7 @@ def test_cancel_all_cancels_pending_and_running_builds(harness: WebHarness) -> N
      BACKEND.cancelled.clear()
      response = harness.post("/builds/cancel-all", ROOT)
      assert response.status_code == 303
@@ -99,7 +36,7 @@ diff --git a/nixbot/tests/test_control.py b/nixbot/tests/test_control.py
      queued = harness.run(
          harness.ctx.pool.fetch(
              "SELECT id FROM builds"
-@@ -338,9 +338,9 @@
+@@ -338,9 +338,9 @@ def test_cancel_all_cancels_pending_and_running_builds(harness: WebHarness) -> N
  
  
  def test_cancel_all_button_admin_only(harness: WebHarness) -> None:
@@ -113,9 +50,10 @@ diff --git a/nixbot/tests/test_control.py b/nixbot/tests/test_control.py
  
  def test_csrf_cross_origin_rejected(harness: WebHarness) -> None:
 diff --git a/nixbot/tests/test_db.py b/nixbot/tests/test_db.py
+index fbfedd6..7b61b74 100644
 --- a/nixbot/tests/test_db.py
 +++ b/nixbot/tests/test_db.py
-@@ -354,12 +354,9 @@
+@@ -354,12 +354,9 @@ async def test_reuse_backfills_pr_fields(pool: asyncpg.Pool) -> None:
      assert row["pr_author"] == "github:alice"
  
  
@@ -129,7 +67,7 @@ diff --git a/nixbot/tests/test_db.py b/nixbot/tests/test_db.py
      project_id = await insert_project(pool, "pr-cross")
      first, _ = await db.get_or_create_build(
          pool,
-@@ -379,17 +376,15 @@
+@@ -379,17 +376,15 @@ async def test_reuse_by_other_pr_clears_both_identity_fields(
          pr_number=2,
          pr_author="github:bob",
      )
@@ -140,14 +78,13 @@ diff --git a/nixbot/tests/test_db.py b/nixbot/tests/test_db.py
      row = await pool.fetchrow(
          "SELECT pr_number, pr_author, branch FROM builds WHERE id = $1",
 -        first.id_,
--    )
++        second.id_,
+     )
 -    # Never mix two PRs' identities: clear both together. The
 -    # branch stays: only a plain branch push takes it over.
 -    assert row["pr_number"] is None
 -    assert row["pr_author"] is None
 -    assert row["branch"] == "feature-a"
-+        second.id_,
-+    )
 +    assert row["pr_number"] == 2
 +    assert row["pr_author"] == "github:bob"
 +    assert row["branch"] == "feature-b"
@@ -155,9 +92,10 @@ diff --git a/nixbot/tests/test_db.py b/nixbot/tests/test_db.py
  
  async def test_branch_push_takes_over_reused_pr_build(pool: asyncpg.Pool) -> None:
 diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.py
+index 725a443..4d5740b 100644
 --- a/nixbot/tests/test_orchestrator.py
 +++ b/nixbot/tests/test_orchestrator.py
-@@ -2220,15 +2220,13 @@
+@@ -2220,15 +2220,13 @@ async def test_stale_event_reusing_old_build_does_not_cancel_newer(
      assert await build_status(pool, build2.id_) == BuildStatus.SUCCEEDED
  
  
@@ -175,7 +113,7 @@ diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.
  
      ran = patch_effects(monkeypatch).ran
      add_commit(upstream, "reuse-deploy")
-@@ -2246,7 +2244,6 @@
+@@ -2246,7 +2244,6 @@ async def test_reuse_for_default_branch_push_runs_effects(
      assert ran == []
      assert await effect_statuses(pool, pr_build.id_) == {"deploy": "skipped"}
  
@@ -183,7 +121,7 @@ diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.
      git(upstream, "commit", "--allow-empty", "-m", "reuse-deploy-merge")
      main_sha = git(upstream, "rev-parse", "HEAD")
      assert main_sha != pr_sha
-@@ -2255,10 +2252,10 @@
+@@ -2255,10 +2252,10 @@ async def test_reuse_for_default_branch_push_runs_effects(
          ChangeEvent(repo=project, branch="main", commit_sha=main_sha)
      )
      assert main_build is not None
@@ -196,7 +134,7 @@ diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.
      # Effects ran for the main merge, so their statuses belong on the
      # main commit -- not the build's stored PR-head commit (pr_sha).
      sha_events = ("effect-started", "effects-started", "effects-finished")
-@@ -2275,11 +2272,10 @@
+@@ -2275,11 +2272,10 @@ async def build_finished_deliveries(pool: asyncpg.Pool) -> list[dict[str, object
      return [json.loads(r["payload"]) for r in rows]
  
  
@@ -210,7 +148,7 @@ diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.
      pr_sha = add_commit(upstream, "reuse-finished")
      orchestrator, _, project = await make_env(
          FakeEvalRunner([mk_job("a")]), FakeExecutor(), name="reuse-finished"
-@@ -2298,7 +2294,7 @@
+@@ -2298,7 +2294,7 @@ async def test_push_reusing_pr_build_delivers_build_finished(
          ChangeEvent(repo=project, branch="main", commit_sha=main_sha)
      )
      assert main_build is not None
@@ -219,7 +157,7 @@ diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.
      [main_delivery] = await build_finished_deliveries(pool)
      assert main_delivery.get("pr_number") is None
      assert main_delivery["rev"] == main_sha
-@@ -2336,7 +2332,6 @@
+@@ -2336,7 +2332,6 @@ async def test_push_linking_running_pr_build_delivers_build_finished(
      )
      await wait_started(executor.started, pr_task)
  
@@ -227,7 +165,7 @@ diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.
      main_sha = git(upstream, "rev-parse", "HEAD")
      main_build = await orchestrator.handle_change_event(
          ChangeEvent(repo=project, branch="main", commit_sha=main_sha)
-@@ -2557,11 +2552,12 @@
+@@ -2557,11 +2552,12 @@ async def test_gated_restart_then_allowed_reuse_deploys(
      assert await effect_statuses(pool, build.id_) == {"deploy": "skipped"}
  
      git(upstream, "commit", "--allow-empty", "-m", "merge")
@@ -241,7 +179,7 @@ diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.
      await drain_effect_items(orchestrator, project, pool)
      assert ran == ["deploy"]
      assert await effect_statuses(pool, build.id_) == {"deploy": "succeeded"}
-@@ -2606,14 +2602,13 @@
+@@ -2606,14 +2602,13 @@ async def test_rerun_single_effect_takes_pending_dependents(
      }
  
  
@@ -258,7 +196,7 @@ diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.
  
      async def failing_run(ctx: object, name: str, log_write: object = None) -> bool:
          return False
-@@ -2632,8 +2627,6 @@
+@@ -2632,8 +2627,6 @@ async def test_reuse_replays_effect_statuses_to_new_commit(
      assert first is not None
      await drain_effect_items(orchestrator, project, pool)
  
@@ -267,7 +205,7 @@ diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.
      git(upstream, "commit", "--allow-empty", "-m", "reuse-replay-empty")
      sha2 = git(upstream, "rev-parse", "HEAD")
      reporter.events.clear()
-@@ -2641,10 +2634,11 @@
+@@ -2641,10 +2634,11 @@ async def test_reuse_replays_effect_statuses_to_new_commit(
          ChangeEvent(repo=project, branch="main", commit_sha=sha2)
      )
      assert reused is not None
@@ -283,9 +221,10 @@ diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.
  
  async def test_attach_to_already_terminal_build_replays_status(
 diff --git a/nixbot/tests/test_upload.py b/nixbot/tests/test_upload.py
+index 0cbfa56..1706fa4 100644
 --- a/nixbot/tests/test_upload.py
 +++ b/nixbot/tests/test_upload.py
-@@ -11,6 +11,7 @@
+@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
  import pytest
  
  from nixbot.config import UploaderConfig
@@ -293,7 +232,7 @@ diff --git a/nixbot/tests/test_upload.py b/nixbot/tests/test_upload.py
  from nixbot.db_gen import uploads as q
  from nixbot.upload import (
      MAX_ATTEMPTS,
-@@ -81,7 +82,7 @@
+@@ -81,7 +82,7 @@ def test_parse_path_info_both_formats() -> None:
  async def test_final_upload_reports_and_clears_queue(
      pool: asyncpg.Pool, tmp_path: Path
  ) -> None:
@@ -302,7 +241,7 @@ diff --git a/nixbot/tests/test_upload.py b/nixbot/tests/test_upload.py
      async with running(up, pool):
          result = await up.upload(["/nix/store/a", "/nix/store/b"])
      assert result.success
-@@ -96,7 +97,7 @@
+@@ -96,7 +97,7 @@ async def test_final_upload_reports_and_clears_queue(
  async def test_intermediates_batch_with_final_and_drop_invalid(
      pool: asyncpg.Pool, tmp_path: Path
  ) -> None:
@@ -311,7 +250,7 @@ diff --git a/nixbot/tests/test_upload.py b/nixbot/tests/test_upload.py
      # Queued before the worker runs: everything lands in one push.
      up.enqueue_nowait("/nix/store/dep1.drv")
      up.enqueue_nowait("/nix/store/failed.drv")
-@@ -109,7 +110,7 @@
+@@ -109,7 +110,7 @@ async def test_intermediates_batch_with_final_and_drop_invalid(
  
  
  async def test_stdin_mode(pool: asyncpg.Pool, tmp_path: Path) -> None:
@@ -320,7 +259,7 @@ diff --git a/nixbot/tests/test_upload.py b/nixbot/tests/test_upload.py
      async with running(up, pool):
          assert (await up.upload(["/nix/store/a"])).success
      assert (tmp_path / "up.log").read_text().split() == ["/nix/store/a", "batch"]
-@@ -121,7 +122,7 @@
+@@ -121,7 +122,7 @@ async def test_pending_paths_survive_restart(
      # Left over by a previous service instance that died mid-batch.
      await q.enqueue_upload_paths(pool, uploader="up", paths=["/nix/store/old"])
      await q.enqueue_upload_paths(pool, uploader="gone", paths=["/nix/store/x"])
@@ -329,7 +268,7 @@ diff --git a/nixbot/tests/test_upload.py b/nixbot/tests/test_upload.py
      async with running(up, pool):
          assert (await up.upload(["/nix/store/new"])).success
      lines = (tmp_path / "up.log").read_text().split()
-@@ -157,7 +158,7 @@
+@@ -157,7 +158,7 @@ def streamer(tmp_path: Path, body: str, name: str = "up") -> UploaderConfig:
  
  
  def test_uploader_factory_picks_stream(pool: asyncpg.Pool, tmp_path: Path) -> None:
@@ -338,7 +277,7 @@ diff --git a/nixbot/tests/test_upload.py b/nixbot/tests/test_upload.py
      assert isinstance(
          Uploader.create(streamer(tmp_path, "ok(p)"), pool), StreamUploader
      )
-@@ -239,7 +240,7 @@
+@@ -239,7 +240,7 @@ async def test_failure_reports_retries_and_gives_up(
          name="up",
          command=["sh", "-c", f"echo x >> {counter}; echo cache down; exit 1", "sh"],
      )
@@ -348,9 +287,10 @@ diff --git a/nixbot/tests/test_upload.py b/nixbot/tests/test_upload.py
          result = await up.upload(["/nix/store/a"])
          assert not result.success
 diff --git a/nixbot/tests/test_web.py b/nixbot/tests/test_web.py
+index 28268ad..0ed2c97 100644
 --- a/nixbot/tests/test_web.py
 +++ b/nixbot/tests/test_web.py
-@@ -112,9 +112,8 @@
+@@ -112,9 +112,8 @@ def test_homepage(client: WebHarness) -> None:
      response = client.get("/")
      assert response.status_code == 200
      assert "acme/widget" in response.text  # sidebar
@@ -361,7 +301,7 @@ diff --git a/nixbot/tests/test_web.py b/nixbot/tests/test_web.py
  
  
  def test_project_page_with_filters(client: WebHarness) -> None:
-@@ -423,9 +422,9 @@
+@@ -423,9 +422,9 @@ def test_pending_build_shows_eval_blocker(client: WebHarness) -> None:
  
  def test_project_filter_escapes_like_wildcards(client: WebHarness) -> None:
      # `%` and `_` must match literally, not as ILIKE wildcards.
@@ -374,7 +314,7 @@ diff --git a/nixbot/tests/test_web.py b/nixbot/tests/test_web.py
  
  
  def test_page_out_of_range_does_not_error(client: WebHarness) -> None:
-@@ -440,8 +439,7 @@
+@@ -440,8 +439,7 @@ def test_page_out_of_range_does_not_error(client: WebHarness) -> None:
  def test_activity_page(client: WebHarness) -> None:
      response = client.get("/builds")
      assert response.status_code == 200
@@ -384,7 +324,7 @@ diff --git a/nixbot/tests/test_web.py b/nixbot/tests/test_web.py
      assert "#3" in response.text
      # Activity feed lists finished builds too.
      assert ">#1<" in response.text
-@@ -1776,8 +1774,8 @@
+@@ -1776,8 +1774,8 @@ def test_build_page_shows_effects(client: WebHarness) -> None:
      # Builds without effects don't render the section.
      assert "Effects" not in client.get("/repos/github/acme/widget/builds/1").text
      pr_text = client.get("/repos/github/acme/widget/builds/3").text
@@ -395,7 +335,7 @@ diff --git a/nixbot/tests/test_web.py b/nixbot/tests/test_web.py
      assert "effects/restart" not in pr_text
      # The builds list folds live or failed effects into the single status icon.
      listing = client.get("/repos/github/acme/widget").text
-@@ -1819,8 +1817,8 @@
+@@ -1819,8 +1817,8 @@ def test_build_page_shows_event_effects(client: WebHarness) -> None:
      # Evaluation failures are rows of the same list as runs.
      assert "undefined variable typo0" in text
      assert "evaluation" in text
@@ -406,7 +346,7 @@ diff --git a/nixbot/tests/test_web.py b/nixbot/tests/test_web.py
      assert "comment.apply" in text
      assert "hcloudx missing" in text
  
-@@ -1848,13 +1846,10 @@
+@@ -1848,13 +1846,10 @@ def test_build_page_groups_dependency_checks_apart(client: WebHarness) -> None:
      client.loop.run_until_complete(seed())
      text = client.get("/repos/github/acme/widget/builds/3").text
      headers = re.findall(r'<div class="grp">([^<]+)</div>', text)
@@ -423,49 +363,3 @@ diff --git a/nixbot/tests/test_web.py b/nixbot/tests/test_web.py
  
  
  def test_effect_log_raw_text(client: WebHarness, tmp_path: Path) -> None:
-diff --git a/nixbot/web/app.py b/nixbot/web/app.py
---- a/nixbot/web/app.py
-+++ b/nixbot/web/app.py
-@@ -350,6 +350,8 @@
-             projects=await ctx.queries.repo_overview(project_ids=visible, q=q or None),
-             disabled_projects=disabled,
-             queue=await ctx.queue_cards(visible),
-+            can_cancel_queue=ctx.authz is not None
-+            and is_admin(await ctx.request_user(request), ctx.authz),
-             uploads=await overview(ctx, request),
-         )
- 
-@@ -395,6 +397,8 @@
-             "_queue.html",
-             request=request,
-             queue=await ctx.queue_cards(visible),
-+            can_cancel_queue=ctx.authz is not None
-+            and is_admin(await ctx.request_user(request), ctx.authz),
-         )
- 
-     async def _schedules(self, project_id: int) -> list[Any]:
-diff --git a/nixbot/web/templates/_queue.html b/nixbot/web/templates/_queue.html
---- a/nixbot/web/templates/_queue.html
-+++ b/nixbot/web/templates/_queue.html
-@@ -13,4 +13,9 @@
-       </a>
-     {% endfor %}
-   </section>
-+  {% if can_cancel_queue %}
-+    <form method="post" action="/builds/cancel-all">
-+      <button>cancel all</button>
-+    </form>
-+  {% endif %}
- {% endif %}
-diff --git a/nixbot/web/uploads.py b/nixbot/web/uploads.py
---- a/nixbot/web/uploads.py
-+++ b/nixbot/web/uploads.py
-@@ -86,7 +86,7 @@
- 
- 
- def create_upload_router(ctx):
--    router = APIRouter()
-+    router = APIRouter(include_in_schema=False)
- 
-     @router.get("/api/uploads")
-     async def uploads(

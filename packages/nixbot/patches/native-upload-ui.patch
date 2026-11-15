@@ -1,17 +1,5 @@
-diff --git a/nixbot/web/api_routes.py b/nixbot/web/api_routes.py
-index 3a85333..9592ddd 100644
---- a/nixbot/web/api_routes.py
-+++ b/nixbot/web/api_routes.py
-@@ -105,6 +105,7 @@ class Attribute(BaseModel):
-     # | dependency_failed | cached_failure | failed_eval | ignored_failure
-     status: str
-     cached: bool
-+    failure_phase: str | None = None
-     error: str | None
-     started_at: datetime | None
-     finished_at: datetime | None
 diff --git a/nixbot/web/app.py b/nixbot/web/app.py
-index 4341b50..bf1e7b0 100644
+index 4341b50..cd924cc 100644
 --- a/nixbot/web/app.py
 +++ b/nixbot/web/app.py
 @@ -41,6 +41,7 @@ from ..auth import User, can_control_build, is_admin  # noqa: TID252
@@ -30,15 +18,16 @@ index 4341b50..bf1e7b0 100644
  from .workload_routes import create_workload_identity_router
  
  if TYPE_CHECKING:
-@@ -116,6 +118,7 @@ class WebContext:
+@@ -116,6 +118,8 @@ class WebContext:
          self.pool = pool
          self.state_dir = state_dir or Path("/var/lib/nixbot")
          self.queries = WebQueries(pool)
++        self.uploaders = []
 +        self._queue_titles = {}
          self.env = make_env()
          self.signer = signer
          self.visibility = visibility
-@@ -135,6 +138,41 @@ class WebContext:
+@@ -135,6 +139,41 @@ class WebContext:
          # Wired by bootstrap. Effects post PR comments through it.
          self.forge_pr: ForgePrClient | None = None
  
@@ -80,16 +69,18 @@ index 4341b50..bf1e7b0 100644
      async def can_control(self, request: Request, build: dict[str, Any]) -> bool:
          """Whether the requester may restart/cancel this build (drives
          both the buttons and the control routes): instance admin, PR
-@@ -311,6 +349,8 @@ class _PageRoutes:
+@@ -311,6 +350,10 @@ class _PageRoutes:
              toggleable=toggleable,
              projects=await ctx.queries.repo_overview(project_ids=visible, q=q or None),
              disabled_projects=disabled,
 +            queue=await ctx.queue_cards(visible),
++            can_cancel_queue=ctx.authz is not None
++            and is_admin(await ctx.request_user(request), ctx.authz),
 +            uploads=await overview(ctx, request),
          )
  
      async def activity(self, request: Request) -> HTMLResponse:
-@@ -324,8 +364,6 @@ class _PageRoutes:
+@@ -324,8 +367,6 @@ class _PageRoutes:
          return await ctx.render(
              "activity.html",
              request=request,
@@ -98,7 +89,7 @@ index 4341b50..bf1e7b0 100644
              builds=builds[:PAGE_SIZE],
              has_more=len(builds) > PAGE_SIZE,
              more_url="/builds/rows",
-@@ -356,15 +394,7 @@ class _PageRoutes:
+@@ -356,15 +397,9 @@ class _PageRoutes:
          return await ctx.render(
              "_queue.html",
              request=request,
@@ -112,10 +103,12 @@ index 4341b50..bf1e7b0 100644
 -        return ctx.authz is not None and is_admin(
 -            await ctx.request_user(request), ctx.authz
 +            queue=await ctx.queue_cards(visible),
++            can_cancel_queue=ctx.authz is not None
++            and is_admin(await ctx.request_user(request), ctx.authz),
          )
  
      async def _schedules(self, project_id: int) -> list[Any]:
-@@ -521,13 +551,24 @@ class _PageRoutes:
+@@ -521,13 +556,24 @@ class _PageRoutes:
          effects = await ctx.queries.effects(build["id"])
          effect_rows = attention_first(
              from_eval_errors(await ctx.queries.effect_eval_errors(build["id"]))
@@ -141,7 +134,7 @@ index 4341b50..bf1e7b0 100644
              attrs_total=total,
              attrs_done=total - progress["pending"] - progress["building"],
              progress=progress,
-@@ -948,6 +989,7 @@ def create_app(
+@@ -948,6 +994,7 @@ def create_app(
      if task_tokens is not None:
          app.include_router(create_task_router(ctx, task_tokens))
      app.include_router(create_api_router(ctx))
@@ -302,10 +295,10 @@ index 0000000..f2dcc93
 +
 +customElements.define("nixbot-upload-path", NixbotUploadPath);
 diff --git a/nixbot/web/templates/_queue.html b/nixbot/web/templates/_queue.html
-index 62a9545..20b7c16 100644
+index 62a9545..e3091fb 100644
 --- a/nixbot/web/templates/_queue.html
 +++ b/nixbot/web/templates/_queue.html
-@@ -1,37 +1,16 @@
+@@ -1,37 +1,21 @@
 -{% from "_macros.html" import status_icon, ref_link, ago %}
 +{% from "_macros.html" import status_icon %}
  {% if queue %}
@@ -356,6 +349,11 @@ index 62a9545..20b7c16 100644
 +      </a>
 +    {% endfor %}
 +  </section>
++  {% if can_cancel_queue %}
++    <form method="post" action="/builds/cancel-all">
++      <button>cancel all</button>
++    </form>
++  {% endif %}
  {% endif %}
 diff --git a/nixbot/web/templates/_uploads.html b/nixbot/web/templates/_uploads.html
 new file mode 100644
@@ -469,78 +467,12 @@ index 6c4d71d..4597692 100644
            </form>
          {% endif %}
        </p>
-diff --git a/nixbot/web/templates/log.html b/nixbot/web/templates/log.html
-index 2d9d766..910cfa3 100644
---- a/nixbot/web/templates/log.html
-+++ b/nixbot/web/templates/log.html
-@@ -16,17 +16,17 @@
-             {% if attr_row | eval_stats %}· {{ attr_row | eval_stats }}{% endif %}
-             {% if prev_number %}
-               · <a href="{{ build_path(project, prev_number) }}/logs/{{ attr | urlencode }}"
--    rel="prev">‹ #{{ prev_number }}</a>
-+                   rel="prev">‹ #{{ prev_number }}</a>
-             {% endif %}
-             {% if next_number %}
-               · <a href="{{ build_path(project, next_number) }}/logs/{{ attr | urlencode }}"
--    rel="next">#{{ next_number }} ›</a>
-+                   rel="next">#{{ next_number }} ›</a>
-             {% endif %}
-           </small>
-         </h2>
-         <div class="controls">
-           {{ copy_log_btn(build_path(project, build.number) ~ "/logs/raw/" ~ (attr | urlencode)) }}
--          {% if can_control and attr_status in ('pending', 'building') %}
-+          {% if can_control and attr_status in ("pending", "building") %}
-             <form method="post"
-                   action="{{ build_path(project, build.number) }}/attrs/{{ attr | urlencode }}/cancel">
-               <button>cancel</button>
-@@ -39,6 +39,11 @@
-           {% endif %}
-         </div>
-       </div>
-+      <div hx-sse:connect="/events"
-+           hx-select=".upload-panel"
-+           hx-get="/uploads?build_id={{ build.id }}&amp;attr={{ attr | urlencode }}"
-+           hx-trigger="load, status from:body throttle:1s"
-+           hx-swap="innerHTML"></div>
-       {% if waiting %}
-         <p class="muted">waiting for the build to start…</p>
-       {% elif unavailable %}
-@@ -126,13 +131,18 @@
-   <script>
-     const LIVE = {{ live | tojson }};
-     const RUNNING = {{ (attr_status in ("pending", "building", "running")) | tojson }};
-+    function reloadLogView() {
-+      document.dispatchEvent(new Event("nixbot:log-save"));
-+      location.reload();
-+    }
-+    document.addEventListener("nixbot:log-reload", reloadLogView);
-     const log = document.getElementById("log");
-     /* Failures sit at the end. Start there unless a line is linked. */
-     if (log && !location.hash) log.scrollTop = log.scrollHeight;
-     /* Queued or just (re)started with no stream yet: reload until it
-        exists. Polling, not events: a status event sent before the
-        EventSource below connects would be lost. */
--    if (!LIVE && RUNNING) setTimeout(() => location.reload(), 2000);
-+    if (!LIVE && RUNNING) setTimeout(reloadLogView, 2000);
-     /* Status changes for this attribute re-render the page: header
-        dot, controls, and (once finished) line anchors. */
-     const events = new EventSource("/events?build={{ build.id }}");
-@@ -140,7 +150,7 @@
-       let e;
-       try { e = JSON.parse(ev.data); } catch { return; }
-       if (e.attr !== {{ attr | tojson }}) return;
--      if (!LIVE || !["pending", "building"].includes(e.status)) location.reload();
-+      if (!LIVE || !["pending", "building"].includes(e.status)) reloadLogView();
-     });
-   </script>
- {% endblock body %}
 diff --git a/nixbot/web/uploads.py b/nixbot/web/uploads.py
 new file mode 100644
-index 0000000..2f56c18
+index 0000000..4eda8ba
 --- /dev/null
 +++ b/nixbot/web/uploads.py
-@@ -0,0 +1,108 @@
+@@ -0,0 +1,97 @@
 +from __future__ import annotations
 +
 +from fastapi import APIRouter, Request
@@ -548,38 +480,34 @@ index 0000000..2f56c18
 +
 +
 +async def overview(ctx, request, build_id=None, attr=None):
++    if not ctx.uploaders:
++        return dict(destinations=[], build_id=build_id, attr=attr)
 +    visible = await ctx.visible_repo_ids(request)
 +    rows = await ctx.pool.fetch(
-+        """SELECT DISTINCT p.*,d.name,d.jobs FROM publication_paths p
-+        JOIN publication_destinations d USING(destination)
-+        LEFT JOIN publication_members m USING(destination,path)
-+        LEFT JOIN publications s ON s.id=m.publication_id
++        """SELECT DISTINCT p.* FROM nixbot_uploads.publication_paths p
++        LEFT JOIN nixbot_uploads.publication_members m USING(destination,path)
++        LEFT JOIN nixbot_uploads.publications s ON s.id=m.publication_id
 +        LEFT JOIN builds b ON b.id=s.build_id
 +        WHERE ($1::bigint IS NULL OR s.build_id=$1) AND ($2::text IS NULL OR s.attr=$2)
 +        AND ($1::bigint IS NOT NULL OR p.state IN ('queued','uploading','retrying') OR (p.state='failed' AND EXISTS(SELECT 1 FROM build_attributes a WHERE a.build_id=s.build_id AND a.attr=s.attr AND a.status IN ('pending','building'))))
-+        AND ($3::bigint[] IS NULL OR b.project_id=ANY($3)) ORDER BY d.name,p.path""",
++        AND ($3::bigint[] IS NULL OR b.project_id=ANY($3)) ORDER BY p.destination,p.path""",
 +        build_id,
 +        attr,
 +        visible,
 +    )
++    uploaders = {u.destination: u for u in ctx.uploaders if hasattr(u, "destination")}
 +    destinations = {
-+        r["destination"]: dict(name=r["name"], jobs=r["jobs"], paths=[])
-+        for r in await ctx.pool.fetch(
-+            "SELECT * FROM publication_destinations ORDER BY name"
-+        )
++        key: dict(name=u.name, paths=[]) for key, u in sorted(uploaders.items())
 +    }
 +    for row in rows:
 +        key = row["destination"]
-+        section = destinations.setdefault(
-+            key, dict(name=row["name"], jobs=row["jobs"], paths=[])
-+        )
-+        section["paths"].append(dict(row))
++        if key in destinations:
++            destinations[key]["paths"].append(dict(row))
 +    members = await ctx.pool.fetch(
-+        """SELECT m.destination,m.path,s.attr,b.number,p.forge,p.owner,p.name,
-+        count(*) OVER(PARTITION BY m.destination,m.path) AS subscribers
-+        FROM publication_members m JOIN publications s ON s.id=m.publication_id
-+        JOIN builds b ON b.id=s.build_id JOIN projects p ON p.id=b.project_id
-+        WHERE s.state IN ('planning','waiting') AND ($1::bigint[] IS NULL OR b.project_id=ANY($1)) ORDER BY s.id""",
++        """SELECT m.destination,m.path,count(*) AS subscribers
++        FROM nixbot_uploads.publication_members m JOIN nixbot_uploads.publications s ON s.id=m.publication_id
++        JOIN builds b ON b.id=s.build_id
++        WHERE s.state IN ('planning','waiting') AND ($1::bigint[] IS NULL OR b.project_id=ANY($1)) GROUP BY m.destination,m.path""",
 +        visible,
 +    )
 +    shared = {(r["destination"], r["path"]): r["subscribers"] for r in members}
@@ -595,6 +523,9 @@ index 0000000..2f56c18
 +        section["hidden_paths"] = max(0, len(pending) - limit)
 +        for path in section["visible_paths"]:
 +            path["name"] = path["path"].rsplit("/", 1)[-1].split("-", 1)[-1]
++            path["sent"] = min(
++                path["bytes"], uploaders[key].progress.get(path["path"], 0)
++            )
 +            path["percent"] = (
 +                min(100, int(100 * path["sent"] / path["bytes"]))
 +                if path["bytes"]
@@ -611,16 +542,6 @@ index 0000000..2f56c18
 +                )
 +            )
 +            path["shared"] = shared.get((key, path["path"]), 0)
-+        section.update(
-+            active=sum(p["state"] == "uploading" for p in paths),
-+            queued=sum(p["state"] in ("queued", "retrying") for p in paths),
-+            complete=sum(p["state"] == "complete" for p in paths),
-+            total=len(paths),
-+            sent=sum(p["sent"] for p in paths),
-+            bytes=sum(p["bytes"] for p in paths),
-+            retries=sum(max(0, p["attempts"] - 1) for p in paths),
-+            failed=sum(p["state"] == "failed" for p in paths),
-+        )
 +    return dict(
 +        destinations=list(destinations.values()),
 +        build_id=build_id,
@@ -629,7 +550,7 @@ index 0000000..2f56c18
 +
 +
 +def create_upload_router(ctx):
-+    router = APIRouter()
++    router = APIRouter(include_in_schema=False)
 +
 +    @router.get("/api/uploads")
 +    async def uploads(

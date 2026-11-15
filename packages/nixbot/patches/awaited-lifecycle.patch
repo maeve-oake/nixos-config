@@ -1,16 +1,8 @@
 diff --git a/nixbot/bootstrap.py b/nixbot/bootstrap.py
-index 14b710b..5e04d0b 100644
+index 14b710b..1fb06f1 100644
 --- a/nixbot/bootstrap.py
 +++ b/nixbot/bootstrap.py
-@@ -50,6 +50,7 @@ from .gitrepo import (
-     RepoManager,
- )
- from .hook_secrets import WebhookSecrets
-+from .lifecycle import run_async_hooks
- from .migrations import apply_migrations
- from .nix_eval import CgroupLimiter, EvalRunner
- from .orchestrator import Orchestrator
-@@ -302,7 +303,10 @@ async def build_service(config: Config) -> tuple[CIService, FastAPI]:
+@@ -302,7 +302,10 @@ async def build_service(config: Config) -> tuple[CIService, FastAPI]:
          eval_runner=EvalRunner(limiter=CgroupLimiter.create()),
          executor=executor,
          identity_issuer=identity_issuer,
@@ -22,17 +14,16 @@ index 14b710b..5e04d0b 100644
          failed_build_cache=lambda project_id: PostgresFailedBuildCache(
              pool, project_id
          ),
-@@ -512,6 +516,8 @@ async def run_service(config: Config) -> None:
-     # Startup can take minutes. It must not keep uvicorn from binding.
-     tasks = [
-         *await start_uploaders(service.orchestrator.uploaders, service.pool),
-+        asyncio.create_task(run_async_hooks(service.orchestrator, "evaluation_finished")),
-+        asyncio.create_task(run_async_hooks(service.orchestrator, "build_finished")),
-         asyncio.create_task(_run_startup(service)),
-         asyncio.create_task(service.maintenance_loop()),
-         asyncio.create_task(service.scheduled_effects_loop()),
+@@ -333,6 +336,7 @@ async def build_service(config: Config) -> tuple[CIService, FastAPI]:
+         identity_issuer=identity_issuer,
+     )
+     ctx = app.state.web_context
++    ctx.uploaders = orchestrator.uploaders
+     authz = AuthzConfig(
+         admins=config.admins,
+         allow_unauthenticated_control=config.allow_unauthenticated_control,
 diff --git a/nixbot/build_run.py b/nixbot/build_run.py
-index 835c45e..95e2474 100644
+index 835c45e..a2c889d 100644
 --- a/nixbot/build_run.py
 +++ b/nixbot/build_run.py
 @@ -16,7 +16,7 @@ import shutil
@@ -52,41 +43,24 @@ index 835c45e..95e2474 100644
  from .workload_identity import identity_from_event
  
  if TYPE_CHECKING:
-@@ -232,6 +233,33 @@ async def _settle_aborted(
-     ended without a normal aggregation (failure or cancellation)."""
-     # Otherwise pending/building attribute rows would look like they
-     # are still running.
-+    partial = await o.pool.fetchval(
-+        "SELECT payload FROM evaluation_contexts WHERE build_id=$1", build.id_
-+    )
-+    from .models import NixEvalJobModel
-+
-+    known = (
-+        [NixEvalJobModel.validate_python(j) for j in json.loads(partial)["attributes"]]
-+        if partial
-+        else []
-+    )
+@@ -248,6 +249,16 @@ async def _settle_aborted(
+         BuildResult(status, build.status_generation, []),
+         eval_success=None if status == BuildStatus.CANCELLED else False,
+     )
 +    await lifecycle.evaluation(
-+        o, event, build, known, complete=False, error=error or status
++        o, event, build, [], complete=False, error=error or status
 +    )
-+    unfinished = await o.pool.fetch(
-+        "SELECT attr FROM build_attributes WHERE build_id=$1 AND status IN ('pending','building')",
-+        build.id_,
++    await lifecycle.finished(
++        o,
++        event,
++        build,
++        status,
++        evaluation_error=error if status == BuildStatus.FAILED else None,
 +    )
-+    for job in known:
-+        if any(row["attr"] == job.attr for row in unfinished):
-+            await lifecycle.attribute(
-+                o,
-+                event,
-+                build,
-+                job,
-+                "cancelled" if status == BuildStatus.CANCELLED else "failed_eval",
-+                o.config.state_dir,
-+            )
-     await q.settle_unfinished_attributes(o.pool, build_id=build.id_)
-     await db.set_build_status(o.pool, build.id_, status, error=error)
-     if status == BuildStatus.CANCELLED:
-@@ -269,6 +297,7 @@ async def _record_eval_success(
+     refreshed = await q.get_build(o.pool, id_=build.id_)
+     if refreshed is not None:
+         await o.deliver_events(event, refreshed)
+@@ -269,6 +280,7 @@ async def _record_eval_success(
          if isinstance(job, NixEvalJobSuccess) and job.system in o.config.build_systems
      ]
      await commit_eval_result(o.pool, build.id_, buildable, result.duration_ms)
@@ -94,44 +68,7 @@ index 835c45e..95e2474 100644
      await o.reporter.eval_finished(
          event,
          build,
-@@ -341,6 +370,27 @@ async def _evaluate(  # noqa: PLR0913
-                 and job.system in o.config.build_systems
-             ],
-         )
-+        partial = await o.pool.fetchval(
-+            "SELECT payload FROM evaluation_contexts WHERE build_id=$1", build.id_
-+        )
-+        attributes = (
-+            {j["attr"]: j for j in json.loads(partial)["attributes"]} if partial else {}
-+        )
-+        attributes.update({j.attr: j.model_dump(mode="json") for j in jobs})
-+        await o.pool.execute(
-+            "INSERT INTO evaluation_contexts VALUES($1,$2) ON CONFLICT(build_id) DO UPDATE SET payload=excluded.payload",
-+            build.id_,
-+            json.dumps(
-+                dict(
-+                    attributes=list(attributes.values()),
-+                    finished=False,
-+                    generation=build.status_generation,
-+                    inventory_complete=False,
-+                    errors=[],
-+                    error=None,
-+                )
-+            ),
-+        )
-         await jobs_queue.put(jobs)
- 
-     # DB writes are throttled since retry storms emit one line per
-@@ -417,6 +467,8 @@ async def _run_build_inner(
-     if await _try_reuse_eval(o, event, build, worktree_path, credentials):
-         return
- 
-+    await o.pool.execute("DELETE FROM evaluation_contexts WHERE build_id=$1", build.id_)
-+
-     jobs_queue: asyncio.Queue[list[NixEvalJob] | None] = asyncio.Queue()
-     live_warnings = LiveWarningAggregator()
-     # Race slot wait and evaluation against the cancel event. A
-@@ -478,6 +530,8 @@ async def _reusable_eval_jobs(
+@@ -478,6 +490,8 @@ async def _reusable_eval_jobs(
      """Eval result of another build of the same tree (e.g. cancelled
      after evaluation, retried later), reusable when its derivations
      are still in the store; None means evaluate afresh."""
@@ -140,10 +77,19 @@ index 835c45e..95e2474 100644
      if build.tree_hash is None:
          return None
      source_id = await q.find_completed_eval(
-@@ -550,6 +604,18 @@ async def build_attributes(  # noqa: PLR0913
+@@ -547,9 +561,27 @@ async def build_attributes(  # noqa: PLR0913
+     ongoing evaluation. Returns the aggregated build status."""
+     cancel_event = o.cancel_events.setdefault(build.id_, asyncio.Event())
+ 
++    executor = _OrchestratorExecutor(o, event, build, worktree_path, cancel_event)
++
      async def record_early(result: AttributeResult) -> None:
          """Persist skips and dependency failures as they happen;
          otherwise they stay pending until the whole build ends."""
++        if result.status == AttributeStatus.failed_eval:
++            executor.compilation_failures.append(
++                dict(attr=result.attr, status="failed_eval")
++            )
 +        existing = await o.pool.fetchval(
 +            "SELECT status FROM build_attributes WHERE build_id=$1 AND attr=$2",
 +            build.id_,
@@ -159,7 +105,13 @@ index 835c45e..95e2474 100644
          await db.complete_attribute(o.pool, build.id_, result, if_unfinished=True)
  
      failed_build_cache: FailedBuildCache | None = (
-@@ -565,6 +631,7 @@ async def build_attributes(  # noqa: PLR0913
+@@ -560,11 +592,12 @@ async def build_attributes(  # noqa: PLR0913
+     if failed_build_cache is not None and not cache_failures:
+         failed_build_cache = _ReadOnlyFailedBuildCache(failed_build_cache)
+     scheduler = JobScheduler(
+-        _OrchestratorExecutor(o, event, build, worktree_path, cancel_event),
++        executor,
+         o.config.build_systems,
          failed_build_cache=failed_build_cache,
          build_url=f"{o.config.url}/repos/{event.repo.forge}/{event.repo.name}/builds/{build.number}",
          on_result=record_early,
@@ -167,7 +119,23 @@ index 835c45e..95e2474 100644
      )
      if isinstance(jobs, asyncio.Queue):
          schedule_result = await scheduler.run_incremental(jobs)
-@@ -673,6 +740,14 @@ class _OrchestratorExecutor:
+@@ -614,6 +647,7 @@ async def build_attributes(  # noqa: PLR0913
+         BuildResult(status, generation, schedule_result.results),
+         eval_success=True,
+     )
++    await lifecycle.finished(o, event, build, status, executor.compilation_failures)
+     o.release_run(build.id_)
+     await after_build(
+         o, event, build, status, worktree_path=worktree_path, credentials=credentials
+@@ -656,6 +690,7 @@ class _OrchestratorExecutor:
+         self.build_record = build
+         self.worktree_path = worktree_path
+         self.cancel_event = cancel_event
++        self.compilation_failures = []
+ 
+     async def build(self, job: NixEvalJobSuccess) -> BuildOutcome:
+         try:
+@@ -673,6 +708,14 @@ class _OrchestratorExecutor:
                  drv_path=job.drv_path,
                  system=job.system,
              )
@@ -182,7 +150,7 @@ index 835c45e..95e2474 100644
              await db.complete_attribute(self.o.pool, self.build_record.id_, result)
              # Internal errors are not derivation failures: don't cache.
              return BuildOutcome.failure_no_cache
-@@ -680,19 +755,45 @@ class _OrchestratorExecutor:
+@@ -680,19 +723,45 @@ class _OrchestratorExecutor:
      async def _after_success(
          self, job: NixEvalJobSuccess, writer: LogWriter
      ) -> BuildOutcome:
@@ -230,27 +198,40 @@ index 835c45e..95e2474 100644
          step_results = await run_post_build_steps(
              self.o.config.post_build_steps,
              build_props(self.event, job),
-@@ -752,12 +853,74 @@ class _OrchestratorExecutor:
+@@ -752,8 +821,76 @@ class _OrchestratorExecutor:
                      ),
                      store=self.o.config.store_for(self.event.repo.name),
                  )
 -                if outcome == BuildOutcome.success:
 -                    outcome = await self._after_success(job, writer)
 +                nix_outcome = outcome.value
-+                failure_phase = (
-+                    "compilation"
-+                    if outcome == BuildOutcome.failure
-+                    else (
-+                        "internal" if outcome == BuildOutcome.failure_no_cache else None
++                if (
++                    outcome == BuildOutcome.failure
++                    and outcome_status(job, outcome)[0] == AttributeStatus.failed
++                ):
++                    self.compilation_failures.append(
++                        dict(attr=job.attr, status="failed")
 +                    )
-+                )
 +
 +                async def finalize():
-+                    nonlocal outcome, failure_phase
++                    nonlocal outcome
 +                    if outcome == BuildOutcome.success:
 +                        outcome = await self._after_success(job, writer)
-+                        if outcome == BuildOutcome.post_build_failure:
-+                            failure_phase = "publication"
++                        if outcome == BuildOutcome.success:
++                            try:
++                                await self.o.post_process_skipped(
++                                    self.event,
++                                    [(job.attr, job.outputs.get("out") or "")],
++                                )
++                            except Exception as error:
++                                logger.exception("post-processing failed")
++                                await writer.write(str(error).encode())
++                                await self.o.pool.execute(
++                                    "UPDATE builds SET error=$2 WHERE id=$1",
++                                    self.build_record.id_,
++                                    str(error),
++                                )
++                                outcome = BuildOutcome.post_build_failure
 +                    ok = await lifecycle.attribute(
 +                        self.o,
 +                        self.event,
@@ -263,7 +244,6 @@ index 835c45e..95e2474 100644
 +                    )
 +                    if not ok and outcome == BuildOutcome.success:
 +                        outcome = BuildOutcome.post_build_failure
-+                        failure_phase = "attribute_finished"
 +
 +                finalization = asyncio.create_task(finalize())
 +                cancelled = asyncio.create_task(attr_cancel.wait())
@@ -297,16 +277,23 @@ index 835c45e..95e2474 100644
          finally:
              mirror.cancel()
              self.o.attr_cancel_events.pop((self.build_record.id_, job.attr), None)
- 
-+        await self.o.pool.execute(
-+            "UPDATE build_attributes SET failure_phase=$3 WHERE build_id=$1 AND attr=$2",
-+            self.build_record.id_,
-+            job.attr,
-+            failure_phase,
-+        )
-         status, error = outcome_status(job, outcome)
-         # Failed attributes carry a log-tail excerpt so the build page
-         # answers "why" without a click into the log. ANSI stays: the
+@@ -790,16 +927,4 @@ class _OrchestratorExecutor:
+             log_size=writer.bytes_seen,
+             log_truncated=writer.truncated,
+         )
+-        if outcome == BuildOutcome.success:
+-            try:
+-                await self.o.post_process_skipped(
+-                    self.event, [(job.attr, job.outputs.get("out") or "")]
+-                )
+-            except Exception:
+-                # Must not overwrite the recorded success or poison
+-                # the failed-build cache.
+-                logger.exception(
+-                    "post-processing failed",
+-                    extra={"build_id": self.build_record.id_, "attr": job.attr},
+-                )
+         return outcome
 diff --git a/nixbot/build_scheduler.py b/nixbot/build_scheduler.py
 index 20c34ce..111f14c 100644
 --- a/nixbot/build_scheduler.py
@@ -388,18 +375,16 @@ index 6718422..4fbd9a7 100644
              raise ConfigError(msg) from e
 diff --git a/nixbot/lifecycle.py b/nixbot/lifecycle.py
 new file mode 100644
-index 0000000..5ae43b7
+index 0000000..3b42c86
 --- /dev/null
 +++ b/nixbot/lifecycle.py
-@@ -0,0 +1,246 @@
+@@ -0,0 +1,133 @@
 +from __future__ import annotations
 +
-+import asyncio
-+import json
 +import logging
 +from datetime import datetime, timezone
 +
-+from .config import PostBuildStep
++from .gitrepo import run_git
 +from .models import NixEvalJobSuccess
 +from .post_build import run_post_build_step
 +
@@ -421,140 +406,50 @@ index 0000000..5ae43b7
 +    )
 +
 +
-+async def enqueue(o, event, build, kind, payload, attr=""):
-+    payload = {
-+        "schema_version": 1,
-+        "kind": kind,
-+        **identity(o, event, build),
-+        **payload,
-+    }
-+    return await enqueue_payload(o, build, kind, payload, attr)
-+
-+
-+async def enqueue_payload(o, build, kind, payload, attr=""):
-+    steps = [
-+        step
-+        for step in getattr(o.config, kind)
-+        if not step.repositories or payload.get("repository") in step.repositories
-+    ]
-+    if not steps:
-+        return None
-+    async with o.pool.acquire() as conn, conn.transaction():
-+        await conn.execute("SELECT pg_advisory_xact_lock($1)", build.id_)
-+        old = await conn.fetchrow(
-+            """SELECT * FROM lifecycle_deliveries WHERE build_id=$1
-+            AND attr=$2 AND kind=$3 ORDER BY version DESC LIMIT 1""",
-+            build.id_,
-+            attr,
-+            kind,
-+        )
-+        encoded = json.dumps(
-+            dict(
-+                context=payload,
-+                steps=[s.model_dump(mode="json", by_alias=True) for s in steps],
-+            ),
-+            sort_keys=True,
-+        )
-+        if old:
-+            previous = json.loads(old["payload"])
-+            previous["context"].pop("observed_at", None)
-+            if previous == json.loads(encoded):
-+                return old["id"]
-+        payload["observed_at"] = datetime.now(timezone.utc).isoformat()
-+        encoded = json.dumps(
-+            dict(
-+                context=payload,
-+                steps=[s.model_dump(mode="json", by_alias=True) for s in steps],
-+            ),
-+            sort_keys=True,
-+        )
-+        return await conn.fetchval(
-+            """INSERT INTO lifecycle_deliveries(build_id,attr,kind,version,payload)
-+            VALUES($1,$2,$3,$4,$5) RETURNING id""",
-+            build.id_,
-+            attr,
-+            kind,
-+            old["version"] + 1 if old else 1,
-+            encoded,
-+        )
-+
-+
-+async def deliver(pool, row, cwd):
-+    payload = json.loads(row["payload"])
-+    await pool.execute(
-+        "UPDATE lifecycle_deliveries SET state='running',attempts=attempts+1,updated_at=now() WHERE id=$1",
-+        row["id"],
-+    )
-+    results = []
-+    try:
-+        for config in payload["steps"]:
-+            result = await run_post_build_step(
-+                PostBuildStep.model_validate(config),
-+                {},
-+                cwd,
-+                context=payload["context"],
-+            )
-+            results.append(result)
-+        failed = any(r.failed for r in results)
-+        output = "\n".join(f"{r.name}: {r.output}" for r in results)
-+    except asyncio.CancelledError:
-+        await pool.execute(
-+            "UPDATE lifecycle_deliveries SET state='queued' WHERE id=$1", row["id"]
-+        )
-+        raise
-+    except Exception as exc:
-+        failed, output = True, str(exc)
-+    await pool.execute(
-+        """UPDATE lifecycle_deliveries SET state=$2,error=$3,output=$4,updated_at=now()
-+        WHERE id=$1""",
-+        row["id"],
-+        "failed" if failed else "complete",
-+        output if failed else "",
-+        output,
-+    )
-+    return not failed, output
-+
-+
-+async def run_async_hooks(o, kind):
-+    while True:
++async def run(o, kind, payload, cwd, writer=None):
++    ok = True
++    for step in getattr(o.config, kind):
++        if step.repositories and payload["repository"] not in step.repositories:
++            continue
 +        try:
-+            rows = await o.pool.fetch(
-+                """SELECT * FROM lifecycle_deliveries WHERE (kind=$1 OR
-+                ($1='evaluation_finished' AND kind='attribute_finished'
-+                 AND payload->'context'->>'outcome'='cancelled')) AND (state IN ('queued','running') OR (state='failed' AND updated_at<now()-interval '5 seconds')) ORDER BY id""",
-+                kind,
-+            )
-+            for row in rows:
-+                await deliver(o.pool, row, o.config.state_dir)
++            result = await run_post_build_step(step, {}, cwd, context=payload)
++            if writer:
++                await writer.write(
++                    ("\n" + step.name + ": " + result.output + "\n").encode()
++                )
++            if result.failed:
++                logging.getLogger(__name__).error(
++                    "%s failed: %s", step.name, result.output
++                )
++                ok = False
 +        except Exception:
-+            logging.getLogger(__name__).exception(
-+                "asynchronous hook delivery interrupted"
-+            )
-+        await asyncio.sleep(0.5)
++            logging.getLogger(__name__).exception("%s failed", step.name)
++            ok = False
++    return ok
 +
 +
 +async def evaluation(o, event, build, jobs, *, complete=True, error=None):
-+    data = dict(
-+        attributes=[j.model_dump(mode="json") for j in jobs],
-+        finished=True,
-+        generation=build.status_generation,
-+        source=identity(o, event, build),
-+        inventory_complete=complete
-+        and not error
-+        and all(isinstance(j, NixEvalJobSuccess) for j in jobs),
-+        errors=[
-+            dict(attr=j.attr, error=j.error)
-+            for j in jobs
-+            if not isinstance(j, NixEvalJobSuccess)
-+        ],
-+        error=error,
-+    )
-+    await enqueue(o, event, build, "evaluation_finished", data)
-+    await o.pool.execute(
-+        """INSERT INTO evaluation_contexts VALUES($1,$2) ON CONFLICT(build_id)
-+        DO UPDATE SET payload=excluded.payload""",
-+        build.id_,
-+        json.dumps(data),
++    if not o.config.evaluation_finished:
++        return
++    await run(
++        o,
++        "evaluation_finished",
++        dict(
++            kind="evaluation_finished",
++            **identity(o, event, build),
++            observed_at=datetime.now(timezone.utc).isoformat(),
++            attributes=[j.model_dump(mode="json") for j in jobs],
++            inventory_complete=complete
++            and not error
++            and all(isinstance(j, NixEvalJobSuccess) for j in jobs),
++            errors=[
++                dict(attr=j.attr, error=j.error)
++                for j in jobs
++                if not isinstance(j, NixEvalJobSuccess)
++            ],
++            error=error,
++        ),
++        o.config.state_dir,
 +    )
 +
 +
@@ -563,81 +458,60 @@ index 0000000..5ae43b7
 +):
 +    if not o.config.attribute_finished:
 +        return True
-+    while True:
-+        context = await o.pool.fetchval(
-+            "SELECT payload FROM evaluation_contexts WHERE build_id=$1", build.id_
-+        )
-+        if outcome == "cancelled":
-+            context = context or json.dumps({"attributes": [], "finished": False})
-+            break
-+        if context and json.loads(context).get("finished", True):
-+            break
-+        await asyncio.sleep(0.2)
-+    evaluation = json.loads(context)
-+    source = evaluation.get("source", {})
-+    source["generation"] = evaluation.get("generation", build.status_generation)
-+    row_id = await enqueue(
++    return await run(
 +        o,
-+        event,
-+        build,
 +        "attribute_finished",
 +        dict(
++            kind="attribute_finished",
++            **identity(o, event, build),
++            observed_at=datetime.now(timezone.utc).isoformat(),
 +            attribute=job.model_dump(mode="json"),
 +            outcome=outcome,
 +            compilation_outcome=compilation_outcome or outcome,
-+            evaluation=evaluation,
-+            **source,
 +        ),
-+        job.attr,
++        cwd,
++        writer,
 +    )
-+    if row_id is None:
-+        return True
-+    if outcome == "cancelled":
-+        await o.pool.execute(
-+            """UPDATE lifecycle_deliveries SET state='cancelled' WHERE build_id=$1
-+            AND attr=$2 AND kind='attribute_finished' AND id<>$3
-+            AND state IN ('queued','failed')""",
-+            build.id_,
-+            job.attr,
-+            row_id,
-+        )
-+        return True
-+    row = await o.pool.fetchrow(
-+        "SELECT * FROM lifecycle_deliveries WHERE id=$1", row_id
-+    )
-+    if row["state"] == "complete":
-+        return True
-+    while True:
-+        preceding = await o.pool.fetchrow(
-+            """SELECT state,error FROM lifecycle_deliveries WHERE build_id=$1
-+            AND kind='evaluation_finished' ORDER BY version DESC LIMIT 1""",
-+            build.id_,
-+        )
-+        if preceding is None or preceding["state"] == "complete":
-+            break
-+        if preceding["state"] == "failed":
-+            if outcome not in ("success", "succeeded", "skipped_local"):
-+                break
-+            error = "evaluation_finished handler failed: " + preceding["error"]
-+            await o.pool.execute(
-+                """UPDATE lifecycle_deliveries SET state='failed',error=$2,output=$2,
-+                updated_at=now() WHERE id=$1""",
-+                row_id,
-+                error,
++
++
++async def finished(o, event, build, status, failures=(), *, evaluation_error=None):
++    if not any(
++        not step.repositories or event.repo.name in step.repositories
++        for step in o.config.build_finished
++    ):
++        return
++    try:
++        author = (
++            await run_git(
++                ["show", "-s", "--format=%an <%ae>", event.commit_sha],
++                cwd=o.repos.clone_path(event.repo.key),
 +            )
-+            if writer:
-+                await writer.write((error + "\n").encode())
-+            return False
-+        await asyncio.sleep(0.2)
-+    ok, output = False, ""
-+    for _ in range(3):
-+        ok, output = await deliver(o.pool, row, cwd)
-+        if writer:
-+            await writer.write(("\nattribute_finished: " + output + "\n").encode())
-+        if ok:
-+            break
-+        await asyncio.sleep(2)
-+    return ok
++        ).strip()
++        await run(
++            o,
++            "build_finished",
++            dict(
++                kind="build_finished",
++                repository=event.repo.name,
++                forge=event.repo.forge,
++                pullRequest={"number": event.pr_number}
++                if event.pr_number is not None
++                else None,
++                build=dict(
++                    id=build.id_,
++                    number=build.number,
++                    rev=event.commit_sha,
++                    branch=event.branch,
++                    status=status,
++                    author=author,
++                    compilationFailures=list(failures),
++                    evaluationError=evaluation_error,
++                ),
++            ),
++            o.config.state_dir,
++        )
++    except Exception:
++        logging.getLogger(__name__).exception("build_finished failed")
 diff --git a/nixbot/nix/apply.nix b/nixbot/nix/apply.nix
 index 2289594..019af93 100644
 --- a/nixbot/nix/apply.nix
@@ -717,48 +591,82 @@ index 0500015..e14b1a1 100644
          [p for job in build.pending_jobs if (p := job.outputs.get("out"))]
      )
 diff --git a/nixbot/rerun_exec.py b/nixbot/rerun_exec.py
-index d8647fc..88a7882 100644
+index d8647fc..fae8534 100644
 --- a/nixbot/rerun_exec.py
 +++ b/nixbot/rerun_exec.py
-@@ -108,6 +108,26 @@ async def rerun_pending_attributes(
+@@ -8,18 +8,21 @@ imported directly since it has no runtime dependency on this module.
+ from __future__ import annotations
+ 
+ import asyncio
++import contextlib
+ import json
+ import logging
+ from contextlib import asynccontextmanager
+ from typing import TYPE_CHECKING
+ 
+-from . import build_run, db
++from . import build_run, db, lifecycle
+ from .canceller import branch_key
+ from .db import BuildStatus
+ from .db_gen import builds as builds_q
+ from .db_gen import maintenance as q
+ from .events import ChangeEvent, EvalReport, event_for_build
+ from .gitrepo import pr_refspec
++from .models import NixEvalJobSuccess
++from .repo_config import BranchConfig
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -92,7 +95,6 @@ async def rerun_pending_attributes(
+             pending_jobs = [
+                 job for job in pending_jobs if job.system in o.config.build_systems
+             ]
+-        # No re-eval happens on this path. Go straight to building.
+         await db.set_build_status(o.pool, build.id_, BuildStatus.BUILDING)
+         # Register so supersede/PR-close cancellation also covers
+         # recovered and restarted builds.
+@@ -108,8 +110,42 @@ async def rerun_pending_attributes(
              event,
              worktree_path,
          ):
-+            from .models import NixEvalJobSuccess
-+
-+            context = await o.pool.fetchval(
-+                "SELECT payload FROM evaluation_contexts WHERE build_id=$1", build.id_
-+            )
-+            if context and json.loads(context).get("finished", True):
-+                original = {
-+                    j["attr"]: j
-+                    for j in json.loads(context)["attributes"]
-+                    if "drv_path" in j
-+                }
-+                pending_jobs = [
-+                    NixEvalJobSuccess.model_validate(original[j.attr])
-+                    if j.attr in original
-+                    else j
-+                    for j in pending_jobs
-+                ]
-+            else:
-+                await o.run_build(event, build, worktree_path, credentials)
-+                return
-             # No re-eval on this path: re-post the eval context green,
-             # the previous run may have left it red or pending.
+-            # No re-eval on this path: re-post the eval context green,
+-            # the previous run may have left it red or pending.
++            if o.config.attribute_finished:
++                try:
++                    async with o.eval_slots, contextlib.AsyncExitStack() as stack:
++                        settings = await build_run._with_build_store(
++                            o,
++                            event,
++                            build,
++                            build_run._eval_settings(o, event, build, credentials),
++                            stack,
++                        )
++                        evaluated = await o.eval_runner.run(
++                            worktree_path, BranchConfig.load(worktree_path), settings
++                        )
++                    jobs = {
++                        job.attr: job
++                        for job in evaluated.jobs
++                        if isinstance(job, NixEvalJobSuccess)
++                    }
++                    for job in pending_jobs:
++                        fresh = jobs.get(job.attr)
++                        if fresh is None or fresh.drv_path != job.drv_path:
++                            raise ValueError(
++                                "Attribute evaluation changed; restart the whole build"
++                            )
++                    pending_jobs = [
++                        job.model_copy(
++                            update={"extra_value": jobs[job.attr].extra_value}
++                        )
++                        for job in pending_jobs
++                    ]
++                    await lifecycle.evaluation(o, event, build, evaluated.jobs)
++                except Exception as error:
++                    await build_run._settle_aborted(
++                        o, event, build, BuildStatus.FAILED, error=str(error)
++                    )
++                    return
              await o.reporter.eval_finished(event, build, EvalReport(success=True))
-diff --git a/nixbot/service.py b/nixbot/service.py
-index f95c6d9..023b8e2 100644
---- a/nixbot/service.py
-+++ b/nixbot/service.py
-@@ -796,7 +796,9 @@ class CIService:
-         settled_effects = await fail_interrupted_effects(self.pool, self._started_at)
-         await self._report_interrupted_effects(settled_effects)
-         for resumable in await find_unfinished_builds(self.pool):
--            remaining, settled = await settle_already_built(self.pool, resumable)
-+            remaining, settled = await settle_already_built(
-+                self.pool, resumable, finalize=True
-+            )
-             if settled:
-                 # Recovered results still need gcroots/outputs updates.
-                 event = await restart_dispatch.change_event_for(self, resumable)
+             # cache_failures=False: see _ReadOnlyFailedBuildCache.
+             # effects_started keeps a recovered, already-deployed

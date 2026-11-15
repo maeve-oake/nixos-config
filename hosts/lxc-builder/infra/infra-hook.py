@@ -114,9 +114,7 @@ else:
         "outcome"
     ] == "cancelled":
         paths = set()
-    related = [
-        m for m in mappings(payload["evaluation"]) if paths.intersection(m["checks"])
-    ]
+    related = mappings({"attributes": [job]}) if paths else []
     roots = {m[k] for m in related for k in ("system", "activation")}
     success = payload["outcome"] in ("success", "succeeded", "skipped_local")
     compiled = payload.get("compilation_outcome", payload["outcome"]) in (

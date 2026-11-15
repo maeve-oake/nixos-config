@@ -169,3 +169,69 @@ index 7d54bdc..cf3659d 100644
        }
      };
    }
+diff --git a/nixbot/web/templates/log.html b/nixbot/web/templates/log.html
+index 2d9d766..910cfa3 100644
+--- a/nixbot/web/templates/log.html
++++ b/nixbot/web/templates/log.html
+@@ -16,17 +16,17 @@
+             {% if attr_row | eval_stats %}· {{ attr_row | eval_stats }}{% endif %}
+             {% if prev_number %}
+               · <a href="{{ build_path(project, prev_number) }}/logs/{{ attr | urlencode }}"
+-    rel="prev">‹ #{{ prev_number }}</a>
++                   rel="prev">‹ #{{ prev_number }}</a>
+             {% endif %}
+             {% if next_number %}
+               · <a href="{{ build_path(project, next_number) }}/logs/{{ attr | urlencode }}"
+-    rel="next">#{{ next_number }} ›</a>
++                   rel="next">#{{ next_number }} ›</a>
+             {% endif %}
+           </small>
+         </h2>
+         <div class="controls">
+           {{ copy_log_btn(build_path(project, build.number) ~ "/logs/raw/" ~ (attr | urlencode)) }}
+-          {% if can_control and attr_status in ('pending', 'building') %}
++          {% if can_control and attr_status in ("pending", "building") %}
+             <form method="post"
+                   action="{{ build_path(project, build.number) }}/attrs/{{ attr | urlencode }}/cancel">
+               <button>cancel</button>
+@@ -39,6 +39,11 @@
+           {% endif %}
+         </div>
+       </div>
++      <div hx-sse:connect="/events"
++           hx-select=".upload-panel"
++           hx-get="/uploads?build_id={{ build.id }}&amp;attr={{ attr | urlencode }}"
++           hx-trigger="load, status from:body throttle:1s"
++           hx-swap="innerHTML"></div>
+       {% if waiting %}
+         <p class="muted">waiting for the build to start…</p>
+       {% elif unavailable %}
+@@ -126,13 +131,18 @@
+   <script>
+     const LIVE = {{ live | tojson }};
+     const RUNNING = {{ (attr_status in ("pending", "building", "running")) | tojson }};
++    function reloadLogView() {
++      document.dispatchEvent(new Event("nixbot:log-save"));
++      location.reload();
++    }
++    document.addEventListener("nixbot:log-reload", reloadLogView);
+     const log = document.getElementById("log");
+     /* Failures sit at the end. Start there unless a line is linked. */
+     if (log && !location.hash) log.scrollTop = log.scrollHeight;
+     /* Queued or just (re)started with no stream yet: reload until it
+        exists. Polling, not events: a status event sent before the
+        EventSource below connects would be lost. */
+-    if (!LIVE && RUNNING) setTimeout(() => location.reload(), 2000);
++    if (!LIVE && RUNNING) setTimeout(reloadLogView, 2000);
+     /* Status changes for this attribute re-render the page: header
+        dot, controls, and (once finished) line anchors. */
+     const events = new EventSource("/events?build={{ build.id }}");
+@@ -140,7 +150,7 @@
+       let e;
+       try { e = JSON.parse(ev.data); } catch { return; }
+       if (e.attr !== {{ attr | tojson }}) return;
+-      if (!LIVE || !["pending", "building"].includes(e.status)) location.reload();
++      if (!LIVE || !["pending", "building"].includes(e.status)) reloadLogView();
+     });
+   </script>
+ {% endblock body %}
