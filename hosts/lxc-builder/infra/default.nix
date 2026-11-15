@@ -1,20 +1,18 @@
-{
-  config,
-  inputs,
-  pkgs,
-  ...
-}:
+{ config, pkgs, ... }:
 let
-  packages = config.services.buildbot-nix.packages;
-
+  handler = name: {
+    inherit name;
+    command = [
+      "${pkgs.python3}/bin/python3"
+      "${./infra-hook.py}"
+    ];
+  };
 in
 {
   age.secrets = {
     "lxc-builder/deploy-ssh-key" = { };
     "lxc-builder/github-public-token" = { };
-    "lxc-builder/infra-oai-token" = { };
   };
-
   infra = {
     deployer = {
       enable = true;
@@ -23,35 +21,22 @@ in
     hub = {
       enable = true;
       githubTokenFile = config.age.secrets."lxc-builder/github-public-token".path;
-      oaiTokenFile = config.age.secrets."lxc-builder/infra-oai-token".path;
     };
     hubUrl = "http://localhost:${toString config.infra.hub.httpPort}";
   };
-
-  services.buildbot-nix.packages.buildbot-nix =
-    (packages.python.pkgs.callPackage "${inputs.buildbot-nix}/packages/buildbot-nix.nix" {
-      buildbot-gitea = packages.buildbot-gitea;
-    }).overrideAttrs
-      (old: {
-        patches = (old.patches or [ ]) ++ [
-          ./buildbot-nix.patch
-          ../buildbot-nix-any-branch-scheduler.patch
-        ];
-        postPatch = (old.postPatch or "") + ''
-          cp ${./infra_hooks.py} buildbot_nix/infra_hooks.py
-          cp ${./infra_buildbot.py} buildbot_nix/infra_buildbot.py
-        '';
-      });
+  services.nixbot = {
+    evaluationFinished = [ (handler "Infra evaluation inventory") ];
+    attributeFinished = [ (handler "dix snapshot and Infra readiness") ];
+  };
   users.groups.infra-inbox = { };
   users.users.infra-hub.extraGroups = [ "infra-inbox" ];
-  users.users.buildbot.extraGroups = [ "infra-inbox" ];
+  users.users.nixbot.extraGroups = [ "infra-inbox" ];
   systemd.tmpfiles.rules = [
     "d /var/lib/infra-hub 0711 infra-hub infra-hub - -"
     "d /var/lib/infra-hub/inbox 2770 infra-hub infra-inbox - -"
   ];
   systemd.services.infra-hub.serviceConfig.StateDirectoryMode = "0711";
-  systemd.services.buildbot-master.path = [ pkgs.dix ];
-  systemd.services.buildbot-master.serviceConfig.ReadWritePaths = [
-    "/var/lib/infra-hub/inbox"
-  ];
+  systemd.services.nixbot.path = [ pkgs.dix ];
+  systemd.services.nixbot.environment.NIXBOT_PUBLICATION_ROOTS = "/var/lib/nixbot/publication-roots";
+  systemd.services.nixbot.serviceConfig.ReadWritePaths = [ "/var/lib/infra-hub/inbox" ];
 }

@@ -1,0 +1,56 @@
+diff --git a/nixbot/db.py b/nixbot/db.py
+index 5687996..7981915 100644
+--- a/nixbot/db.py
++++ b/nixbot/db.py
+@@ -62,11 +62,11 @@ async def get_or_create_build(  # noqa: PLR0913
+     pr_author: str | None = None,
+     actor: str | None = None,
+ ) -> tuple[BuildRecord, bool]:
+-    """Reuse keyed on post-merge tree hash across contexts."""
++    """Reuse the same revision and post-merge tree across contexts."""
+     async with pool.acquire() as conn, conn.transaction():
+-        await q.lock_build_identity(conn, key=f"{project_id}:{tree_hash}")
++        await q.lock_build_identity(conn, key=f"{project_id}:{commit_sha}:{tree_hash}")
+         row = await q.find_reusable_build(
+-            conn, project_id=project_id, tree_hash=tree_hash
++            conn, project_id=project_id, tree_hash=tree_hash, commit_sha=commit_sha
+         )
+         if row is not None:
+             if pr_number != row.pr_number:
+diff --git a/nixbot/db_gen/builds.py b/nixbot/db_gen/builds.py
+index 3fb84fa..67285b6 100644
+--- a/nixbot/db_gen/builds.py
++++ b/nixbot/db_gen/builds.py
+@@ -112,7 +112,7 @@ SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))
+ """
+ 
+ FIND_REUSABLE_BUILD: typing.Final[str] = """-- name: FindReusableBuild :one
+-SELECT id, project_id, number, tree_hash, commit_sha, branch, pr_number, pr_author, status, status_generation, effects_started, error, created_at, started_at, finished_at, eval_warnings, eval_completed, effects_commit_sha, effects_branch, effects_pr_number, eval_duration_ms, actor, merged_pr_number FROM builds WHERE project_id = $1 AND tree_hash = $2
++SELECT id, project_id, number, tree_hash, commit_sha, branch, pr_number, pr_author, status, status_generation, effects_started, error, created_at, started_at, finished_at, eval_warnings, eval_completed, effects_commit_sha, effects_branch, effects_pr_number, eval_duration_ms, actor, merged_pr_number FROM builds WHERE project_id = $1 AND tree_hash = $2 AND commit_sha = $3
+ AND status <> 'cancelled' ORDER BY id DESC LIMIT 1
+ """
+ 
+@@ -486,8 +486,8 @@ async def lock_build_identity(conn: ConnectionLike, *, key: str) -> None:
+     await conn.execute(LOCK_BUILD_IDENTITY, key)
+ 
+ 
+-async def find_reusable_build(conn: ConnectionLike, *, project_id: int, tree_hash: str | None) -> models.Build | None:
+-    row = await conn.fetchrow(FIND_REUSABLE_BUILD, project_id, tree_hash)
++async def find_reusable_build(conn: ConnectionLike, *, project_id: int, tree_hash: str | None, commit_sha: str) -> models.Build | None:
++    row = await conn.fetchrow(FIND_REUSABLE_BUILD, project_id, tree_hash, commit_sha)
+     if row is None:
+         return None
+     return models.Build(
+diff --git a/nixbot/queries/builds.sql b/nixbot/queries/builds.sql
+index 3fbe079..2b2f828 100644
+--- a/nixbot/queries/builds.sql
++++ b/nixbot/queries/builds.sql
+@@ -7,7 +7,7 @@ SELECT pg_advisory_xact_lock(hashtextextended(sqlc.arg(key)::text, 0));
+ 
+ -- name: FindReusableBuild :one
+ -- A cancelled build carries no verdict; never reuse it.
+-SELECT * FROM builds WHERE project_id = $1 AND tree_hash = $2
++SELECT * FROM builds WHERE project_id = $1 AND tree_hash = $2 AND commit_sha = $3
+ AND status <> 'cancelled' ORDER BY id DESC LIMIT 1;
+ 
+ -- name: DetachBuildFromPr :one

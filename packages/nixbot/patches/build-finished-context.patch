@@ -1,0 +1,175 @@
+diff --git a/nixbot/db_gen/models.py b/nixbot/db_gen/models.py
+index c5b1f64..5d3ba73 100644
+--- a/nixbot/db_gen/models.py
++++ b/nixbot/db_gen/models.py
+@@ -67,6 +67,7 @@ class BuildAttribute:
+     eval_warnings: str | None
+     eval_wall_ms: int | None
+     eval_alloc_bytes: int | None
++    failure_phase: str | None
+ 
+ 
+ @dataclasses.dataclass()
+diff --git a/nixbot/db_gen/web.py b/nixbot/db_gen/web.py
+index 2e92ffa..824c347 100644
+--- a/nixbot/db_gen/web.py
++++ b/nixbot/db_gen/web.py
+@@ -222,6 +222,7 @@ class WebAttributeHistoryRow:
+     eval_warnings: str | None
+     eval_wall_ms: int | None
+     eval_alloc_bytes: int | None
++    failure_phase: str | None
+     build_number: int
+     branch: str
+     commit_sha: str
+@@ -511,7 +512,7 @@ FROM builds WHERE project_id = $1
+ """
+ 
+ WEB_ATTRIBUTES: typing.Final[str] = """-- name: WebAttributes :many
+-SELECT a.id, a.build_id, a.attr, a.system, a.drv_path, a.outputs, a.status, a.cached, a.error, a.started_at, a.finished_at, a.log_size, a.log_truncated, a.eval_warnings, a.eval_wall_ms, a.eval_alloc_bytes FROM build_attributes a
++SELECT a.id, a.build_id, a.attr, a.system, a.drv_path, a.outputs, a.status, a.cached, a.error, a.started_at, a.finished_at, a.log_size, a.log_truncated, a.eval_warnings, a.eval_wall_ms, a.eval_alloc_bytes, a.failure_phase FROM build_attributes a
+ WHERE a.build_id = $1
+ ORDER BY CASE
+     WHEN a.status IN ('failed', 'failed_eval', 'dependency_failed',
+@@ -524,7 +525,7 @@ END, a.attr
+ """
+ 
+ WEB_ATTRIBUTES_FINISHED_AFTER: typing.Final[str] = """-- name: WebAttributesFinishedAfter :many
+-SELECT a.id, a.build_id, a.attr, a.system, a.drv_path, a.outputs, a.status, a.cached, a.error, a.started_at, a.finished_at, a.log_size, a.log_truncated, a.eval_warnings, a.eval_wall_ms, a.eval_alloc_bytes FROM build_attributes a
++SELECT a.id, a.build_id, a.attr, a.system, a.drv_path, a.outputs, a.status, a.cached, a.error, a.started_at, a.finished_at, a.log_size, a.log_truncated, a.eval_warnings, a.eval_wall_ms, a.eval_alloc_bytes, a.failure_phase FROM build_attributes a
+ WHERE a.build_id = $1 AND a.finished_at IS NOT NULL
+   AND ($2::timestamptz IS NULL
+        OR (a.finished_at, a.id) > ($2::timestamptz,
+@@ -560,7 +561,7 @@ GROUP BY status
+ """
+ 
+ WEB_ATTRIBUTE_PAGE: typing.Final[str] = """-- name: WebAttributePage :many
+-SELECT a.id, a.build_id, a.attr, a.system, a.drv_path, a.outputs, a.status, a.cached, a.error, a.started_at, a.finished_at, a.log_size, a.log_truncated, a.eval_warnings, a.eval_wall_ms, a.eval_alloc_bytes FROM build_attributes a
++SELECT a.id, a.build_id, a.attr, a.system, a.drv_path, a.outputs, a.status, a.cached, a.error, a.started_at, a.finished_at, a.log_size, a.log_truncated, a.eval_warnings, a.eval_wall_ms, a.eval_alloc_bytes, a.failure_phase FROM build_attributes a
+ WHERE a.build_id = $1 AND a.status = ANY($2::text[])
+   AND ($3::text IS NULL OR a.attr ILIKE $3)
+ ORDER BY (a.eval_warnings IS NULL), a.attr
+@@ -568,7 +569,7 @@ LIMIT $5::bigint OFFSET $4::bigint
+ """
+ 
+ WEB_ATTRIBUTE_HISTORY: typing.Final[str] = """-- name: WebAttributeHistory :many
+-SELECT a.id, a.build_id, a.attr, a.system, a.drv_path, a.outputs, a.status, a.cached, a.error, a.started_at, a.finished_at, a.log_size, a.log_truncated, a.eval_warnings, a.eval_wall_ms, a.eval_alloc_bytes, b.number AS build_number, b.branch, b.commit_sha,
++SELECT a.id, a.build_id, a.attr, a.system, a.drv_path, a.outputs, a.status, a.cached, a.error, a.started_at, a.finished_at, a.log_size, a.log_truncated, a.eval_warnings, a.eval_wall_ms, a.eval_alloc_bytes, a.failure_phase, b.number AS build_number, b.branch, b.commit_sha,
+        b.created_at AS build_created_at
+ FROM build_attributes a
+ JOIN builds b ON b.id = a.build_id
+@@ -961,6 +962,7 @@ def web_attributes(conn: ConnectionLike, *, build_id: int) -> QueryResults[model
+             eval_warnings=row[13],
+             eval_wall_ms=row[14],
+             eval_alloc_bytes=row[15],
++            failure_phase=row[16],
+         )
+ 
+     return QueryResults(conn, WEB_ATTRIBUTES, _decode_hook, build_id)
+@@ -985,6 +987,7 @@ def web_attributes_finished_after(conn: ConnectionLike, *, build_id: int, after:
+             eval_warnings=row[13],
+             eval_wall_ms=row[14],
+             eval_alloc_bytes=row[15],
++            failure_phase=row[16],
+         )
+ 
+     return QueryResults(conn, WEB_ATTRIBUTES_FINISHED_AFTER, _decode_hook, build_id, after, after_id)
+@@ -1060,6 +1063,7 @@ def web_attribute_page(conn: ConnectionLike, *, build_id: int, statuses: collect
+             eval_warnings=row[13],
+             eval_wall_ms=row[14],
+             eval_alloc_bytes=row[15],
++            failure_phase=row[16],
+         )
+ 
+     return QueryResults(conn, WEB_ATTRIBUTE_PAGE, _decode_hook, build_id, statuses, pattern, offset_, limit_)
+@@ -1084,10 +1088,11 @@ def web_attribute_history(conn: ConnectionLike, *, project_id: int, attr: str, l
+             eval_warnings=row[13],
+             eval_wall_ms=row[14],
+             eval_alloc_bytes=row[15],
+-            build_number=row[16],
+-            branch=row[17],
+-            commit_sha=row[18],
+-            build_created_at=row[19],
++            failure_phase=row[16],
++            build_number=row[17],
++            branch=row[18],
++            commit_sha=row[19],
++            build_created_at=row[20],
+         )
+ 
+     return QueryResults(conn, WEB_ATTRIBUTE_HISTORY, _decode_hook, project_id, attr, limit_)
+diff --git a/nixbot/deliver.py b/nixbot/deliver.py
+index cb37bd1..316808b 100644
+--- a/nixbot/deliver.py
++++ b/nixbot/deliver.py
+@@ -18,13 +18,14 @@ from typing import TYPE_CHECKING, Any
+ from nixbot_effects import EffectError, EventEffectMeta
+ from nixbot_effects.match import expand_lock, skip_reason
+ 
++from . import lifecycle
+ from .db_gen import builds as builds_q
+ from .db_gen import events as ev_q
+ from .db_gen import maintenance as q
+ from .db_gen import work_queue as wq
+ from .effects import effects_context
+ from .forge import ForgeError
+-from .gitrepo import GitError
++from .gitrepo import GitError, run_git
+ from .repos import repo_info
+ from .work_queue import TransientError
+ 
+@@ -216,6 +217,23 @@ async def _deliver_scoped(  # noqa: PLR0913
+     if d.kind == TAG_KIND:
+         await _deliver_tag(s, d, info, build, credentials)
+         return
++    if d.kind == "build_finished" and s.config.build_finished:
++        try:
++            payload = await _payload(s, project, info, build, d)
++        except (ForgeError, GitError) as exc:
++            raise TransientError(str(exc)) from exc
++        await lifecycle.enqueue_payload(
++            s.orchestrator,
++            build,
++            "build_finished",
++            {
++                "schema_version": 1,
++                "kind": d.kind,
++                "repository": info.name,
++                "forge": info.forge,
++                **payload,
++            },
++        )
+     repos = s.orchestrator.repos
+     try:
+         await repos.fetch(
+@@ -529,6 +547,23 @@ async def _payload(
+         payload["build"]["previousStatus"] = d.previous_status
+     if d.failed_attrs is not None:
+         payload["build"]["failedAttrs"] = d.failed_attrs
++        payload["build"]["id"] = build.id_
++        payload["build"]["author"] = (
++            await run_git(
++                ["show", "-s", "--format=%an <%ae>", d.rev or build.commit_sha],
++                cwd=s.orchestrator.repos.clone_path(info.key),
++            )
++        ).strip()
++        payload["build"]["compilationFailures"] = [
++            dict(r)
++            for r in await s.pool.fetch(
++                "SELECT attr,status FROM build_attributes WHERE build_id=$1 AND ((status='failed' AND failure_phase='compilation') OR status='failed_eval')",
++                build.id_,
++            )
++        ]
++        payload["build"]["evaluationError"] = (
++            build.error if build.eval_duration_ms is None else None
++        )
+     if d.actor:
+         payload["actor"] = {
+             "name": d.actor,
+diff --git a/nixbot/migrations/0040_failure_phase.sql b/nixbot/migrations/0040_failure_phase.sql
+new file mode 100644
+index 0000000..90cb37d
+--- /dev/null
++++ b/nixbot/migrations/0040_failure_phase.sql
+@@ -0,0 +1 @@
++ALTER TABLE build_attributes ADD COLUMN failure_phase TEXT;

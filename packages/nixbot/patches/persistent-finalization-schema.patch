@@ -1,0 +1,97 @@
+diff --git a/nixbot/migrations/0039_publications.sql b/nixbot/migrations/0039_publications.sql
+new file mode 100644
+index 0000000..bee9e83
+--- /dev/null
++++ b/nixbot/migrations/0039_publications.sql
+@@ -0,0 +1,66 @@
++CREATE TABLE publication_paths (
++    destination TEXT NOT NULL,
++    path TEXT NOT NULL,
++    state TEXT NOT NULL DEFAULT 'queued',
++    bytes BIGINT NOT NULL DEFAULT 0,
++    sent BIGINT NOT NULL DEFAULT 0,
++    attempts INT NOT NULL DEFAULT 0,
++    error TEXT NOT NULL DEFAULT '',
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
++    available_at TIMESTAMPTZ NOT NULL DEFAULT now(),
++    PRIMARY KEY (destination, path)
++);
++CREATE TABLE publications (
++    id BIGSERIAL PRIMARY KEY,
++    build_id BIGINT NOT NULL REFERENCES builds(id) ON DELETE CASCADE,
++    attr TEXT NOT NULL,
++    destination TEXT NOT NULL,
++    state TEXT NOT NULL DEFAULT 'planning',
++    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
++    UNIQUE (build_id, attr, destination)
++);
++CREATE TABLE publication_members (
++    publication_id BIGINT NOT NULL REFERENCES publications(id) ON DELETE CASCADE,
++    destination TEXT NOT NULL,
++    path TEXT NOT NULL,
++    PRIMARY KEY (publication_id, path),
++    FOREIGN KEY (destination, path) REFERENCES publication_paths(destination, path)
++);
++CREATE TABLE lifecycle_deliveries (
++    id BIGSERIAL PRIMARY KEY,
++    build_id BIGINT NOT NULL REFERENCES builds(id) ON DELETE CASCADE,
++    attr TEXT NOT NULL DEFAULT '',
++    kind TEXT NOT NULL,
++    version INT NOT NULL DEFAULT 1,
++    payload JSONB NOT NULL,
++    state TEXT NOT NULL DEFAULT 'queued',
++    attempts INT NOT NULL DEFAULT 0,
++    error TEXT NOT NULL DEFAULT '',
++    output TEXT NOT NULL DEFAULT '',
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
++    UNIQUE (build_id, attr, kind, version)
++);
++CREATE TABLE evaluation_contexts (
++    build_id BIGINT PRIMARY KEY REFERENCES builds(id) ON DELETE CASCADE,
++    payload JSONB NOT NULL
++);
++CREATE TABLE publication_destinations (destination TEXT PRIMARY KEY, name TEXT NOT NULL, jobs INT NOT NULL);
++CREATE FUNCTION notify_publication_change() RETURNS trigger LANGUAGE plpgsql AS $$
++DECLARE item RECORD;
++BEGIN
++  FOR item IN SELECT DISTINCT b.id,b.project_id FROM publication_members m
++    JOIN publications s ON s.id=m.publication_id JOIN builds b ON b.id=s.build_id
++    WHERE m.destination=NEW.destination AND m.path=NEW.path LOOP
++    PERFORM pg_notify('build_events',json_build_object('build_id',item.id,'project_id',item.project_id)::text);
++  END LOOP;
++  RETURN NEW;
++END $$;
++CREATE TRIGGER publication_progress AFTER UPDATE ON publication_paths
++  FOR EACH ROW EXECUTE FUNCTION notify_publication_change();
++CREATE FUNCTION notify_lifecycle_change() RETURNS trigger LANGUAGE plpgsql AS $$
++BEGIN
++  PERFORM pg_notify('build_events',(SELECT json_build_object('build_id',id,'project_id',project_id)::text FROM builds WHERE id=NEW.build_id));
++  RETURN NEW;
++END $$;
++CREATE TRIGGER lifecycle_progress AFTER INSERT OR UPDATE ON lifecycle_deliveries
++  FOR EACH ROW EXECUTE FUNCTION notify_lifecycle_change();
+diff --git a/nixbot/migrations/0041_publication_failure.sql b/nixbot/migrations/0041_publication_failure.sql
+new file mode 100644
+index 0000000..751991a
+--- /dev/null
++++ b/nixbot/migrations/0041_publication_failure.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE publications ADD COLUMN error TEXT NOT NULL DEFAULT '';
++CREATE INDEX publications_waiting_idx ON publications(destination,state);
+diff --git a/nixbot/migrations/0042_publication_pins.sql b/nixbot/migrations/0042_publication_pins.sql
+new file mode 100644
+index 0000000..0b66bb9
+--- /dev/null
++++ b/nixbot/migrations/0042_publication_pins.sql
+@@ -0,0 +1,3 @@
++ALTER TABLE publication_paths ADD COLUMN pinned BOOLEAN NOT NULL DEFAULT false;
++UPDATE publication_paths SET pinned=true;
++CREATE INDEX publication_pins_idx ON publication_paths(destination) WHERE pinned;
+diff --git a/nixbot/migrations/0043_publication_queue_indexes.sql b/nixbot/migrations/0043_publication_queue_indexes.sql
+new file mode 100644
+index 0000000..a0a02ef
+--- /dev/null
++++ b/nixbot/migrations/0043_publication_queue_indexes.sql
+@@ -0,0 +1,2 @@
++CREATE INDEX IF NOT EXISTS publication_members_path_idx ON publication_members(destination,path);
++CREATE INDEX IF NOT EXISTS publication_pending_idx ON publication_paths(destination,available_at) WHERE state IN ('queued','retrying');

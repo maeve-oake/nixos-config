@@ -6,7 +6,7 @@
 {
   imports = [
     inputs.self.nixosModules.default
-    ./buildbot.nix
+    ./nixbot.nix
     ./remote-builders.nix
   ];
 
