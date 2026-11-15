@@ -4,6 +4,7 @@ let
   evaluator = pkgs.callPackage "${upstream}/packages/nix-eval-jobs.nix" { };
   package = pkgs.python3.pkgs.callPackage "${upstream}/packages/nixbot.nix" {
     nix-eval-jobs = evaluator;
+    nixbot-cli = pkgs.python3.pkgs.callPackage "${upstream}/packages/nixbot-cli.nix" { };
   };
 in
 package.overrideAttrs (old: {
@@ -15,5 +16,6 @@ package.overrideAttrs (old: {
     ./patches/build-finished-context.patch
     ./patches/native-upload-ui.patch
     ./patches/live-log-state.patch
+    ./patches/ci-fixes.patch
   ];
 })
