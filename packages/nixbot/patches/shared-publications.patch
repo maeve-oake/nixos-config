@@ -1,9 +1,9 @@
 diff --git a/nixbot/publication.py b/nixbot/publication.py
 new file mode 100644
-index 0000000..d996e7d
+index 0000000..257cee3
 --- /dev/null
 +++ b/nixbot/publication.py
-@@ -0,0 +1,408 @@
+@@ -0,0 +1,410 @@
 +from __future__ import annotations
 +
 +import asyncio
@@ -29,7 +29,9 @@ index 0000000..d996e7d
 +        self.destination = (
 +            self.name
 +            + ":"
-+            + hashlib.sha256(self.config.model_dump_json().encode()).hexdigest()[:16]
++            + hashlib.sha256(
++                self.config.model_dump_json(exclude={"colour"}).encode()
++            ).hexdigest()[:16]
 +        )
 +
 +        self.active_destinations = [self.destination]

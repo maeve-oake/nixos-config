@@ -8,11 +8,13 @@ let
     buyan = {
       host = "https://attic-buyan.oa.ke";
       jobs = 12;
+      colour = "#c29bed";
       includeUpstream = true;
     };
     kitezh = {
       host = "https://attic-kitezh.oa.ke";
       jobs = 4;
+      colour = "#ffb267";
       includeUpstream = false;
     };
   };
@@ -30,7 +32,7 @@ in
   services.nixbot.uploaders = builtins.attrValues (
     builtins.mapAttrs (name: target: {
       inherit name;
-      inherit (target) jobs;
+      inherit (target) jobs colour;
       command = [ (push name target) ];
       planCommand = [
         "${push name target}"

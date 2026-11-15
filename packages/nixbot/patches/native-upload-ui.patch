@@ -276,19 +276,22 @@ index 0000000..9a5bc98
 +  }
 +});
 diff --git a/nixbot/web/static/style.css b/nixbot/web/static/style.css
-index 9ff1b26..9dda0f8 100644
+index 9ff1b26..19d5f1a 100644
 --- a/nixbot/web/static/style.css
 +++ b/nixbot/web/static/style.css
 @@ -1420,3 +1420,100 @@ button.quiet:hover {
  	border-color: var(--border);
  	color: var(--fg);
  }
++.dashboard-section { margin-bottom: 1.5rem; }
++.dashboard-heading { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
++.dashboard-heading h2.section, .dashboard-heading form { margin: 0; }
++.dashboard-section > h2.section { margin: 0 0 0.5rem; }
 +.upload-grid {
 +  display: grid;
 +  grid-template-columns: repeat(2, minmax(0, 40rem));
 +  max-width: 81rem;
 +  gap: 1rem;
-+  margin-bottom: 1.5rem;
 +  align-items: start;
 +}
 +.upload-card {
@@ -302,8 +305,6 @@ index 9ff1b26..9dda0f8 100644
 +  min-width: 0;
 +}
 +.upload-card:only-child { grid-column: 1 / -1; }
-+#uploads-buyan { --upload-color: #c29bed; }
-+#uploads-kitezh { --upload-color: #ffb267; }
 +.upload-heading { font-size: 0.8rem; margin-bottom: 0.5rem; }
 +.upload-path {
 +  display: grid;
@@ -339,7 +340,7 @@ index 9ff1b26..9dda0f8 100644
 +  border-radius: 2px;
 +  overflow: hidden;
 +}
-+.upload-track > span { display: block; height: 100%; background: var(--upload-color, var(--accent)); transition: width 0.5s ease; }
++.upload-track > span { display: block; height: 100%; background: var(--upload-colour, var(--accent)); transition: width 0.5s ease; }
 +.upload-path[data-state="queued"] .upload-track,
 +.upload-path[data-state="queued"] .upload-percent { visibility: hidden; }
 +.upload-path[data-state="failed"] .upload-percent { color: var(--bad); }
@@ -358,7 +359,6 @@ index 9ff1b26..9dda0f8 100644
 +  grid-template-columns: repeat(2, minmax(0, 30rem));
 +  gap: 0.75rem;
 +  max-width: 60.75rem;
-+  margin-bottom: 1.5rem;
 +}
 +.queue-card {
 +  display: block;
@@ -447,10 +447,10 @@ index b8e347f..075f6f5 100644
              {% endwith %}
            {% else %}
 diff --git a/nixbot/web/templates/_queue.html b/nixbot/web/templates/_queue.html
-index 62a9545..e3091fb 100644
+index 62a9545..57b4114 100644
 --- a/nixbot/web/templates/_queue.html
 +++ b/nixbot/web/templates/_queue.html
-@@ -1,37 +1,21 @@
+@@ -1,37 +1,26 @@
 -{% from "_macros.html" import status_icon, ref_link, ago %}
 +{% from "_macros.html" import status_icon %}
  {% if queue %}
@@ -473,7 +473,17 @@ index 62a9545..e3091fb 100644
 -        <th scope="col">ref</th>
 -        <th scope="col">waiting</th>
 -      </tr>
--      {% for b in queue %}
++  <section class="dashboard-section" aria-label="Queued and running builds">
++    <div class="dashboard-heading">
++      <h2 class="section">Queue</h2>
++      {% if can_cancel_queue %}
++        <form method="post" action="/builds/cancel-all">
++          <button class="quiet">cancel all</button>
++        </form>
++      {% endif %}
++    </div>
++    <div class="queue-cards">
+       {% for b in queue %}
 -        <tr>
 -          <td>
 -            <span class="queue-pos">{{ b.queue_position or "–" }}</span>
@@ -485,42 +495,35 @@ index 62a9545..e3091fb 100644
 -          <td>{{ ref_link(b, b) }}</td>
 -          <td>{{ ago(b.created_at) }}</td>
 -        </tr>
--      {% endfor %}
++        <a class="queue-card" href="{{ build_path(b, b.number) }}">
++          <div class="queue-card-meta">
++            {{ status_icon(b.status) }}
++            <strong>#{{ b.number }}</strong>
++            <span class="queue-card-branch" title="{{ b.branch }}">{{ b.branch }}</span>
++            <span class="queue-card-project">{{ repo_name(b.owner, b.project_name) }}</span>
++          </div>
++          <div class="queue-card-title" title="{{ b.commit_title or b.commit_sha }}">{{ b.commit_title or b.commit_sha[:10] }}</div>
++        </a>
+       {% endfor %}
 -    </table>
 -  </div>
-+  <section class="queue-cards" aria-label="Queued and running builds">
-+    {% for b in queue %}
-+      <a class="queue-card" href="{{ build_path(b, b.number) }}">
-+        <div class="queue-card-meta">
-+          {{ status_icon(b.status) }}
-+          <strong>#{{ b.number }}</strong>
-+          <span class="queue-card-branch" title="{{ b.branch }}">{{ b.branch }}</span>
-+          <span class="queue-card-project">{{ repo_name(b.owner, b.project_name) }}</span>
-+        </div>
-+        <div class="queue-card-title" title="{{ b.commit_title or b.commit_sha }}">{{ b.commit_title or b.commit_sha[:10] }}</div>
-+      </a>
-+    {% endfor %}
++    </div>
 +  </section>
-+  {% if can_cancel_queue %}
-+    <form method="post" action="/builds/cancel-all">
-+      <button>cancel all</button>
-+    </form>
-+  {% endif %}
  {% endif %}
 diff --git a/nixbot/web/templates/_uploads.html b/nixbot/web/templates/_uploads.html
 new file mode 100644
-index 0000000..02cc08d
+index 0000000..f320ed9
 --- /dev/null
 +++ b/nixbot/web/templates/_uploads.html
 @@ -0,0 +1,29 @@
 +<div class="upload-panel">
 +  {% set queued = destinations | selectattr('visible_paths') | list %}
 +  {% if queued %}
-+    <section>
++    <section class="dashboard-section">
 +      <h2 class="section">Uploads</h2>
 +      <div class="upload-grid">
 +        {% for d in queued %}
-+          <section class="upload-card" id="uploads-{{ d.name | urlencode }}" aria-label="{{ d.name }} uploads">
++          <section class="upload-card" id="uploads-{{ d.name | urlencode }}" aria-label="{{ d.name }} uploads"{% if d.colour %} style="--upload-colour: {{ d.colour }}"{% endif %}>
 +            <div class="upload-heading"><strong>{{ d.name }}</strong></div>
 +            {% for p in d.visible_paths %}
 +              <nixbot-upload-path id="upload-{{ d.name | urlencode }}-{{ p.path | urlencode }}" class="upload-path" data-state="{{ p.state }}" title="{{ p.path }} · {{ p.state }}{% if p.shared > 1 %} · shared by {{ p.shared }} attributes{% endif %}{% if p.error %} · {{ p.error }}{% endif %}">
@@ -602,44 +605,216 @@ index 105dfd9..c703c20 100644
        {% if build.eval_queue %}
          <p class="build-meta">
 diff --git a/nixbot/web/templates/index.html b/nixbot/web/templates/index.html
-index 6c4d71d..5f31913 100644
+index 6c4d71d..416c96f 100644
 --- a/nixbot/web/templates/index.html
 +++ b/nixbot/web/templates/index.html
-@@ -11,6 +11,10 @@
+@@ -5,110 +5,106 @@
+ {% endblock bodyattrs %}
+ {% block body %}
+   <main id="main"
+-        hx-get="/"
+-        hx-include="#pipeline-filter"
++        hx-get="{{ '/?q=' ~ (q | urlencode) if q else '/' }}"
+         hx-select="#main"
          hx-swap="outerMorph"
          hx-trigger="status from:body throttle:1s, htmx:sse:after:connection from:body">
      <section class="content dashboard">
+-      <h2 class="section">Repositories</h2>
+-      <p class="filters">
+-        <input type="search"
+-               id="pipeline-filter"
+-               name="q"
+-               value="{{ q }}"
+-               hx-get="/"
+-               hx-trigger="input changed delay:200ms"
+-               hx-select="#main"
+-               hx-target="#main"
+-               hx-swap="outerMorph"
+-               {% if toggleable is none or toggleable %} aria-label="search repos to add" placeholder="search repos to add" {% else %} aria-label="search repositories" placeholder="search repositories" {% endif %}>
+-        {% if user %}
+-          <form method="post"
+-                action="/admin/repos/refresh"
+-                hx-post="/admin/repos/refresh"
+-                hx-select="#main"
+-                hx-target="#main"
+-                hx-swap="outerMorph">
+-            <input type="hidden" name="q" value="{{ q }}">
+-            <button class="toggle-btn" title="re-scan forges for new repositories">refresh repos</button>
+-          </form>
+-        {% endif %}
+-      </p>
+-      <div class="pipelines">
+-        {% for p in projects %}
+-          {% set max_secs = p.history | map(attribute='secs') | select | max | default(1, true) %}
+-          <div class="pipeline-row">
+-            <a class="pipeline{% if p.last_status %} {{ p.last_status }}{% endif %}"
+-               href="{{ repo_path(p) }}">
+-              {{ status_icon(p.last_status or "", labelled=false) }}
+-              {% if p.last_status %}
+-                <span class="visually-hidden">{{ p.last_status.replace('_', ' ') }}</span>
+-              {% endif %}
+-              <div class="pipeline-info">
+-                <span class="pipeline-name">{{ repo_name(p.owner, p.name) }}</span>
+-                {% if p.last_number %}
+-                  <span class="pipeline-meta muted">
+-                    #{{ p.last_number }} · {{ p.last_branch }}
+-                    {% if p.last_created_at %}· {{ p.last_created_at | timeago }}{% endif %}
+-                  </span>
+-                {% else %}
+-                  <span class="pipeline-meta muted">no builds yet</span>
 +      {% include "_queue.html" %}
 +      {% with destinations=uploads.destinations %}
 +        {% include "_uploads.html" %}
 +      {% endwith %}
-       <h2 class="section">Repositories</h2>
-       <p class="filters">
-         <input type="search"
-@@ -31,14 +35,15 @@
-                 hx-target="#main"
-                 hx-swap="outerMorph">
-             <input type="hidden" name="q" value="{{ q }}">
--            <button class="toggle-btn" title="re-scan forges for new repositories">refresh repos</button>
-+            <button class="toggle-btn"
-+                    title="re-scan forges for new repositories">refresh repos</button>
-           </form>
-         {% endif %}
-       </p>
-       <div class="pipelines">
-         {% for p in projects %}
-           {% set max_secs = p.history | map(attribute='secs') | select | max | default(1, true) %}
--          <div class="pipeline-row">
-+          <div class="pipeline-row" id="repo-{{ p.id }}">
-             <a class="pipeline{% if p.last_status %} {{ p.last_status }}{% endif %}"
-                href="{{ repo_path(p) }}">
-               {{ status_icon(p.last_status or "", labelled=false) }}
++      <section class="dashboard-section">
++        <div class="dashboard-heading">
++          <h2 class="section">Repositories</h2>
++          {% if user %}
++            <form method="post"
++                  action="/admin/repos/refresh"
++                  hx-post="/admin/repos/refresh"
++                  hx-select="#main"
++                  hx-target="#main"
++                  hx-swap="outerMorph">
++              <button class="quiet" title="re-scan forges for new repositories">refresh</button>
++            </form>
++          {% endif %}
++        </div>
++        <div class="pipelines">
++          {% for p in projects %}
++            {% set max_secs = p.history | map(attribute='secs') | select | max | default(1, true) %}
++            <div class="pipeline-row" id="repo-{{ p.id }}">
++              <a class="pipeline{% if p.last_status %} {{ p.last_status }}{% endif %}"
++                 href="{{ repo_path(p) }}">
++                {{ status_icon(p.last_status or "", labelled=false) }}
++                {% if p.last_status %}
++                  <span class="visually-hidden">{{ p.last_status.replace('_', ' ') }}</span>
+                 {% endif %}
+-              </div>
+-              <div class="pipeline-spark" aria-hidden="true">
+-                {% for h in p.history %}
+-                  {% set bar_title = "#%s %s" | format(h.number, h.status) %}
+-                  {% if h.secs %}
+-                    {% set bar_title = bar_title ~ " · " ~ (h.secs | duration_secs) %}
+-                  {% endif %}
+-                  <i class="spark-bar {{ h.status }}"
+-                     style="height: {{ [100 * (h.secs or 0) / max_secs, 15] | max | round | int }}%"
+-                     title="{{ bar_title }}"></i>
+-                {% endfor %}
+-              </div>
+-              <div class="pipeline-metric"
+-                   title="median duration of the last 30 successful builds">
+-                <b>{{ p.median_secs | duration_secs }}</b>
+-                <span class="muted">median duration</span>
+-              </div>
+-              <div class="pipeline-metric"
+-                   title="succeeded share of the last 30 finished builds (cancelled excluded)">
+-                <b>
+-                  {% if p.pass_rate is not none %}
+-                    {{ (100 * p.pass_rate) | round | int }}%
++                <div class="pipeline-info">
++                  <span class="pipeline-name">{{ repo_name(p.owner, p.name) }}</span>
++                  {% if p.last_number %}
++                    <span class="pipeline-meta muted">
++                      #{{ p.last_number }} · {{ p.last_branch }}
++                      {% if p.last_created_at %}· {{ p.last_created_at | timeago }}{% endif %}
++                    </span>
+                   {% else %}
+-                    —
++                    <span class="pipeline-meta muted">no builds yet</span>
+                   {% endif %}
+-                </b>
+-                <span class="muted">pass rate</span>
+-              </div>
+-            </a>
+-            {% if toggleable is none or p.id in toggleable %}{{ toggle_form(p, q, "disable") }}{% endif %}
+-          </div>
+-        {% else %}
+-          {% if q %}
+-            <p class="muted">no matching repositories</p>
+-          {% elif disabled_projects %}
+-            <p class="muted">no repositories enabled yet — enable one from the list below</p>
+-          {% else %}
+-            <p class="muted">no repositories enabled yet</p>
+-          {% endif %}
+-        {% endfor %}
+-      </div>
+-      {% if disabled_projects %}
+-        <h2 class="section muted">Disabled</h2>
+-        <div class="pipelines">
+-          {% for p in disabled_projects %}
+-            <div class="pipeline-row disabled">
+-              <span class="pipeline">
+-                <span class="dot" aria-hidden="true"></span>
+-                {{ project_link(p, class="pipeline-name") }}
+-              </span>
+-              {{ toggle_form(p, q, "enable") }}
++                </div>
++                <div class="pipeline-spark" aria-hidden="true">
++                  {% for h in p.history %}
++                    {% set bar_title = "#%s %s" | format(h.number, h.status) %}
++                    {% if h.secs %}
++                      {% set bar_title = bar_title ~ " · " ~ (h.secs | duration_secs) %}
++                    {% endif %}
++                    <i class="spark-bar {{ h.status }}"
++                       style="height: {{ [100 * (h.secs or 0) / max_secs, 15] | max | round | int }}%"
++                       title="{{ bar_title }}"></i>
++                  {% endfor %}
++                </div>
++                <div class="pipeline-metric"
++                     title="median duration of the last 30 successful builds">
++                  <b>{{ p.median_secs | duration_secs }}</b>
++                  <span class="muted">median duration</span>
++                </div>
++                <div class="pipeline-metric"
++                     title="succeeded share of the last 30 finished builds (cancelled excluded)">
++                  <b>
++                    {% if p.pass_rate is not none %}
++                      {{ (100 * p.pass_rate) | round | int }}%
++                    {% else %}
++                      —
++                    {% endif %}
++                  </b>
++                  <span class="muted">pass rate</span>
++                </div>
++              </a>
++              {% if toggleable is none or p.id in toggleable %}{{ toggle_form(p, q, "disable") }}{% endif %}
+             </div>
++          {% else %}
++            {% if q %}
++              <p class="muted">no matching repositories</p>
++            {% elif disabled_projects %}
++              <p class="muted">no repositories enabled yet — enable one from the list below</p>
++            {% else %}
++              <p class="muted">no repositories enabled yet</p>
++            {% endif %}
+           {% endfor %}
+         </div>
++      </section>
++      {% if disabled_projects %}
++        <section class="dashboard-section">
++          <h2 class="section muted">Disabled</h2>
++          <div class="pipelines">
++            {% for p in disabled_projects %}
++              <div class="pipeline-row disabled">
++                <span class="pipeline">
++                  <span class="dot" aria-hidden="true"></span>
++                  {{ project_link(p, class="pipeline-name") }}
++                </span>
++                {{ toggle_form(p, q, "enable") }}
++              </div>
++            {% endfor %}
++          </div>
++        </section>
+       {% endif %}
+     </section>
+   </main>
 diff --git a/nixbot/web/uploads.py b/nixbot/web/uploads.py
 new file mode 100644
-index 0000000..03e43e4
+index 0000000..f5c86fe
 --- /dev/null
 +++ b/nixbot/web/uploads.py
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,93 @@
 +from __future__ import annotations
 +
 +from fastapi import APIRouter, Request
@@ -664,7 +839,8 @@ index 0000000..03e43e4
 +    )
 +    uploaders = {u.destination: u for u in ctx.uploaders if hasattr(u, "destination")}
 +    destinations = {
-+        key: dict(name=u.name, paths=[]) for key, u in sorted(uploaders.items())
++        key: dict(name=u.name, colour=u.config.colour, paths=[])
++        for key, u in sorted(uploaders.items())
 +    }
 +    for row in rows:
 +        key = row["destination"]
