@@ -387,10 +387,10 @@ index 6718422..4fbd9a7 100644
              raise ConfigError(msg) from e
 diff --git a/nixbot/lifecycle.py b/nixbot/lifecycle.py
 new file mode 100644
-index 0000000..3b42c86
+index 0000000..06611b7
 --- /dev/null
 +++ b/nixbot/lifecycle.py
-@@ -0,0 +1,133 @@
+@@ -0,0 +1,130 @@
 +from __future__ import annotations
 +
 +import logging
@@ -405,11 +405,8 @@ index 0000000..3b42c86
 +    return dict(
 +        repository=event.repo.name,
 +        forge=event.repo.forge,
-+        tree_hash=build.tree_hash,
-+        base_revision=event.base_sha,
 +        revision=event.commit_sha,
 +        branch=event.branch,
-+        default_branch=event.repo.default_branch,
 +        build_id=build.id_,
 +        build_number=build.number,
 +        generation=build.status_generation,

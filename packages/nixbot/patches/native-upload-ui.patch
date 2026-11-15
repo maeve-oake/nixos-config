@@ -1,5 +1,5 @@
 diff --git a/nixbot/web/app.py b/nixbot/web/app.py
-index 4341b50..cd924cc 100644
+index 4341b50..70de1ff 100644
 --- a/nixbot/web/app.py
 +++ b/nixbot/web/app.py
 @@ -41,6 +41,7 @@ from ..auth import User, can_control_build, is_admin  # noqa: TID252
@@ -108,25 +108,7 @@ index 4341b50..cd924cc 100644
          )
  
      async def _schedules(self, project_id: int) -> list[Any]:
-@@ -521,13 +556,24 @@ class _PageRoutes:
-         effects = await ctx.queries.effects(build["id"])
-         effect_rows = attention_first(
-             from_eval_errors(await ctx.queries.effect_eval_errors(build["id"]))
--            + from_runs(effects, build)
-+            + from_runs(
-+                [
-+                    effect
-+                    for effect in effects
-+                    if effect["status"] != "skipped"
-+                    and not (
-+                        effect["kind"] == "check" and effect["status"] == "succeeded"
-+                    )
-+                ],
-+                build,
-+            )
-         )
-         return await ctx.render(
-             "build.html",
+@@ -528,6 +563,7 @@ class _PageRoutes:
              request=request,
              project=project,
              build=build,
@@ -134,7 +116,7 @@ index 4341b50..cd924cc 100644
              attrs_total=total,
              attrs_done=total - progress["pending"] - progress["building"],
              progress=progress,
-@@ -948,6 +994,7 @@ def create_app(
+@@ -948,6 +984,7 @@ def create_app(
      if task_tokens is not None:
          app.include_router(create_task_router(ctx, task_tokens))
      app.include_router(create_api_router(ctx))
@@ -469,10 +451,10 @@ index 6c4d71d..4597692 100644
        </p>
 diff --git a/nixbot/web/uploads.py b/nixbot/web/uploads.py
 new file mode 100644
-index 0000000..4eda8ba
+index 0000000..9ad49b0
 --- /dev/null
 +++ b/nixbot/web/uploads.py
-@@ -0,0 +1,97 @@
+@@ -0,0 +1,88 @@
 +from __future__ import annotations
 +
 +from fastapi import APIRouter, Request
@@ -481,7 +463,7 @@ index 0000000..4eda8ba
 +
 +async def overview(ctx, request, build_id=None, attr=None):
 +    if not ctx.uploaders:
-+        return dict(destinations=[], build_id=build_id, attr=attr)
++        return dict(destinations=[])
 +    visible = await ctx.visible_repo_ids(request)
 +    rows = await ctx.pool.fetch(
 +        """SELECT DISTINCT p.* FROM nixbot_uploads.publication_paths p
@@ -544,20 +526,11 @@ index 0000000..4eda8ba
 +            path["shared"] = shared.get((key, path["path"]), 0)
 +    return dict(
 +        destinations=list(destinations.values()),
-+        build_id=build_id,
-+        attr=attr,
 +    )
 +
 +
 +def create_upload_router(ctx):
 +    router = APIRouter(include_in_schema=False)
-+
-+    @router.get("/api/uploads")
-+    async def uploads(
-+        request: Request, build_id: int | None = None, attr: str | None = None
-+    ):
-+        data = await overview(ctx, request, build_id, attr)
-+        return data
 +
 +    @router.get("/uploads", response_class=HTMLResponse)
 +    async def panel(

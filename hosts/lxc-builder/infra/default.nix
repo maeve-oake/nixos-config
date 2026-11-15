@@ -37,6 +37,5 @@ in
   ];
   systemd.services.infra-hub.serviceConfig.StateDirectoryMode = "0711";
   systemd.services.nixbot.path = [ pkgs.dix ];
-  systemd.services.nixbot.environment.NIXBOT_PUBLICATION_ROOTS = "/var/lib/nixbot/publication-roots";
   systemd.services.nixbot.serviceConfig.ReadWritePaths = [ "/var/lib/infra-hub/inbox" ];
 }

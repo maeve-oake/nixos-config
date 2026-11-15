@@ -1,9 +1,9 @@
 diff --git a/nixbot/publication.py b/nixbot/publication.py
 new file mode 100644
-index 0000000..ff8d699
+index 0000000..1948194
 --- /dev/null
 +++ b/nixbot/publication.py
-@@ -0,0 +1,389 @@
+@@ -0,0 +1,386 @@
 +from __future__ import annotations
 +
 +import asyncio
@@ -11,8 +11,7 @@ index 0000000..ff8d699
 +import hashlib
 +import json
 +import logging
-+import os
-+from dataclasses import dataclass
++from dataclasses import dataclass, field
 +from pathlib import Path
 +
 +from .upload import PATH_INFO_CMD, Uploader, UploadResult, _run, chunk_args
@@ -20,15 +19,13 @@ index 0000000..ff8d699
 +
 +@dataclass
 +class PublicationUploader(Uploader):
-+    root_dir: Path | None = None
++    root_dir: Path = field(kw_only=True)
 +
 +    def __post_init__(self):
 +        self._lock = asyncio.Lock()
 +        self._last_owner = 0
 +        self.progress = {}
-+        self._root = self.root_dir or Path(
-+            os.environ.get("NIXBOT_PUBLICATION_ROOTS", "/tmp/nixbot-publication-roots")
-+        )
++        self._root = self.root_dir
 +        self._root.mkdir(parents=True, exist_ok=True)
 +        self.destination = (
 +            self.name

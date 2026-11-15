@@ -142,7 +142,7 @@ index 725a443..3b1d91d 100644
      reporter.events.clear()
      reused = await orchestrator.handle_change_event(
 diff --git a/nixbot/tests/test_web.py b/nixbot/tests/test_web.py
-index 28268ad..3a07fdc 100644
+index 28268ad..fdc9522 100644
 --- a/nixbot/tests/test_web.py
 +++ b/nixbot/tests/test_web.py
 @@ -114,7 +114,7 @@ def test_homepage(client: WebHarness) -> None:
@@ -176,42 +176,3 @@ index 28268ad..3a07fdc 100644
      assert "#3" in response.text
      # Activity feed lists finished builds too.
      assert ">#1<" in response.text
-@@ -1776,8 +1774,8 @@ def test_build_page_shows_effects(client: WebHarness) -> None:
-     # Builds without effects don't render the section.
-     assert "Effects" not in client.get("/repos/github/acme/widget/builds/1").text
-     pr_text = client.get("/repos/github/acme/widget/builds/3").text
--    assert 'id="effects-status" class="status skipped"' in pr_text
--    assert "not run for pull requests" in pr_text
-+    assert 'id="effects-status"' not in pr_text
-+    assert "not run for pull requests" not in pr_text
-     assert "effects/restart" not in pr_text
-     # The builds list folds live or failed effects into the single status icon.
-     listing = client.get("/repos/github/acme/widget").text
-@@ -1819,8 +1817,8 @@ def test_build_page_shows_event_effects(client: WebHarness) -> None:
-     # Evaluation failures are rows of the same list as runs.
-     assert "undefined variable typo0" in text
-     assert "evaluation" in text
--    assert "pull_request" in text
--    assert "needs write access" in text
-+    assert "pull_request" not in text
-+    assert "needs write access" not in text
-     assert "comment.apply" in text
-     assert "hcloudx missing" in text
- 
-@@ -1848,13 +1846,10 @@ def test_build_page_groups_dependency_checks_apart(client: WebHarness) -> None:
-     client.loop.run_until_complete(seed())
-     text = client.get("/repos/github/acme/widget/builds/3").text
-     headers = re.findall(r'<div class="grp">([^<]+)</div>', text)
--    assert headers == ["Needs attention", "Done", "Dependency checks"]
--    order = [
--        text.index(f"<code>{n}</code>")
--        for n in ("comment.bad", "rollout", "comment.ok")
--    ]
-+    assert headers == ["Needs attention", "Done"]
-+    order = [text.index(f"<code>{n}</code>") for n in ("comment.bad", "rollout")]
-     assert order == sorted(order)
--    assert "build only" in text
-+    assert "comment.ok" not in text
- 
- 
- def test_effect_log_raw_text(client: WebHarness, tmp_path: Path) -> None:
