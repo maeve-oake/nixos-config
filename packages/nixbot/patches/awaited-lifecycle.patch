@@ -34,8 +34,36 @@ index 14b710b..864795b 100644
      authz = AuthzConfig(
          admins=config.admins,
          allow_unauthenticated_control=config.allow_unauthenticated_control,
+diff --git a/nixbot/build_reuse.py b/nixbot/build_reuse.py
+index a1d8ca3..3a0a48e 100644
+--- a/nixbot/build_reuse.py
++++ b/nixbot/build_reuse.py
+@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
+ 
+ from .after_build import after_build
+ from .canceller import RegisterOutcome
++from .completion import report_reused_inventory
+ from .db import BuildStatus
+ from .db_gen import builds as builds_q
+ from .db_gen import maintenance as q
+@@ -72,6 +73,7 @@ async def replay_terminal_status(
+     await o.reporter.build_finished(
+         event, build, BuildResult(build.status, build.status_generation, [])
+     )
++    await report_reused_inventory(o, event, build)
+ 
+ 
+ async def replay_effect_statuses(
+@@ -110,6 +112,7 @@ async def finish_linked(
+             # status would otherwise stay pending forever.
+             await o.reporter.eval_cancelled(linked, build)
+         await o.reporter.build_finished(linked, build, result)
++        await report_reused_inventory(o, linked, build)
+         await o.deliver_tag(linked, build, result.status)
+         await deliver_branch_push(o, linked, build)
+ 
 diff --git a/nixbot/build_run.py b/nixbot/build_run.py
-index 835c45e..a2c889d 100644
+index 835c45e..695f882 100644
 --- a/nixbot/build_run.py
 +++ b/nixbot/build_run.py
 @@ -16,7 +16,7 @@ import shutil
@@ -47,15 +75,23 @@ index 835c45e..a2c889d 100644
  from .after_build import after_build
  from .build_scheduler import (
      AttributeResult,
-@@ -38,6 +38,7 @@ from .nix_eval import EvalError, EvalResult, EvalSettings
- from .post_build import build_props, run_post_build_steps
+@@ -25,6 +25,7 @@ from .build_scheduler import (
+     JobScheduler,
+     outcome_status,
+ )
++from .completion import complete_attribute
+ from .db import BuildStatus
+ from .db_gen import builds as q
+ from .db_gen import maintenance as mq
+@@ -35,7 +36,6 @@ from .live_warnings import LiveWarningAggregator
+ from .memory import calculate_eval_workers
+ from .models import CacheStatus, NixEvalJobSuccess
+ from .nix_eval import EvalError, EvalResult, EvalSettings
+-from .post_build import build_props, run_post_build_steps
  from .repo_config import BranchConfig
  from .store_token import store_token_file
-+from .upload import UploadResult
  from .workload_identity import identity_from_event
- 
- if TYPE_CHECKING:
-@@ -248,6 +249,16 @@ async def _settle_aborted(
+@@ -248,6 +248,16 @@ async def _settle_aborted(
          BuildResult(status, build.status_generation, []),
          eval_success=None if status == BuildStatus.CANCELLED else False,
      )
@@ -72,7 +108,7 @@ index 835c45e..a2c889d 100644
      refreshed = await q.get_build(o.pool, id_=build.id_)
      if refreshed is not None:
          await o.deliver_events(event, refreshed)
-@@ -269,6 +280,7 @@ async def _record_eval_success(
+@@ -269,6 +279,7 @@ async def _record_eval_success(
          if isinstance(job, NixEvalJobSuccess) and job.system in o.config.build_systems
      ]
      await commit_eval_result(o.pool, build.id_, buildable, result.duration_ms)
@@ -80,7 +116,7 @@ index 835c45e..a2c889d 100644
      await o.reporter.eval_finished(
          event,
          build,
-@@ -478,6 +490,8 @@ async def _reusable_eval_jobs(
+@@ -478,6 +489,8 @@ async def _reusable_eval_jobs(
      """Eval result of another build of the same tree (e.g. cancelled
      after evaluation, retried later), reusable when its derivations
      are still in the store; None means evaluate afresh."""
@@ -89,15 +125,49 @@ index 835c45e..a2c889d 100644
      if build.tree_hash is None:
          return None
      source_id = await q.find_completed_eval(
-@@ -547,9 +561,27 @@ async def build_attributes(  # noqa: PLR0913
+@@ -547,10 +560,52 @@ async def build_attributes(  # noqa: PLR0913
      ongoing evaluation. Returns the aggregated build status."""
      cancel_event = o.cancel_events.setdefault(build.id_, asyncio.Event())
  
+-    async def record_early(result: AttributeResult) -> None:
+-        """Persist skips and dependency failures as they happen;
+-        otherwise they stay pending until the whole build ends."""
+-        await db.complete_attribute(o.pool, build.id_, result, if_unfinished=True)
 +    executor = _OrchestratorExecutor(o, event, build, worktree_path, cancel_event)
 +
-     async def record_early(result: AttributeResult) -> None:
-         """Persist skips and dependency failures as they happen;
-         otherwise they stay pending until the whole build ends."""
++    completions = []
++
++    async def complete_result(result):
++        async with o.open_log(build.id_, result.attr) as writer:
++            if result.status == AttributeStatus.skipped_local:
++                marked = await q.mark_attribute_building(
++                    o.pool,
++                    build_id=build.id_,
++                    attr=result.attr,
++                    system=result.system,
++                    drv_path=result.drv_path,
++                )
++                if marked is None:
++                    result.status = AttributeStatus.cancelled
++                    return
++            outcome = await complete_attribute(
++                o, event, build, result.job, result.status.value, worktree_path, writer
++            )
++            if outcome == "cancelled":
++                result.status = AttributeStatus.cancelled
++            elif outcome == "post_build_failure":
++                result.status = AttributeStatus.failed
++                result.error = "attribute completion failed"
++            await db.complete_attribute(
++                o.pool,
++                build.id_,
++                result,
++                if_unfinished=True,
++                log_size=writer.bytes_seen,
++                log_truncated=writer.truncated,
++            )
++
++    async def record_early(result):
 +        if result.status == AttributeStatus.failed_eval:
 +            executor.compilation_failures.append(
 +                dict(attr=result.attr, status="failed_eval")
@@ -107,17 +177,12 @@ index 835c45e..a2c889d 100644
 +            build.id_,
 +            result.attr,
 +        )
-+        if existing not in ("succeeded", "failed", "cancelled", "ignored_failure"):
-+            ok = await lifecycle.attribute(
-+                o, event, build, result.job, result.status.value, worktree_path
-+            )
-+            if not ok:
-+                result.status = AttributeStatus.failed
-+                result.error = "attribute_finished handler failed"
-         await db.complete_attribute(o.pool, build.id_, result, if_unfinished=True)
++        if existing not in db.TERMINAL_ATTRIBUTE_STATUSES:
++            completions.append(asyncio.create_task(complete_result(result)))
  
      failed_build_cache: FailedBuildCache | None = (
-@@ -560,11 +592,12 @@ async def build_attributes(  # noqa: PLR0913
+         o.failed_build_cache(build.project_id)
+@@ -560,16 +615,24 @@ async def build_attributes(  # noqa: PLR0913
      if failed_build_cache is not None and not cache_failures:
          failed_build_cache = _ReadOnlyFailedBuildCache(failed_build_cache)
      scheduler = JobScheduler(
@@ -127,11 +192,27 @@ index 835c45e..a2c889d 100644
          failed_build_cache=failed_build_cache,
          build_url=f"{o.config.url}/repos/{event.repo.forge}/{event.repo.name}/builds/{build.number}",
          on_result=record_early,
-+        finalize_local=True,
      )
-     if isinstance(jobs, asyncio.Queue):
-         schedule_result = await scheduler.run_incremental(jobs)
-@@ -614,6 +647,7 @@ async def build_attributes(  # noqa: PLR0913
+-    if isinstance(jobs, asyncio.Queue):
+-        schedule_result = await scheduler.run_incremental(jobs)
+-    else:
+-        schedule_result = await scheduler.run(list(jobs))
++    try:
++        if isinstance(jobs, asyncio.Queue):
++            schedule_result = await scheduler.run_incremental(jobs)
++        else:
++            schedule_result = await scheduler.run(list(jobs))
++
++        await asyncio.gather(*completions)
++    except BaseException:
++        for task in completions:
++            task.cancel()
++        await asyncio.gather(*completions, return_exceptions=True)
++        raise
+ 
+     # Persist results the executor adapter didn't already write
+     # (failed_eval, dependency_failed, cached_failure, skips).
+@@ -614,6 +677,7 @@ async def build_attributes(  # noqa: PLR0913
          BuildResult(status, generation, schedule_result.results),
          eval_success=True,
      )
@@ -139,7 +220,7 @@ index 835c45e..a2c889d 100644
      o.release_run(build.id_)
      await after_build(
          o, event, build, status, worktree_path=worktree_path, credentials=credentials
-@@ -656,6 +690,7 @@ class _OrchestratorExecutor:
+@@ -656,6 +720,7 @@ class _OrchestratorExecutor:
          self.build_record = build
          self.worktree_path = worktree_path
          self.cancel_event = cancel_event
@@ -147,33 +228,109 @@ index 835c45e..a2c889d 100644
  
      async def build(self, job: NixEvalJobSuccess) -> BuildOutcome:
          try:
-@@ -673,6 +708,14 @@ class _OrchestratorExecutor:
-                 drv_path=job.drv_path,
-                 system=job.system,
-             )
-+            await lifecycle.attribute(
-+                self.o,
-+                self.event,
-+                self.build_record,
-+                job,
-+                BuildOutcome.failure_no_cache.value,
-+                self.worktree_path,
-+            )
-             await db.complete_attribute(self.o.pool, self.build_record.id_, result)
+@@ -677,39 +742,6 @@ class _OrchestratorExecutor:
              # Internal errors are not derivation failures: don't cache.
              return BuildOutcome.failure_no_cache
-@@ -680,19 +723,45 @@ class _OrchestratorExecutor:
-     async def _after_success(
-         self, job: NixEvalJobSuccess, writer: LogWriter
-     ) -> BuildOutcome:
+ 
+-    async def _after_success(
+-        self, job: NixEvalJobSuccess, writer: LogWriter
+-    ) -> BuildOutcome:
 -        """Uploads (warn-only) and post-build steps for a built attribute."""
-+        """Uploads and post-build steps for a built attribute."""
-         paths = (
-             []
-             if job.build_dependencies_only
-             else [p for p in job.outputs.values() if p]
-         )
+-        paths = (
+-            []
+-            if job.build_dependencies_only
+-            else [p for p in job.outputs.values() if p]
+-        )
 -        results = await asyncio.gather(*(u.upload(paths) for u in self.o.uploaders))
+-        for uploader, result in zip(self.o.uploaders, results, strict=True):
+-            await writer.write(
+-                f"\nupload {uploader.name}: "
+-                f"{'ok' if result.success else 'failed'}\n".encode()
+-            )
+-            await writer.write(result.output.encode())
+-        step_results = await run_post_build_steps(
+-            self.o.config.post_build_steps,
+-            build_props(self.event, job),
+-            self.worktree_path,
+-        )
+-        for step in step_results:
+-            await writer.write(
+-                f"\npost-build step {step.name}: "
+-                f"{'ok' if step.success else 'failed'}\n".encode()
+-            )
+-            await writer.write(step.output.encode())
+-        if any(step.failed for step in step_results):
+-            # The derivation built: fail the attribute without
+-            # poisoning the failed-build cache.
+-            return BuildOutcome.post_build_failure
+-        return BuildOutcome.success
+-
+     async def _build_inner(self, job: NixEvalJobSuccess) -> BuildOutcome:
+         # Runs after slot acquisition so started_at (and the shown
+         # duration) excludes queue wait. False: row already terminal.
+@@ -752,8 +784,24 @@ class _OrchestratorExecutor:
+                     ),
+                     store=self.o.config.store_for(self.event.repo.name),
+                 )
+-                if outcome == BuildOutcome.success:
+-                    outcome = await self._after_success(job, writer)
++                if (
++                    outcome == BuildOutcome.failure
++                    and outcome_status(job, outcome)[0] == AttributeStatus.failed
++                ):
++                    self.compilation_failures.append(
++                        dict(attr=job.attr, status="failed")
++                    )
++                outcome = BuildOutcome(
++                    await complete_attribute(
++                        self.o,
++                        self.event,
++                        self.build_record,
++                        job,
++                        outcome.value,
++                        self.worktree_path,
++                        writer,
++                    )
++                )
+         finally:
+             mirror.cancel()
+             self.o.attr_cancel_events.pop((self.build_record.id_, job.attr), None)
+diff --git a/nixbot/completion.py b/nixbot/completion.py
+new file mode 100644
+index 0000000..d9e3b54
+--- /dev/null
++++ b/nixbot/completion.py
+@@ -0,0 +1,195 @@
++from __future__ import annotations
++
++import asyncio
++import contextlib
++import dataclasses
++import json
++import logging
++import tempfile
++import uuid
++from pathlib import Path
++
++from . import lifecycle
++from .db_gen import builds as builds_q
++from .models import NixEvalJobSuccess
++from .post_build import build_props, run_post_build_steps
++from .repo_config import BranchConfig
++from .upload import UploadResult
++
++logger = logging.getLogger(__name__)
++
++
++async def complete_attribute(o, event, build, job, outcome, cwd, writer):
++    compilation_outcome = outcome
++
++    async def publish():
++        paths = (
++            []
++            if job.build_dependencies_only
++            else [p for p in job.outputs.values() if p]
++        )
 +        if (
 +            any(p is None for p in job.outputs.values())
 +            and not job.build_dependencies_only
@@ -185,155 +342,160 @@ index 835c45e..a2c889d 100644
 +                merge_stderr=False,
 +            )
 +            if rc:
-+                return BuildOutcome.post_build_failure
++                return "post_build_failure"
 +            job.outputs = json.loads(out)[0]["outputs"]
 +            paths = list(job.outputs.values())
 +        raw_results = await asyncio.gather(
-+            *(
-+                u.upload(paths, owner=(self.build_record.id_, job.attr))
-+                for u in self.o.uploaders
-+            ),
++            *(u.upload(paths, owner=(build.id_, job.attr)) for u in o.uploaders),
 +            return_exceptions=True,
 +        )
 +        results = [
 +            r if isinstance(r, UploadResult) else UploadResult(False, str(r))
 +            for r in raw_results
 +        ]
-         for uploader, result in zip(self.o.uploaders, results, strict=True):
-             await writer.write(
-                 f"\nupload {uploader.name}: "
-                 f"{'ok' if result.success else 'failed'}\n".encode()
-             )
-             await writer.write(result.output.encode())
++        for uploader, result in zip(o.uploaders, results, strict=True):
++            await writer.write(
++                f"\nupload {uploader.name}: "
++                f"{'ok' if result.success else 'failed'}\n".encode()
++            )
++            await writer.write(result.output.encode())
 +        if any(not result.success for result in results):
-+            return BuildOutcome.post_build_failure
-         step_results = await run_post_build_steps(
-             self.o.config.post_build_steps,
-             build_props(self.event, job),
-@@ -752,8 +821,76 @@ class _OrchestratorExecutor:
-                     ),
-                     store=self.o.config.store_for(self.event.repo.name),
-                 )
--                if outcome == BuildOutcome.success:
--                    outcome = await self._after_success(job, writer)
-+                nix_outcome = outcome.value
++            return "post_build_failure"
++        step_results = await run_post_build_steps(
++            o.config.post_build_steps if outcome == "success" else [],
++            build_props(event, job),
++            cwd,
++        )
++        for step in step_results:
++            await writer.write(
++                f"\npost-build step {step.name}: "
++                f"{'ok' if step.success else 'failed'}\n".encode()
++            )
++            await writer.write(step.output.encode())
++        if any(step.failed for step in step_results):
++            # The derivation built: fail the attribute without
++            # poisoning the failed-build cache.
++            return "post_build_failure"
++        return outcome
++
++    async def finish():
++        result = await publish() if outcome in ("success", "skipped_local") else outcome
++        ok = await lifecycle.attribute(
++            o,
++            event,
++            build,
++            job,
++            result,
++            cwd,
++            writer,
++            compilation_outcome=compilation_outcome,
++        )
++        return (
++            "post_build_failure"
++            if not ok and result in ("success", "skipped_local")
++            else result
++        )
++
++    key = (build.id_, job.attr)
++    own_cancel = key not in o.attr_cancel_events
++    cancel = o.attr_cancel_events.setdefault(key, asyncio.Event())
++    mirror = (
++        asyncio.create_task(_mirror_cancel(o, build.id_, cancel))
++        if own_cancel
++        else None
++    )
++    task = asyncio.create_task(finish())
++    cancelled = asyncio.create_task(cancel.wait())
++    try:
++        done, _ = await asyncio.wait(
++            {task, cancelled}, return_when=asyncio.FIRST_COMPLETED
++        )
++        if task in done:
++            return await task
++        task.cancel()
++        await asyncio.gather(task, return_exceptions=True)
++        await lifecycle.attribute(
++            o,
++            event,
++            build,
++            job,
++            "cancelled",
++            cwd,
++            writer,
++            compilation_outcome=compilation_outcome,
++        )
++        return "cancelled"
++    finally:
++        cancelled.cancel()
++        task.cancel()
++        await asyncio.gather(task, cancelled, return_exceptions=True)
++        if mirror:
++            mirror.cancel()
++            await asyncio.gather(mirror, return_exceptions=True)
++            o.attr_cancel_events.pop(key, None)
++
++
++async def _mirror_cancel(o, build_id, cancel):
++    await o.cancel_events.setdefault(build_id, asyncio.Event()).wait()
++    cancel.set()
++
++
++async def evaluate_metadata(o, event, build, cwd, credentials=None):
++    from .build_run import _eval_settings, _with_build_store
++
++    async with o.eval_slots, contextlib.AsyncExitStack() as stack:
++        with tempfile.TemporaryDirectory(
++            prefix="metadata-", dir=o.config.state_dir
++        ) as directory:
++            settings = dataclasses.replace(
++                _eval_settings(o, event, build, credentials),
++                gc_roots_dir=Path(directory),
++            )
++            settings = await _with_build_store(o, event, build, settings, stack)
++            return await o.eval_runner.run(cwd, BranchConfig.load(cwd), settings)
++
++
++async def report_reused_inventory(o, event, build):
++    if not o.config.evaluation_finished or event.commit_sha == build.commit_sha:
++        return
++    worktree = None
++    try:
++        worktree = await o.repos.checkout_for_build(
++            event.repo.key,
++            "inventory-" + uuid.uuid4().hex,
++            base_commit=event.commit_sha,
++        )
++        evaluated = await evaluate_metadata(o, event, build, worktree.path)
++        stored = {
++            row.attr: row
++            for row in await builds_q.eval_job_rows(o.pool, build_id=build.id_)
++        }
++        for job in evaluated.jobs:
++            if (
++                isinstance(job, NixEvalJobSuccess)
++                and job.system in o.config.build_systems
++            ):
++                previous = stored.get(job.attr)
 +                if (
-+                    outcome == BuildOutcome.failure
-+                    and outcome_status(job, outcome)[0] == AttributeStatus.failed
++                    previous is None
++                    or previous.drv_path != job.drv_path
++                    or (json.loads(previous.outputs) if previous.outputs else {})
++                    != job.outputs
 +                ):
-+                    self.compilation_failures.append(
-+                        dict(attr=job.attr, status="failed")
++                    raise ValueError(
++                        "Reused revision evaluates to different outputs; inventory was not reported"
 +                    )
-+
-+                async def finalize():
-+                    nonlocal outcome
-+                    if outcome == BuildOutcome.success:
-+                        outcome = await self._after_success(job, writer)
-+                        if outcome == BuildOutcome.success:
-+                            try:
-+                                await self.o.post_process_skipped(
-+                                    self.event,
-+                                    [(job.attr, job.outputs.get("out") or "")],
-+                                )
-+                            except Exception as error:
-+                                logger.exception("post-processing failed")
-+                                await writer.write(str(error).encode())
-+                                await self.o.pool.execute(
-+                                    "UPDATE builds SET error=$2 WHERE id=$1",
-+                                    self.build_record.id_,
-+                                    str(error),
-+                                )
-+                                outcome = BuildOutcome.post_build_failure
-+                    ok = await lifecycle.attribute(
-+                        self.o,
-+                        self.event,
-+                        self.build_record,
-+                        job,
-+                        outcome.value,
-+                        self.worktree_path,
-+                        writer,
-+                        compilation_outcome=nix_outcome,
-+                    )
-+                    if not ok and outcome == BuildOutcome.success:
-+                        outcome = BuildOutcome.post_build_failure
-+
-+                finalization = asyncio.create_task(finalize())
-+                cancelled = asyncio.create_task(attr_cancel.wait())
-+                try:
-+                    done, _ = await asyncio.wait(
-+                        {finalization, cancelled}, return_when=asyncio.FIRST_COMPLETED
-+                    )
-+                    if cancelled in done and not finalization.done():
-+                        finalization.cancel()
-+                        with contextlib.suppress(asyncio.CancelledError):
-+                            await finalization
-+                        outcome = BuildOutcome.cancelled
-+                        await lifecycle.attribute(
-+                            self.o,
-+                            self.event,
-+                            self.build_record,
-+                            job,
-+                            outcome.value,
-+                            self.worktree_path,
-+                            writer,
-+                            compilation_outcome=nix_outcome,
-+                        )
-+                    else:
-+                        await finalization
-+                finally:
-+                    cancelled.cancel()
-+                    if not finalization.done():
-+                        finalization.cancel()
-+                        with contextlib.suppress(asyncio.CancelledError):
-+                            await finalization
-         finally:
-             mirror.cancel()
-             self.o.attr_cancel_events.pop((self.build_record.id_, job.attr), None)
-@@ -790,16 +927,4 @@ class _OrchestratorExecutor:
-             log_size=writer.bytes_seen,
-             log_truncated=writer.truncated,
-         )
--        if outcome == BuildOutcome.success:
--            try:
--                await self.o.post_process_skipped(
--                    self.event, [(job.attr, job.outputs.get("out") or "")]
--                )
--            except Exception:
--                # Must not overwrite the recorded success or poison
--                # the failed-build cache.
--                logger.exception(
--                    "post-processing failed",
--                    extra={"build_id": self.build_record.id_, "attr": job.attr},
--                )
-         return outcome
-diff --git a/nixbot/build_scheduler.py b/nixbot/build_scheduler.py
-index 20c34ce..111f14c 100644
---- a/nixbot/build_scheduler.py
-+++ b/nixbot/build_scheduler.py
-@@ -373,12 +373,14 @@ class JobScheduler:
-         failed_build_cache: FailedBuildCache | None = None,
-         *,
-         build_url: str = "",
-+        finalize_local: bool = False,
-         on_result: Callable[[AttributeResult], Awaitable[None]] | None = None,
-     ) -> None:
-         self.executor = executor
-         self.supported_systems = supported_systems
-         self.failed_build_cache = failed_build_cache
-         self.build_url = build_url
-+        self.finalize_local = finalize_local
-         # Called for each result as soon as it is known.
-         self.on_result = on_result
- 
-@@ -607,6 +609,8 @@ class JobScheduler:
-         # local-store skip must win over a stale failed-build cache
-         # entry for the same drv.
-         if job.cache_status == CacheStatus.local:
-+            if self.finalize_local:
-+                return "run"
-             result.results.append(_success_result(job, AttributeStatus.skipped_local))
-             return "skip"
- 
++        await lifecycle.evaluation(o, event, build, evaluated.jobs)
++    except Exception:
++        logger.exception(
++            "reused revision inventory failed", extra={"build_id": build.id_}
++        )
++    finally:
++        if worktree is not None:
++            try:
++                await o.repos.remove_worktree(worktree)
++            except Exception:
++                logger.exception("inventory worktree cleanup failed")
 diff --git a/nixbot/config.py b/nixbot/config.py
 index 6718422..4fbd9a7 100644
 --- a/nixbot/config.py
@@ -580,51 +742,36 @@ index 2775f04..be68f87 100644
  ) -> PostBuildStepResult:
      try:
          command = [interpolate(arg, props) for arg in step.command]
-diff --git a/nixbot/recovery.py b/nixbot/recovery.py
-index 0500015..e14b1a1 100644
---- a/nixbot/recovery.py
-+++ b/nixbot/recovery.py
-@@ -183,10 +183,14 @@ async def settle_already_built(
-     pool: asyncpg.Pool,
-     build: ResumableBuild,
-     path_checker: Callable[[list[str]], Awaitable[set[str]]] = check_store_paths,
-+    *,
-+    finalize: bool = False,
- ) -> tuple[list[NixEvalJobSuccess], list[tuple[str, str]]]:
-     """Complete pending attributes whose out paths already exist in the
-     store. Return (jobs that still need building, settled (attr,
-     out_path) pairs for gcroots/outputs post-processing)."""
-+    if finalize:
-+        return build.pending_jobs, []
-     valid = await path_checker(
-         [p for job in build.pending_jobs if (p := job.outputs.get("out"))]
-     )
 diff --git a/nixbot/rerun_exec.py b/nixbot/rerun_exec.py
-index d8647fc..fae8534 100644
+index d8647fc..47fd5e0 100644
 --- a/nixbot/rerun_exec.py
 +++ b/nixbot/rerun_exec.py
-@@ -8,18 +8,21 @@ imported directly since it has no runtime dependency on this module.
- from __future__ import annotations
- 
- import asyncio
-+import contextlib
- import json
- import logging
+@@ -13,13 +13,16 @@ import logging
  from contextlib import asynccontextmanager
  from typing import TYPE_CHECKING
  
 -from . import build_run, db
 +from . import build_run, db, lifecycle
  from .canceller import branch_key
++from .completion import evaluate_metadata
  from .db import BuildStatus
  from .db_gen import builds as builds_q
  from .db_gen import maintenance as q
  from .events import ChangeEvent, EvalReport, event_for_build
  from .gitrepo import pr_refspec
-+from .models import NixEvalJobSuccess
++from .models import CacheStatus, NixEvalJobSuccess
 +from .repo_config import BranchConfig
  
  logger = logging.getLogger(__name__)
+ 
+@@ -30,7 +33,7 @@ if TYPE_CHECKING:
+     from .db import BuildRecord
+     from .events import RepoInfo
+     from .gitrepo import FetchCredentials
+-    from .models import NixEvalJobSuccess
++    from .models import CacheStatus, NixEvalJobSuccess
+     from .orchestrator import Orchestrator
+ 
  
 @@ -92,7 +95,6 @@ async def rerun_pending_attributes(
              pending_jobs = [
@@ -634,7 +781,7 @@ index d8647fc..fae8534 100644
          await db.set_build_status(o.pool, build.id_, BuildStatus.BUILDING)
          # Register so supersede/PR-close cancellation also covers
          # recovered and restarted builds.
-@@ -108,8 +110,42 @@ async def rerun_pending_attributes(
+@@ -108,8 +110,49 @@ async def rerun_pending_attributes(
              event,
              worktree_path,
          ):
@@ -642,17 +789,9 @@ index d8647fc..fae8534 100644
 -            # the previous run may have left it red or pending.
 +            if o.config.attribute_finished:
 +                try:
-+                    async with o.eval_slots, contextlib.AsyncExitStack() as stack:
-+                        settings = await build_run._with_build_store(
-+                            o,
-+                            event,
-+                            build,
-+                            build_run._eval_settings(o, event, build, credentials),
-+                            stack,
-+                        )
-+                        evaluated = await o.eval_runner.run(
-+                            worktree_path, BranchConfig.load(worktree_path), settings
-+                        )
++                    evaluated = await evaluate_metadata(
++                        o, event, build, worktree_path, credentials
++                    )
 +                    jobs = {
 +                        job.attr: job
 +                        for job in evaluated.jobs
@@ -676,6 +815,37 @@ index d8647fc..fae8534 100644
 +                        o, event, build, BuildStatus.FAILED, error=str(error)
 +                    )
 +                    return
++            if o.config.uploaders or o.config.attribute_finished:
++                outputs = [
++                    path
++                    for job in pending_jobs
++                    for path in job.outputs.values()
++                    if path
++                ]
++                valid = await o.check_store_paths(outputs)
++                pending_jobs = [
++                    job.model_copy(update={"cache_status": CacheStatus.local})
++                    if job.outputs
++                    and all(path in valid for path in job.outputs.values())
++                    else job
++                    for job in pending_jobs
++                ]
              await o.reporter.eval_finished(event, build, EvalReport(success=True))
              # cache_failures=False: see _ReadOnlyFailedBuildCache.
              # effects_started keeps a recovered, already-deployed
+diff --git a/nixbot/service.py b/nixbot/service.py
+index f95c6d9..35a27fd 100644
+--- a/nixbot/service.py
++++ b/nixbot/service.py
+@@ -796,7 +796,10 @@ class CIService:
+         settled_effects = await fail_interrupted_effects(self.pool, self._started_at)
+         await self._report_interrupted_effects(settled_effects)
+         for resumable in await find_unfinished_builds(self.pool):
+-            remaining, settled = await settle_already_built(self.pool, resumable)
++            if self.config.uploaders or self.config.attribute_finished:
++                remaining, settled = resumable.pending_jobs, []
++            else:
++                remaining, settled = await settle_already_built(self.pool, resumable)
+             if settled:
+                 # Recovered results still need gcroots/outputs updates.
+                 event = await restart_dispatch.change_event_for(self, resumable)

@@ -9,7 +9,6 @@ let
 in
 package.overrideAttrs (old: {
   patches = (old.patches or [ ]) ++ [
-    ./patches/revision-identity.patch
     ./patches/shared-publications.patch
     ./patches/awaited-lifecycle.patch
     ./patches/native-upload-ui.patch

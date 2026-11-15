@@ -11,18 +11,6 @@ index 57af95e..18ebb7c 100644
      page.wait_for_url("**/repos/github/acme/widget")
  
      page.locator('a[href$="/builds/2"]').first.click()
-diff --git a/nixbot/tests/support.py b/nixbot/tests/support.py
-index 0b1e72c..2e35d1e 100644
---- a/nixbot/tests/support.py
-+++ b/nixbot/tests/support.py
-@@ -43,6 +43,7 @@ from nixbot.models import CacheStatus, NixEvalJobSuccess
- def make_config(dsn: str, state_dir: Path, **kwargs: Any) -> Config:
-     """A minimal valid Config for service-level tests."""
-     kwargs.setdefault("work_retry_backoff", 0)
-+    kwargs.setdefault("gcroots_dir", state_dir / "gcroots")
-     return Config(
-         db_url=dsn,
-         build_systems=["x86_64-linux"],
 diff --git a/nixbot/tests/test_control.py b/nixbot/tests/test_control.py
 index c2d73d0..f881f8c 100644
 --- a/nixbot/tests/test_control.py
@@ -49,98 +37,6 @@ index c2d73d0..f881f8c 100644
  
  
  def test_csrf_cross_origin_rejected(harness: WebHarness) -> None:
-diff --git a/nixbot/tests/test_db.py b/nixbot/tests/test_db.py
-index fbfedd6..3c94820 100644
---- a/nixbot/tests/test_db.py
-+++ b/nixbot/tests/test_db.py
-@@ -374,7 +374,7 @@ async def test_reuse_by_other_pr_clears_both_identity_fields(
-         pool,
-         project_id,
-         "tree-x",
--        "sha2",
-+        "sha",
-         "feature-b",
-         pr_number=2,
-         pr_author="github:bob",
-diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.py
-index 725a443..3b1d91d 100644
---- a/nixbot/tests/test_orchestrator.py
-+++ b/nixbot/tests/test_orchestrator.py
-@@ -2226,9 +2226,7 @@ async def test_reuse_for_default_branch_push_runs_effects(
-     upstream: Path,
-     monkeypatch: pytest.MonkeyPatch,
- ) -> None:
--    """A main push reusing a succeeded PR build must still deploy (the
--    PR run never started effects) and report the effects on the main
--    commit, not the build's stored PR-head commit."""
-+    """A main push reusing a succeeded PR build must still deploy."""
- 
-     ran = patch_effects(monkeypatch).ran
-     add_commit(upstream, "reuse-deploy")
-@@ -2246,10 +2244,8 @@ async def test_reuse_for_default_branch_push_runs_effects(
-     assert ran == []
-     assert await effect_statuses(pool, pr_build.id_) == {"deploy": "skipped"}
- 
--    # Squash-merge: an identical tree under a new SHA reuses the build.
--    git(upstream, "commit", "--allow-empty", "-m", "reuse-deploy-merge")
-     main_sha = git(upstream, "rev-parse", "HEAD")
--    assert main_sha != pr_sha
-+    assert main_sha == pr_sha
-     reporter.events.clear()
-     main_build = await orchestrator.handle_change_event(
-         ChangeEvent(repo=project, branch="main", commit_sha=main_sha)
-@@ -2259,8 +2255,6 @@ async def test_reuse_for_default_branch_push_runs_effects(
-     await drain_effect_items(orchestrator, project, pool)
-     assert ran == ["deploy"]
-     assert await effect_statuses(pool, pr_build.id_) == {"deploy": "succeeded"}
--    # Effects ran for the main merge, so their statuses belong on the
--    # main commit -- not the build's stored PR-head commit (pr_sha).
-     sha_events = ("effect-started", "effects-started", "effects-finished")
-     effect_shas = {e[-1] for e in reporter.events if e[0] in sha_events}
-     assert effect_shas == {main_sha}
-@@ -2292,7 +2286,6 @@ async def test_push_reusing_pr_build_delivers_build_finished(
-     assert pr_delivery["pr_number"] == 9
-     await pool.execute("DELETE FROM work_queue WHERE kind = 'deliver'")
- 
--    git(upstream, "commit", "--allow-empty", "-m", "reuse-finished-merge")
-     main_sha = git(upstream, "rev-parse", "HEAD")
-     main_build = await orchestrator.handle_change_event(
-         ChangeEvent(repo=project, branch="main", commit_sha=main_sha)
-@@ -2336,7 +2329,6 @@ async def test_push_linking_running_pr_build_delivers_build_finished(
-     )
-     await wait_started(executor.started, pr_task)
- 
--    git(upstream, "commit", "--allow-empty", "-m", "link-running-merge")
-     main_sha = git(upstream, "rev-parse", "HEAD")
-     main_build = await orchestrator.handle_change_event(
-         ChangeEvent(repo=project, branch="main", commit_sha=main_sha)
-@@ -2556,7 +2548,6 @@ async def test_gated_restart_then_allowed_reuse_deploys(
-     assert ran == []
-     assert await effect_statuses(pool, build.id_) == {"deploy": "skipped"}
- 
--    git(upstream, "commit", "--allow-empty", "-m", "merge")
-     await orchestrator.handle_change_event(
-         ChangeEvent(
-             repo=project, branch="main", commit_sha=git(upstream, "rev-parse", "HEAD")
-@@ -2606,7 +2597,7 @@ async def test_rerun_single_effect_takes_pending_dependents(
-     }
- 
- 
--async def test_reuse_replays_effect_statuses_to_new_commit(
-+async def test_reuse_replays_effect_statuses(
-     pool: asyncpg.Pool,
-     make_env: EnvFactory,
-     upstream: Path,
-@@ -2632,9 +2623,6 @@ async def test_reuse_replays_effect_statuses_to_new_commit(
-     assert first is not None
-     await drain_effect_items(orchestrator, project, pool)
- 
--    # A second commit with an identical tree reuses the build. Its
--    # effects do not re-run, so the statuses must be replayed.
--    git(upstream, "commit", "--allow-empty", "-m", "reuse-replay-empty")
-     sha2 = git(upstream, "rev-parse", "HEAD")
-     reporter.events.clear()
-     reused = await orchestrator.handle_change_event(
 diff --git a/nixbot/tests/test_web.py b/nixbot/tests/test_web.py
 index 28268ad..fdc9522 100644
 --- a/nixbot/tests/test_web.py
