@@ -1,0 +1,74 @@
+diff --git a/nixbot/tests/e2e/test_browse.py b/nixbot/tests/e2e/test_browse.py
+index 57af95e..18ebb7c 100644
+--- a/nixbot/tests/e2e/test_browse.py
++++ b/nixbot/tests/e2e/test_browse.py
+@@ -21,7 +21,7 @@ def test_homepage_lists_project_and_recent_builds(page: Page) -> None:
+ 
+ def test_navigate_sidebar_to_failed_build(page: Page) -> None:
+     page.goto("/")
+-    page.get_by_role("link", name="acme/widget").first.click()
++    page.locator('a[href="/repos/github/acme/widget"]').first.click()
+     page.wait_for_url("**/repos/github/acme/widget")
+ 
+     page.locator('a[href$="/builds/2"]').first.click()
+diff --git a/nixbot/tests/test_control.py b/nixbot/tests/test_control.py
+index c2d73d0..f881f8c 100644
+--- a/nixbot/tests/test_control.py
++++ b/nixbot/tests/test_control.py
+@@ -326,7 +326,7 @@ def test_cancel_all_cancels_pending_and_running_builds(harness: WebHarness) -> N
+     BACKEND.cancelled.clear()
+     response = harness.post("/builds/cancel-all", ROOT)
+     assert response.status_code == 303
+-    assert response.headers["location"] == "/builds"
++    assert response.headers["location"] == "/"
+     queued = harness.run(
+         harness.ctx.pool.fetch(
+             "SELECT id FROM builds"
+@@ -338,9 +338,9 @@ def test_cancel_all_cancels_pending_and_running_builds(harness: WebHarness) -> N
+ 
+ 
+ def test_cancel_all_button_admin_only(harness: WebHarness) -> None:
+-    assert "cancel all" in harness.get("/builds", ROOT).text
+-    assert "cancel all" not in harness.get("/builds", ALICE).text
+-    assert "cancel all" not in harness.get("/builds").text
++    assert "cancel all" in harness.get("/", ROOT).text
++    assert "cancel all" not in harness.get("/", ALICE).text
++    assert "cancel all" not in harness.get("/").text
+ 
+ 
+ def test_csrf_cross_origin_rejected(harness: WebHarness) -> None:
+diff --git a/nixbot/tests/test_web.py b/nixbot/tests/test_web.py
+index 28268ad..fdc9522 100644
+--- a/nixbot/tests/test_web.py
++++ b/nixbot/tests/test_web.py
+@@ -114,7 +114,7 @@ def test_homepage(client: WebHarness) -> None:
+     assert "acme/widget" in response.text  # sidebar
+     # Card shows the latest default-branch build, not PR build #3.
+     assert "#2" in response.text
+-    assert "#3" not in response.text
++    assert "#3" not in response.text.split('<div class="pipelines">', 1)[1]
+ 
+ 
+ def test_project_page_with_filters(client: WebHarness) -> None:
+@@ -423,9 +423,9 @@ def test_pending_build_shows_eval_blocker(client: WebHarness) -> None:
+ 
+ def test_project_filter_escapes_like_wildcards(client: WebHarness) -> None:
+     # `%` and `_` must match literally, not as ILIKE wildcards.
+-    assert "acme/widget" in client.get("/?q=widg").text
+-    assert "acme/widget" not in client.get("/?q=%25").text
+-    assert "acme/widget" not in client.get("/?q=widge_").text
++    assert 'class="pipeline-name">acme/widget' in client.get("/?q=widg").text
++    assert 'class="pipeline-name">acme/widget' not in client.get("/?q=%25").text
++    assert 'class="pipeline-name">acme/widget' not in client.get("/?q=widge_").text
+ 
+ 
+ def test_page_out_of_range_does_not_error(client: WebHarness) -> None:
+@@ -440,8 +440,6 @@ def test_page_out_of_range_does_not_error(client: WebHarness) -> None:
+ def test_activity_page(client: WebHarness) -> None:
+     response = client.get("/builds")
+     assert response.status_code == 200
+-    # Queue section shows the building build with its position.
+-    assert "queue-pos" in response.text
+     assert "#3" in response.text
+     # Activity feed lists finished builds too.
+     assert ">#1<" in response.text

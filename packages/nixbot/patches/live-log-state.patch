@@ -1,0 +1,237 @@
+diff --git a/nixbot/web/static/structured-logs.js b/nixbot/web/static/structured-logs.js
+index 7d54bdc..cf3659d 100644
+--- a/nixbot/web/static/structured-logs.js
++++ b/nixbot/web/static/structured-logs.js
+@@ -53,6 +53,49 @@
+     }
+   });
+ 
++  const viewKey = `nixbot-log-view:${location.pathname}`;
++  let savedView = null;
++  try {
++    savedView = JSON.parse(sessionStorage.getItem(viewKey) || "null");
++    sessionStorage.removeItem(viewKey);
++  } catch {}
++
++  document.addEventListener("nixbot:log-save", () => {
++    const view = {
++      y: scrollY,
++      succeeded: $("succeeded-panel")?.hasAttribute("open"),
++      cards: [...list.querySelectorAll(".log-card")].map((card) => ({
++        idx: card.getAttribute("data-idx"),
++        name: pick(card, ".card-name").textContent,
++        open: card.hasAttribute("open"),
++        scroll: card.querySelector(".log-lines")?.scrollTop || 0,
++      })),
++    };
++    try { sessionStorage.setItem(viewKey, JSON.stringify(view)); } catch {}
++  });
++
++  function restoreView() {
++    if (!savedView || !list.querySelector(".log-card")) return;
++    const panel = $("succeeded-panel");
++    if (panel) panel.toggleAttribute("open", !!savedView.succeeded);
++    let loading = false;
++    for (const saved of savedView.cards) {
++      const card = list.querySelector(`.log-card[data-idx="${saved.idx}"]`);
++      if (!card || pick(card, ".card-name").textContent !== saved.name) continue;
++      card.toggleAttribute("open", saved.open);
++      const viewport = card.querySelector(".log-lines");
++      if (!viewport) continue;
++      if (saved.open && card.hasAttribute("hx-get") && !viewport.childElementCount
++          && Number(card.getAttribute("data-n")) > 0) loading = true;
++      viewport.scrollTop = saved.scroll;
++    }
++    window.scrollTo(0, savedView.y);
++    if (!loading) savedView = null;
++  }
++
++  document.addEventListener("DOMContentLoaded", restoreView, { once: true });
++  document.body.addEventListener("htmx:after:settle", restoreView);
++
+   if (LOG_BASE) return runLive();
+ 
+   const succeeded =
+@@ -131,7 +174,7 @@
+   // in arrival order, the running one following its tail. The
+   // terminal-status reload swaps to the polished container page.
+   function runLive() {
+-    /** @typedef {{el: HTMLDetailsElement, viewport: HTMLElement}} Card */
++    /** @typedef {{el: HTMLDetailsElement, viewport: HTMLElement, status: string|null}} Card */
+     /** @type {Map<number, Card>} */
+     const cards = new Map();
+     /** @param {Element|null} el */
+@@ -198,7 +241,26 @@
+       );
+     }
+ 
++    function readingAnchor() {
++      for (const card of cards.values()) {
++        if (!card.el.open || card.status === "running") continue;
++        const top = card.el.getBoundingClientRect().top;
++        if (top < innerHeight && card.el.getBoundingClientRect().bottom > 0) {
++          return { el: card.el, top };
++        }
++      }
++      return null;
++    }
++
++    function restoreAnchor(anchor) {
++      if (anchor?.el.isConnected) {
++        const shift = anchor.el.getBoundingClientRect().top - anchor.top;
++        if (shift) window.scrollBy(0, shift);
++      }
++    }
++
+     function flush() {
++      const anchor = readingAnchor();
+       flushScheduled = false;
+       for (const [idx, chunks] of pendingRows) {
+         const card = cards.get(idx);
+@@ -216,6 +278,7 @@
+         processHtmx(card.viewport);
+       }
+       pendingRows.clear();
++      restoreAnchor(anchor);
+     }
+ 
+     /** A state entry or delta: card shell, status change and/or rows.
+@@ -225,16 +288,20 @@
+       if (!card && delta.card) {
+         list.insertAdjacentHTML("beforeend", delta.card);
+         const el = /** @type {HTMLDetailsElement} */ (list.lastElementChild);
+-        card = { el, viewport: pick(el, ".log-lines") };
++        card = { el, viewport: pick(el, ".log-lines"), status: null };
+         cards.set(delta.idx, card);
+       }
+       if (!card) return;
+-      if (delta.status) {
++      if (delta.status && delta.status !== card.status) {
++        const previousStatus = card.status;
++        const anchor = readingAnchor();
+         flush();
+         setStatus(card, delta.status);
+-        if (delta.t === "status" && delta.status !== "running") {
++        card.status = delta.status;
++        if (delta.t === "status" && previousStatus === "running" && delta.status !== "running") {
+           card.el.open = delta.status === "failed";
+         }
++        restoreAnchor(anchor);
+       }
+       if (delta.html) {
+         const chunks = pendingRows.get(delta.idx);
+@@ -251,11 +318,36 @@
+     const src = new EventSource(`${LOG_BASE}/stream?format=structured`);
+     src.addEventListener("state", (ev) => {
+       errors = 0;
+-      for (const card of cards.values()) card.el.remove();
+-      cards.clear();
++      const anchor = readingAnchor();
++      const seen = new Set();
+       pendingRows.clear();
++      for (const delta of JSON.parse(ev.data)) {
++        seen.add(delta.idx);
++        const card = cards.get(delta.idx);
++        if (!card) {
++          apply(delta);
++          continue;
++        }
++        const finished = card.status === delta.status && card.status !== "running";
++        if (!finished) {
++          const top = card.viewport.scrollTop;
++          const atBottom = card.viewport.scrollHeight - top - card.viewport.clientHeight < 40;
++          card.viewport.innerHTML = delta.html || "";
++          processHtmx(card.viewport);
++          card.viewport.scrollTop = atBottom ? card.viewport.scrollHeight : top;
++        }
++        apply({ ...delta, html: undefined });
++      }
++      for (const [idx, card] of cards) {
++        if (!seen.has(idx)) {
++          card.el.remove();
++          cards.delete(idx);
++        }
++      }
+       updateGroups();
+-      for (const delta of JSON.parse(ev.data)) apply(delta);
++      flush();
++      restoreAnchor(anchor);
++      restoreView();
+     });
+     src.addEventListener("delta", (ev) => apply(JSON.parse(ev.data)));
+     src.addEventListener("done", () => src.close());
+@@ -264,7 +356,7 @@
+     src.onerror = () => {
+       if (++errors >= 5) {
+         src.close();
+-        setTimeout(() => location.reload(), 3000);
++        setTimeout(() => document.dispatchEvent(new Event("nixbot:log-reload")), 3000);
+       }
+     };
+   }
+diff --git a/nixbot/web/templates/log.html b/nixbot/web/templates/log.html
+index 2d9d766..910cfa3 100644
+--- a/nixbot/web/templates/log.html
++++ b/nixbot/web/templates/log.html
+@@ -16,17 +16,17 @@
+             {% if attr_row | eval_stats %}· {{ attr_row | eval_stats }}{% endif %}
+             {% if prev_number %}
+               · <a href="{{ build_path(project, prev_number) }}/logs/{{ attr | urlencode }}"
+-    rel="prev">‹ #{{ prev_number }}</a>
++                   rel="prev">‹ #{{ prev_number }}</a>
+             {% endif %}
+             {% if next_number %}
+               · <a href="{{ build_path(project, next_number) }}/logs/{{ attr | urlencode }}"
+-    rel="next">#{{ next_number }} ›</a>
++                   rel="next">#{{ next_number }} ›</a>
+             {% endif %}
+           </small>
+         </h2>
+         <div class="controls">
+           {{ copy_log_btn(build_path(project, build.number) ~ "/logs/raw/" ~ (attr | urlencode)) }}
+-          {% if can_control and attr_status in ('pending', 'building') %}
++          {% if can_control and attr_status in ("pending", "building") %}
+             <form method="post"
+                   action="{{ build_path(project, build.number) }}/attrs/{{ attr | urlencode }}/cancel">
+               <button>cancel</button>
+@@ -39,6 +39,11 @@
+           {% endif %}
+         </div>
+       </div>
++      <div hx-sse:connect="/events"
++           hx-select=".upload-panel"
++           hx-get="/uploads?build_id={{ build.id }}&amp;attr={{ attr | urlencode }}"
++           hx-trigger="load, status from:body throttle:1s"
++           hx-swap="innerHTML"></div>
+       {% if waiting %}
+         <p class="muted">waiting for the build to start…</p>
+       {% elif unavailable %}
+@@ -126,13 +131,18 @@
+   <script>
+     const LIVE = {{ live | tojson }};
+     const RUNNING = {{ (attr_status in ("pending", "building", "running")) | tojson }};
++    function reloadLogView() {
++      document.dispatchEvent(new Event("nixbot:log-save"));
++      location.reload();
++    }
++    document.addEventListener("nixbot:log-reload", reloadLogView);
+     const log = document.getElementById("log");
+     /* Failures sit at the end. Start there unless a line is linked. */
+     if (log && !location.hash) log.scrollTop = log.scrollHeight;
+     /* Queued or just (re)started with no stream yet: reload until it
+        exists. Polling, not events: a status event sent before the
+        EventSource below connects would be lost. */
+-    if (!LIVE && RUNNING) setTimeout(() => location.reload(), 2000);
++    if (!LIVE && RUNNING) setTimeout(reloadLogView, 2000);
+     /* Status changes for this attribute re-render the page: header
+        dot, controls, and (once finished) line anchors. */
+     const events = new EventSource("/events?build={{ build.id }}");
+@@ -140,7 +150,7 @@
+       let e;
+       try { e = JSON.parse(ev.data); } catch { return; }
+       if (e.attr !== {{ attr | tojson }}) return;
+-      if (!LIVE || !["pending", "building"].includes(e.status)) location.reload();
++      if (!LIVE || !["pending", "building"].includes(e.status)) reloadLogView();
+     });
+   </script>
+ {% endblock body %}

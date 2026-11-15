@@ -1,0 +1,63 @@
+--- a/client/src/command/push.rs
++++ b/client/src/command/push.rs
+@@ -10,7 +10,7 @@
+ use crate::api::ApiClient;
+ use crate::cache::{CacheName, CacheRef, ServerName};
+ use crate::cli::Opts;
+-use crate::config::Config;
++use crate::config::{Config, ServerConfig, ServerTokenConfig};
+ use crate::push::{PushConfig, PushSessionConfig, Pusher};
+ use attic::nix_store::NixStore;
+ 
+@@ -22,6 +22,9 @@
+     /// This can be either `servername:cachename` or `cachename`
+     /// when using the default server.
+     cache: CacheRef,
++
++    #[clap(long, help = "Use an API endpoint without client configuration; authenticate with ATTIC_TOKEN")]
++    endpoint: Option<String>,
+ 
+     /// The store paths to push.
+     paths: Vec<PathBuf>,
+@@ -141,16 +144,35 @@
+         return Err(anyhow!("The number of jobs cannot be 0"));
+     }
+ 
+-    let config = Config::load()?;
++    let (server_name, mut server, cache_name) = if let Some(endpoint) = &sub.endpoint {
++        let cache_name = match &sub.cache {
++            CacheRef::DefaultServer(cache) => cache.clone(),
++            CacheRef::ServerQualified(_, _) => {
++                return Err(anyhow!("Use an unqualified cache name with --endpoint"));
++            }
++        };
++        (
++            "direct".parse::<ServerName>()?,
++            ServerConfig { endpoint: endpoint.clone(), token: None },
++            cache_name,
++        )
++    } else {
++        let config = Config::load()?;
++        let (name, server, cache) = config.resolve_cache(&sub.cache)?;
++        (name.clone(), server.clone(), cache.clone())
++    };
++    if let Ok(token) = std::env::var("ATTIC_TOKEN") {
++        if token.trim().is_empty() {
++            return Err(anyhow!("ATTIC_TOKEN is empty"));
++        }
++        server.token = Some(ServerTokenConfig::Raw { token });
++    }
+ 
+     let store = Arc::new(NixStore::connect()?);
+-
+-    let (server_name, server, cache_name) = config.resolve_cache(&sub.cache)?;
+-
+-    let mut api = ApiClient::from_server_config(server.clone())?;
++    let mut api = ApiClient::from_server_config(server)?;
+ 
+     // Confirm remote cache validity, query cache config
+-    let cache_config = api.get_cache_config(cache_name).await?;
++    let cache_config = api.get_cache_config(&cache_name).await?;
+ 
+     if let Some(api_endpoint) = &cache_config.api_endpoint {
+         // Use delegated API endpoint

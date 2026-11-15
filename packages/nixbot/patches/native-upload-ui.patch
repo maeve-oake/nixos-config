@@ -1,0 +1,545 @@
+diff --git a/nixbot/web/app.py b/nixbot/web/app.py
+index 4341b50..70de1ff 100644
+--- a/nixbot/web/app.py
++++ b/nixbot/web/app.py
+@@ -41,6 +41,7 @@ from ..auth import User, can_control_build, is_admin  # noqa: TID252
+ from ..db_gen import approvals as approvals_q  # noqa: TID252
+ from ..forge_tokens import RevokedSessionStore  # noqa: TID252
+ from ..recovery import check_db_health  # noqa: TID252
++from nixbot.gitrepo import GitError, run_git
+ from ..schedules import ScheduledEffectsStore, schedule_overview  # noqa: TID252
+ from . import badge
+ from .api_routes import create_api_router
+@@ -62,6 +63,7 @@ from .routing import register_owner_convertor
+ from .state_routes import create_state_router
+ from .task_routes import create_task_router
+ from .templating import STATIC_DIR, CachedStaticFiles, make_env, repo_path
++from .uploads import create_upload_router, overview
+ from .workload_routes import create_workload_identity_router
+ 
+ if TYPE_CHECKING:
+@@ -116,6 +118,8 @@ class WebContext:
+         self.pool = pool
+         self.state_dir = state_dir or Path("/var/lib/nixbot")
+         self.queries = WebQueries(pool)
++        self.uploaders = []
++        self._queue_titles = {}
+         self.env = make_env()
+         self.signer = signer
+         self.visibility = visibility
+@@ -135,6 +139,41 @@ class WebContext:
+         # Wired by bootstrap. Effects post PR comments through it.
+         self.forge_pr: ForgePrClient | None = None
+ 
++    async def queue_cards(self, visible):
++        builds = await self.queries.queue(visible)
++        builds.sort(
++            key=lambda build: (
++                build["status"] != "pending",
++                build["started_at"] or build["created_at"],
++                build["id"],
++            ),
++            reverse=True,
++        )
++        titles = {}
++        for build in builds:
++            key = (build["project_id"], build["commit_sha"])
++            title = self._queue_titles.get(key)
++            if title is None:
++                repo = (
++                    self.state_dir / "clones" / build["forge"]
++                    / build["owner"] / build["project_name"] / "clone.git"
++                )
++                if repo.exists():
++                    try:
++                        title = (
++                            await run_git(
++                                ["show", "-s", "--format=%s", build["commit_sha"]],
++                                cwd=repo,
++                            )
++                        ).strip()
++                    except GitError:
++                        title = None
++            build["commit_title"] = title
++            if title is not None:
++                titles[key] = title
++        self._queue_titles = titles
++        return builds
++
+     async def can_control(self, request: Request, build: dict[str, Any]) -> bool:
+         """Whether the requester may restart/cancel this build (drives
+         both the buttons and the control routes): instance admin, PR
+@@ -311,6 +350,10 @@ class _PageRoutes:
+             toggleable=toggleable,
+             projects=await ctx.queries.repo_overview(project_ids=visible, q=q or None),
+             disabled_projects=disabled,
++            queue=await ctx.queue_cards(visible),
++            can_cancel_queue=ctx.authz is not None
++            and is_admin(await ctx.request_user(request), ctx.authz),
++            uploads=await overview(ctx, request),
+         )
+ 
+     async def activity(self, request: Request) -> HTMLResponse:
+@@ -324,8 +367,6 @@ class _PageRoutes:
+         return await ctx.render(
+             "activity.html",
+             request=request,
+-            queue=await ctx.queries.queue(visible),
+-            can_cancel_queue=await self._can_cancel_queue(request),
+             builds=builds[:PAGE_SIZE],
+             has_more=len(builds) > PAGE_SIZE,
+             more_url="/builds/rows",
+@@ -356,15 +397,9 @@ class _PageRoutes:
+         return await ctx.render(
+             "_queue.html",
+             request=request,
+-            queue=await ctx.queries.queue(visible),
+-            can_cancel_queue=await self._can_cancel_queue(request),
+-        )
+-
+-    async def _can_cancel_queue(self, request: Request) -> bool:
+-        """UX only. The cancel-all route re-checks server-side."""
+-        ctx = self.ctx
+-        return ctx.authz is not None and is_admin(
+-            await ctx.request_user(request), ctx.authz
++            queue=await ctx.queue_cards(visible),
++            can_cancel_queue=ctx.authz is not None
++            and is_admin(await ctx.request_user(request), ctx.authz),
+         )
+ 
+     async def _schedules(self, project_id: int) -> list[Any]:
+@@ -528,6 +563,7 @@ class _PageRoutes:
+             request=request,
+             project=project,
+             build=build,
++            uploads=await overview(ctx, request, build["id"]),
+             attrs_total=total,
+             attrs_done=total - progress["pending"] - progress["building"],
+             progress=progress,
+@@ -948,6 +984,7 @@ def create_app(
+     if task_tokens is not None:
+         app.include_router(create_task_router(ctx, task_tokens))
+     app.include_router(create_api_router(ctx))
++    app.include_router(create_upload_router(ctx))
+     # Last: the legacy catch-alls must not shadow real routes.
+     app.include_router(create_legacy_router(ctx), include_in_schema=False)
+     app.mount("/static", CachedStaticFiles(directory=STATIC_DIR), name="static")
+diff --git a/nixbot/web/control_routes.py b/nixbot/web/control_routes.py
+index 1ffa8f4..b102113 100644
+--- a/nixbot/web/control_routes.py
++++ b/nixbot/web/control_routes.py
+@@ -233,7 +233,7 @@ class _ControlRoutes:
+         build_ids = await maint_gen.running_build_ids(self.ctx.pool)
+         for build_id in build_ids:
+             await self.backend.cancel_build(build_id)
+-        return RedirectResponse("/builds", status_code=303)
++        return RedirectResponse("/", status_code=303)
+ 
+     async def _require_repo_writer(self, request: Request, project_id: int) -> str:
+         """Instance admins or forge-side writers. Deliberately not the
+diff --git a/nixbot/web/static/style.css b/nixbot/web/static/style.css
+index 9ff1b26..419c91f 100644
+--- a/nixbot/web/static/style.css
++++ b/nixbot/web/static/style.css
+@@ -1420,3 +1420,101 @@ button.quiet:hover {
+ 	border-color: var(--border);
+ 	color: var(--fg);
+ }
++.upload-grid {
++  display: grid;
++  grid-template-columns: repeat(2, minmax(0, 40rem));
++  max-width: 81rem;
++  gap: 1rem;
++  margin-bottom: 1.5rem;
++  align-items: start;
++}
++.upload-card {
++  container: upload-card / inline-size;
++  width: 100%;
++  max-width: 40rem;
++  box-sizing: border-box;
++  border: 1px solid var(--border);
++  border-radius: 5px;
++  padding: 0.65rem 0.85rem;
++  min-width: 0;
++}
++.upload-card:only-child { grid-column: 1 / -1; }
++.upload-heading { font-size: 0.8rem; margin-bottom: 0.5rem; }
++.upload-path {
++  display: grid;
++  grid-template-columns: minmax(0, 1fr) 7ch clamp(2rem, calc(100cqw - 20rem - 7ch - 3em - 18px), 8rem) 3em;
++  gap: 6px;
++  align-items: center;
++  padding: 1px 0;
++  font-size: 12px;
++}
++.upload-name {
++  cursor: pointer;
++  font-family: var(--mono);
++  white-space: nowrap;
++  overflow: hidden;
++  text-overflow: ellipsis;
++  min-width: 0;
++  color: inherit;
++}
++.upload-name:hover { text-decoration: underline; }
++.upload-size, .upload-percent {
++  text-align: right;
++  font-variant-numeric: tabular-nums;
++  color: var(--muted);
++  font-size: 11px;
++  white-space: nowrap;
++}
++.upload-track {
++  width: 100%;
++  max-width: 8rem;
++  min-width: 0;
++  height: 4px;
++  background: var(--border);
++  border-radius: 2px;
++  overflow: hidden;
++}
++.upload-track > span { display: block; height: 100%; background: var(--accent); transition: width 0.5s ease; }
++.upload-separator { display: none; }
++.upload-path[data-state="queued"] .upload-track,
++.upload-path[data-state="queued"] .upload-percent,
++.upload-path[data-state="queued"] .upload-separator { visibility: hidden; }
++.upload-path[data-state="failed"] .upload-percent { color: var(--bad); }
++.upload-path[data-state="failed"] .upload-track > span { background: var(--bad); }
++.upload-path[data-state="retrying"] .upload-percent { color: var(--warn); }
++.upload-more { font-size: 11px; margin-top: 0.4rem; }
++@container upload-card (max-width: 28.5rem) {
++  .upload-path { grid-template-columns: minmax(0, 1fr) 7ch 0.5em 3em; }
++  .upload-track { display: none; }
++  .upload-separator { display: inline; }
++}
++@media (max-width: 420px) { .upload-grid { grid-template-columns: 1fr; } }
++@media (prefers-reduced-motion: reduce) { .upload-track > span { transition: none; } }
++
++.queue-cards {
++  display: grid;
++  grid-template-columns: repeat(2, minmax(0, 30rem));
++  gap: 0.75rem;
++  max-width: 60.75rem;
++  margin-bottom: 1.5rem;
++}
++.queue-card {
++  display: block;
++  min-width: 0;
++  border: 1px solid var(--border);
++  border-radius: 5px;
++  padding: 0.7rem 0.85rem;
++  color: inherit;
++  text-decoration: none;
++}
++.queue-card:hover { border-color: var(--accent); text-decoration: none; }
++.queue-card-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
++.queue-card-branch, .queue-card-project, .queue-card-title {
++  overflow: hidden;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++}
++.queue-card-branch { max-width: 12rem; color: var(--muted); }
++.queue-card-project { margin-left: auto; color: var(--muted); }
++.queue-card-title { margin-top: 0.45rem; font-size: 0.85rem; }
++@media (max-width: 640px) { .queue-cards { grid-template-columns: 1fr; } }
+diff --git a/nixbot/web/static/uploads.js b/nixbot/web/static/uploads.js
+new file mode 100644
+index 0000000..f2dcc93
+--- /dev/null
++++ b/nixbot/web/static/uploads.js
+@@ -0,0 +1,27 @@
++class NixbotUploadPath extends HTMLElement {
++  connectedCallback() {
++    this.addEventListener("click", this.copy);
++    this.addEventListener("keydown", this.copy);
++  }
++
++  disconnectedCallback() {
++    this.removeEventListener("click", this.copy);
++    this.removeEventListener("keydown", this.copy);
++  }
++
++  async copy(event) {
++    const name = event.target.closest(".upload-name");
++    if (!name || (event.type === "keydown" && !["Enter", " "].includes(event.key))) return;
++    event.preventDefault();
++    try {
++      await navigator.clipboard.writeText(name.dataset.path);
++      name.title = "Copied";
++      setTimeout(() => { name.title = `Copy ${name.dataset.path}`; }, 1500);
++    } catch {
++      name.title = "Unable to copy path";
++    }
++  }
++
++}
++
++customElements.define("nixbot-upload-path", NixbotUploadPath);
+diff --git a/nixbot/web/templates/_queue.html b/nixbot/web/templates/_queue.html
+index 62a9545..e3091fb 100644
+--- a/nixbot/web/templates/_queue.html
++++ b/nixbot/web/templates/_queue.html
+@@ -1,37 +1,21 @@
+-{% from "_macros.html" import status_icon, ref_link, ago %}
++{% from "_macros.html" import status_icon %}
+ {% if queue %}
+-  <div class="section-row">
+-    <h2 class="section">Queue</h2>
+-    {# UX only. The route enforces admin server-side. #}
+-    {% if can_cancel_queue %}
+-      <form method="post" action="/builds/cancel-all">
+-        <button>cancel all</button>
+-      </form>
+-    {% endif %}
+-  </div>
+-  <div class="table-scroll">
+-    <table class="builds">
+-      <caption class="visually-hidden">waiting and running builds</caption>
+-      <tr>
+-        <th scope="col">pos</th>
+-        <th scope="col">project</th>
+-        <th scope="col">#</th>
+-        <th scope="col">ref</th>
+-        <th scope="col">waiting</th>
+-      </tr>
+-      {% for b in queue %}
+-        <tr>
+-          <td>
+-            <span class="queue-pos">{{ b.queue_position or "–" }}</span>
+-          </td>
+-          <td>{{ repo_name(b.owner, b.project_name) }}</td>
+-          <td>
+-            {{ status_icon(b.status) }}<a href="{{ build_path(b, b.number) }}">#{{ b.number }}</a>
+-          </td>
+-          <td>{{ ref_link(b, b) }}</td>
+-          <td>{{ ago(b.created_at) }}</td>
+-        </tr>
+-      {% endfor %}
+-    </table>
+-  </div>
++  <section class="queue-cards" aria-label="Queued and running builds">
++    {% for b in queue %}
++      <a class="queue-card" href="{{ build_path(b, b.number) }}">
++        <div class="queue-card-meta">
++          {{ status_icon(b.status) }}
++          <strong>#{{ b.number }}</strong>
++          <span class="queue-card-branch" title="{{ b.branch }}">{{ b.branch }}</span>
++          <span class="queue-card-project">{{ repo_name(b.owner, b.project_name) }}</span>
++        </div>
++        <div class="queue-card-title" title="{{ b.commit_title or b.commit_sha }}">{{ b.commit_title or b.commit_sha[:10] }}</div>
++      </a>
++    {% endfor %}
++  </section>
++  {% if can_cancel_queue %}
++    <form method="post" action="/builds/cancel-all">
++      <button>cancel all</button>
++    </form>
++  {% endif %}
+ {% endif %}
+diff --git a/nixbot/web/templates/_uploads.html b/nixbot/web/templates/_uploads.html
+new file mode 100644
+index 0000000..ef46e42
+--- /dev/null
++++ b/nixbot/web/templates/_uploads.html
+@@ -0,0 +1,30 @@
++<div class="upload-panel">
++  {% set queued = destinations | selectattr('visible_paths') | list %}
++  {% if queued %}
++    <section>
++      <h2 class="section">Uploads</h2>
++      <div class="upload-grid">
++        {% for d in queued %}
++          <section class="upload-card" aria-label="{{ d.name }} uploads">
++            <div class="upload-heading"><strong>{{ d.name }}</strong></div>
++            {% for p in d.visible_paths %}
++              <nixbot-upload-path class="upload-path" data-state="{{ p.state }}" title="{{ p.path }} · {{ p.state }}{% if p.shared > 1 %} · shared by {{ p.shared }} attributes{% endif %}{% if p.error %} · {{ p.error }}{% endif %}">
++              <span class="upload-name" role="button" tabindex="0" data-path="{{ p.path }}" title="Copy {{ p.path }}" aria-label="Copy {{ p.path }}">{{ p.name }}</span>
++              <span class="upload-size">{{ p.size_label }}</span>
++              <span class="upload-track"
++                    role="progressbar"
++                    aria-label="{{ p.name }}"
++                    aria-valuemin="0"
++                    aria-valuemax="100"
++                    aria-valuenow="{{ p.percent }}"><span style="width:{{ p.percent }}%"></span></span>
++              <span class="upload-separator muted">·</span>
++              <span class="upload-percent">{{ p.percent }}%</span>
++              </nixbot-upload-path>
++            {% endfor %}
++            {% if d.hidden_paths %}<div class="upload-more muted">{{ d.hidden_paths }} more...</div>{% endif %}
++          </section>
++        {% endfor %}
++      </div>
++    </section>
++  {% endif %}
++</div>
+diff --git a/nixbot/web/templates/activity.html b/nixbot/web/templates/activity.html
+index 1dc21e1..da41ef8 100644
+--- a/nixbot/web/templates/activity.html
++++ b/nixbot/web/templates/activity.html
+@@ -8,9 +8,6 @@
+ {% block body %}
+   <main id="main">
+     <section class="content">
+-      <div hx-get="/builds/queue"
+-           hx-trigger="status from:body throttle:1s, htmx:sse:after:connection from:body"
+-           hx-swap="innerMorph">{% include "_queue.html" %}</div>
+       <h2 class="section">Recent activity</h2>
+       <div class="table-scroll">
+         <table class="builds" id="activity">
+diff --git a/nixbot/web/templates/base.html b/nixbot/web/templates/base.html
+index 63f5fac..02ae98a 100644
+--- a/nixbot/web/templates/base.html
++++ b/nixbot/web/templates/base.html
+@@ -14,6 +14,7 @@
+       {% endblock title %}
+     </title>
+     <link rel="stylesheet" href="/static/style.css?v={{ static_v }}">
++    <script src="/static/uploads.js?v={{ static_v }}" defer></script>
+     <link rel="icon"
+           href="/static/favicon.svg?v={{ static_v }}"
+           type="image/svg+xml">
+@@ -76,7 +77,9 @@
+     {% block body %}
+     {% endblock body %}
+     <footer class="site-footer muted">
+-      <a href="https://github.com/Mic92/nixbot" target="_blank" rel="noopener">github.com/Mic92/nixbot</a>
++      <a href="https://github.com/Mic92/nixbot"
++         target="_blank"
++         rel="noopener">github.com/Mic92/nixbot</a>
+     </footer>
+     <script src="/static/vendor/htmx.min.js?v={{ static_v }}"></script>
+     <script src="/static/vendor/hx-sse.min.js?v={{ static_v }}"></script>
+diff --git a/nixbot/web/templates/build.html b/nixbot/web/templates/build.html
+index 105dfd9..38a8a23 100644
+--- a/nixbot/web/templates/build.html
++++ b/nixbot/web/templates/build.html
+@@ -72,6 +72,9 @@
+           {% endif %}
+         </div>
+       </div>
++      {% with destinations=uploads.destinations %}
++        {% include "_uploads.html" %}
++      {% endwith %}
+       {% if build.error %}<pre class="error">{{ build.error | excerpt(2000) | ansi }}</pre>{% endif %}
+       {% if build.eval_queue %}
+         <p class="build-meta">
+diff --git a/nixbot/web/templates/index.html b/nixbot/web/templates/index.html
+index 6c4d71d..4597692 100644
+--- a/nixbot/web/templates/index.html
++++ b/nixbot/web/templates/index.html
+@@ -11,6 +11,10 @@
+         hx-swap="outerMorph"
+         hx-trigger="status from:body throttle:1s, htmx:sse:after:connection from:body">
+     <section class="content dashboard">
++      {% include "_queue.html" %}
++      {% with destinations=uploads.destinations %}
++        {% include "_uploads.html" %}
++      {% endwith %}
+       <h2 class="section">Repositories</h2>
+       <p class="filters">
+         <input type="search"
+@@ -31,7 +35,8 @@
+                 hx-target="#main"
+                 hx-swap="outerMorph">
+             <input type="hidden" name="q" value="{{ q }}">
+-            <button class="toggle-btn" title="re-scan forges for new repositories">refresh repos</button>
++            <button class="toggle-btn"
++                    title="re-scan forges for new repositories">refresh repos</button>
+           </form>
+         {% endif %}
+       </p>
+diff --git a/nixbot/web/uploads.py b/nixbot/web/uploads.py
+new file mode 100644
+index 0000000..9ad49b0
+--- /dev/null
++++ b/nixbot/web/uploads.py
+@@ -0,0 +1,88 @@
++from __future__ import annotations
++
++from fastapi import APIRouter, Request
++from fastapi.responses import HTMLResponse
++
++
++async def overview(ctx, request, build_id=None, attr=None):
++    if not ctx.uploaders:
++        return dict(destinations=[])
++    visible = await ctx.visible_repo_ids(request)
++    rows = await ctx.pool.fetch(
++        """SELECT DISTINCT p.* FROM nixbot_uploads.publication_paths p
++        LEFT JOIN nixbot_uploads.publication_members m USING(destination,path)
++        LEFT JOIN nixbot_uploads.publications s ON s.id=m.publication_id
++        LEFT JOIN builds b ON b.id=s.build_id
++        WHERE ($1::bigint IS NULL OR s.build_id=$1) AND ($2::text IS NULL OR s.attr=$2)
++        AND ($1::bigint IS NOT NULL OR p.state IN ('queued','uploading','retrying') OR (p.state='failed' AND EXISTS(SELECT 1 FROM build_attributes a WHERE a.build_id=s.build_id AND a.attr=s.attr AND a.status IN ('pending','building'))))
++        AND ($3::bigint[] IS NULL OR b.project_id=ANY($3)) ORDER BY p.destination,p.path""",
++        build_id,
++        attr,
++        visible,
++    )
++    uploaders = {u.destination: u for u in ctx.uploaders if hasattr(u, "destination")}
++    destinations = {
++        key: dict(name=u.name, paths=[]) for key, u in sorted(uploaders.items())
++    }
++    for row in rows:
++        key = row["destination"]
++        if key in destinations:
++            destinations[key]["paths"].append(dict(row))
++    members = await ctx.pool.fetch(
++        """SELECT m.destination,m.path,count(*) AS subscribers
++        FROM nixbot_uploads.publication_members m JOIN nixbot_uploads.publications s ON s.id=m.publication_id
++        JOIN builds b ON b.id=s.build_id
++        WHERE s.state IN ('planning','waiting') AND ($1::bigint[] IS NULL OR b.project_id=ANY($1)) GROUP BY m.destination,m.path""",
++        visible,
++    )
++    shared = {(r["destination"], r["path"]): r["subscribers"] for r in members}
++    for key, section in destinations.items():
++        paths = section["paths"]
++        order = {"uploading": 0, "failed": 1, "retrying": 2, "queued": 3}
++        pending = sorted(
++            (p for p in paths if p["state"] in order),
++            key=lambda p: (order[p["state"]], p["path"]),
++        )
++        limit = 5
++        section["visible_paths"] = pending[:limit]
++        section["hidden_paths"] = max(0, len(pending) - limit)
++        for path in section["visible_paths"]:
++            path["name"] = path["path"].rsplit("/", 1)[-1].split("-", 1)[-1]
++            path["sent"] = min(
++                path["bytes"], uploaders[key].progress.get(path["path"], 0)
++            )
++            path["percent"] = (
++                min(100, int(100 * path["sent"] / path["bytes"]))
++                if path["bytes"]
++                else 0
++            )
++            size = path["bytes"]
++            path["size_label"] = (
++                f"{size / 1024**3:.2f} GiB"
++                if size >= 1024**3
++                else (
++                    f"{round(size / 1024**2)} MiB"
++                    if size >= 1024**2
++                    else f"{max(1, round(size / 1024))} KiB"
++                )
++            )
++            path["shared"] = shared.get((key, path["path"]), 0)
++    return dict(
++        destinations=list(destinations.values()),
++    )
++
++
++def create_upload_router(ctx):
++    router = APIRouter(include_in_schema=False)
++
++    @router.get("/uploads", response_class=HTMLResponse)
++    async def panel(
++        request: Request, build_id: int | None = None, attr: str | None = None
++    ):
++        return await ctx.render(
++            "_uploads.html",
++            request=request,
++            **await overview(ctx, request, build_id, attr),
++        )
++
++    return router

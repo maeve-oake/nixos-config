@@ -83,27 +83,6 @@
         "type": "github"
       }
     },
-    "buildbot-nix": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "treefmt-nix": "treefmt-nix_2"
-      },
-      "locked": {
-        "lastModified": 1792833139,
-        "narHash": "sha256-iPbJV5QbtR1bZaxgMCu7IZARQ+HGmzEC8foeJF1r/2Q=",
-        "owner": "nix-community",
-        "repo": "buildbot-nix",
-        "rev": "12bdcf45ae7d0366dda54bf3eed6378edf8d919a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "buildbot-nix",
-        "type": "github"
-      }
-    },
     "crane": {
       "locked": {
         "lastModified": 1789760033,
@@ -508,11 +487,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794498296,
-        "narHash": "sha256-dk8W0q2QfvBpOMRBVFJ2hyobRF/npI2/xnpHKkcFFZ0=",
+        "lastModified": 1794706379,
+        "narHash": "sha256-KO0na6jDnWPeQqbdwVadMgUVqCDKA5Ahr4Uyc3N+064=",
         "owner": "oake",
         "repo": "nix-things",
-        "rev": "5a135c9815aef098f1c3275c7c7a315a01fc8733",
+        "rev": "d0844aaac6bd89dad92494ae38cea737603e62f9",
         "type": "github"
       },
       "original": {
@@ -538,6 +517,27 @@
       "original": {
         "owner": "nix-community",
         "repo": "nix-vscode-extensions",
+        "type": "github"
+      }
+    },
+    "nixbot": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix_2"
+      },
+      "locked": {
+        "lastModified": 1794475042,
+        "narHash": "sha256-3LONGj1ZR+wtga6LnmL2gfeXntRA9w7LXGssZx9Tfac=",
+        "owner": "Mic92",
+        "repo": "nixbot",
+        "rev": "171a8c77d6e8e2b5b99ce5870c042a2dbc2cda62",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "nixbot",
         "type": "github"
       }
     },
@@ -639,7 +639,6 @@
         "agenix": "agenix",
         "agenix-rekey": "agenix-rekey",
         "apple-silicon-support": "apple-silicon-support",
-        "buildbot-nix": "buildbot-nix",
         "decider-efi": "decider-efi",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
@@ -649,6 +648,7 @@
         "nix-index-database": "nix-index-database",
         "nix-things": "nix-things",
         "nix-vscode-extensions": "nix-vscode-extensions",
+        "nixbot": "nixbot",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_2"
       }
@@ -735,16 +735,16 @@
     "treefmt-nix_2": {
       "inputs": {
         "nixpkgs": [
-          "buildbot-nix",
+          "nixbot",
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1791885023,
-        "narHash": "sha256-C3alQ2MEt0zVrUSho5NUDo3jmhbff72++bfwoqT9Omo=",
+        "lastModified": 1780220602,
+        "narHash": "sha256-eynAfOmbmxJnkp7YewvCEbShNnnYJ9gLLqkzsYtBPeM=",
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "rev": "0d6d739a833ba9a9c93034862e4a7b061a062a1c",
+        "rev": "db947814a175b7ca6ded66e21383d938df01c227",
         "type": "github"
       },
       "original": {

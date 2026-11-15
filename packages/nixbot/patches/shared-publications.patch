@@ -1,0 +1,510 @@
+diff --git a/nixbot/publication.py b/nixbot/publication.py
+new file mode 100644
+index 0000000..1948194
+--- /dev/null
++++ b/nixbot/publication.py
+@@ -0,0 +1,386 @@
++from __future__ import annotations
++
++import asyncio
++import contextlib
++import hashlib
++import json
++import logging
++from dataclasses import dataclass, field
++from pathlib import Path
++
++from .upload import PATH_INFO_CMD, Uploader, UploadResult, _run, chunk_args
++
++
++@dataclass
++class PublicationUploader(Uploader):
++    root_dir: Path = field(kw_only=True)
++
++    def __post_init__(self):
++        self._lock = asyncio.Lock()
++        self._last_owner = 0
++        self.progress = {}
++        self._root = self.root_dir
++        self._root.mkdir(parents=True, exist_ok=True)
++        self.destination = (
++            self.name
++            + ":"
++            + hashlib.sha256(self.config.model_dump_json().encode()).hexdigest()[:16]
++        )
++
++        self.active_destinations = [self.destination]
++
++    async def _closure(self, paths, *, recursive=True):
++        found = {}
++        for chunk in chunk_args(sorted(set(paths))):
++            rc, out = await _run(
++                [*PATH_INFO_CMD, *(["--recursive"] if recursive else []), *chunk],
++                merge_stderr=False,
++            )
++            if rc:
++                raise RuntimeError("Unable to resolve required closure: " + out[-4000:])
++            data = json.loads(out)
++            if isinstance(data, list):
++                data = {item["path"]: item for item in data}
++            if any(info is None for info in data.values()):
++                raise RuntimeError("Required store path is missing")
++            found.update(
++                {path: int(info.get("narSize", 0)) for path, info in data.items()}
++            )
++        return found
++
++    def _pin_name(self, path, destination=None):
++        return (
++            self._root
++            / hashlib.sha256(
++                ((destination or self.destination) + path).encode()
++            ).hexdigest()
++        )
++
++    async def _pin(self, path):
++        root = self._pin_name(path)
++        if root.exists():
++            return False
++        rc, out = await _run(
++            ["nix-store", "--add-root", str(root), "--indirect", "--realise", path]
++        )
++        if rc:
++            raise RuntimeError("Unable to pin publication: " + out[-2000:])
++        return True
++
++    async def _enqueue(self, paths, owner=None, *, recursive=True):
++        closure = await self._closure(paths, recursive=recursive)
++        roots = set(paths)
++        created = []
++        async with self._lock:
++            try:
++                async with self.pool.acquire() as conn, conn.transaction():
++                    publication = None
++                    if owner:
++                        publication = await conn.fetchval(
++                            """INSERT INTO nixbot_uploads.publications(build_id,attr,destination) VALUES($1,$2,$3)
++                            ON CONFLICT(build_id,attr,destination) DO UPDATE SET state='planning',error=''
++                            RETURNING id""",
++                            *owner,
++                            self.destination,
++                        )
++                        await conn.execute(
++                            "DELETE FROM nixbot_uploads.publication_members WHERE publication_id=$1",
++                            publication,
++                        )
++                    for path in sorted(roots):
++                        if await self._pin(path):
++                            created.append(path)
++                    await conn.executemany(
++                        """INSERT INTO nixbot_uploads.publication_paths(destination,path,bytes,pinned) VALUES($1,$2,$3,$5)
++                        ON CONFLICT(destination,path) DO UPDATE SET
++                          pinned=nixbot_uploads.publication_paths.pinned OR excluded.pinned,
++                          state=CASE WHEN nixbot_uploads.publication_paths.state IN ('uploading','queued','retrying')
++                            OR (nixbot_uploads.publication_paths.state='complete' AND nixbot_uploads.publication_paths.updated_at > now()-$4::double precision*interval '1 second')
++                            THEN nixbot_uploads.publication_paths.state ELSE 'queued' END,
++                          attempts=CASE WHEN nixbot_uploads.publication_paths.state IN ('uploading','queued','retrying')
++                            THEN nixbot_uploads.publication_paths.attempts ELSE 0 END,
++                          available_at=CASE WHEN nixbot_uploads.publication_paths.state IN ('queued','retrying','uploading') THEN nixbot_uploads.publication_paths.available_at ELSE now() END""",
++                        [
++                            (
++                                self.destination,
++                                path,
++                                size,
++                                float(self.config.success_ttl),
++                                path in roots,
++                            )
++                            for path, size in closure.items()
++                        ],
++                    )
++                    if publication:
++                        await conn.executemany(
++                            "INSERT INTO nixbot_uploads.publication_members VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
++                            [(publication, self.destination, path) for path in closure],
++                        )
++                    if publication:
++                        await conn.execute(
++                            "UPDATE nixbot_uploads.publications SET state='waiting' WHERE id=$1",
++                            publication,
++                        )
++            except BaseException:
++                for path in created:
++                    try:
++                        tracked = await self.pool.fetchval(
++                            "SELECT pinned FROM nixbot_uploads.publication_paths WHERE destination=$1 AND path=$2",
++                            self.destination,
++                            path,
++                        )
++                    except Exception:
++                        continue
++                    if not tracked:
++                        self._pin_name(path).unlink(missing_ok=True)
++                raise
++        self._wake.set()
++        return publication
++
++    async def reconcile_roots(self):
++        rows = await self.pool.fetch(
++            "SELECT destination,path FROM nixbot_uploads.publication_paths WHERE pinned"
++        )
++        expected = {
++            self._pin_name(row["path"], row["destination"]).name for row in rows
++        }
++        for root in self._root.iterdir():
++            if root.is_symlink() and root.name not in expected:
++                root.unlink(missing_ok=True)
++
++    async def _cleanup_pins(self):
++        async with self._lock:
++            rows = await self.pool.fetch(
++                """SELECT p.destination,p.path FROM nixbot_uploads.publication_paths p WHERE p.pinned
++                AND ((p.destination=$1 AND p.state IN ('complete','failed'))
++                     OR NOT p.destination=ANY($2::text[]))
++                AND NOT EXISTS (
++                  SELECT 1 FROM nixbot_uploads.publication_members m JOIN nixbot_uploads.publications s ON s.id=m.publication_id
++                  WHERE m.destination=p.destination AND m.path=p.path AND (
++                    EXISTS (SELECT 1 FROM build_attributes a WHERE a.build_id=s.build_id
++                            AND a.attr=s.attr AND a.status IN ('pending','building'))
++                    OR (p.destination=$1 AND EXISTS (
++                      SELECT 1 FROM nixbot_uploads.publication_members other JOIN nixbot_uploads.publication_paths queued USING(destination,path)
++                      WHERE other.publication_id=s.id AND queued.state IN ('queued','uploading','retrying')))
++                  )) LIMIT 256""",
++                self.destination,
++                self.active_destinations,
++            )
++            for row in rows:
++                self._pin_name(row["path"], row["destination"]).unlink(missing_ok=True)
++            if rows:
++                await self.pool.executemany(
++                    "UPDATE nixbot_uploads.publication_paths SET pinned=false WHERE destination=$1 AND path=$2",
++                    [(row["destination"], row["path"]) for row in rows],
++                )
++
++    async def upload(self, paths, *, owner=None):
++        if not paths:
++            return UploadResult(True, "")
++        publication = await self._enqueue(paths, owner)
++        try:
++            while True:
++                ticket = await self.pool.fetchrow(
++                    "SELECT state,error FROM nixbot_uploads.publications WHERE id=$1",
++                    publication,
++                )
++                if ticket["state"] == "failed":
++                    return UploadResult(False, ticket["error"])
++                rows = await self.pool.fetch(
++                    """SELECT p.state,p.error FROM nixbot_uploads.publication_members m
++                    JOIN nixbot_uploads.publication_paths p USING(destination,path) WHERE m.publication_id=$1""",
++                    publication,
++                )
++                if any(r["state"] == "failed" for r in rows) or all(
++                    r["state"] == "complete" for r in rows
++                ):
++                    failed = [r["error"] for r in rows if r["state"] == "failed"]
++                    if failed:
++                        await self.pool.execute(
++                            "UPDATE nixbot_uploads.publications SET state='failed',error=$2 WHERE id=$1 AND state='waiting'",
++                            publication,
++                            "\n".join(failed),
++                        )
++                    else:
++                        await self.pool.execute(
++                            "UPDATE nixbot_uploads.publications SET state='complete' WHERE id=$1 AND state='waiting'",
++                            publication,
++                        )
++                    ticket = await self.pool.fetchrow(
++                        "SELECT state,error FROM nixbot_uploads.publications WHERE id=$1",
++                        publication,
++                    )
++                    return UploadResult(ticket["state"] == "complete", ticket["error"])
++                await asyncio.sleep(0.3)
++        except asyncio.CancelledError:
++            await self.pool.execute(
++                "UPDATE nixbot_uploads.publications SET state='cancelled' WHERE id=$1",
++                publication,
++            )
++            raise
++
++    async def _progress(self, path, file):
++        offset = 0
++        while True:
++            await asyncio.sleep(0.25)
++            with file.open() as stream:
++                stream.seek(offset)
++                lines = stream.readlines()
++                offset = stream.tell()
++            for line in lines:
++                with contextlib.suppress(ValueError, KeyError):
++                    data = json.loads(line)
++                    self.progress[path] = int(data["sent"])
++            if lines:
++                await self.pool.execute(
++                    """SELECT pg_notify('build_events',json_build_object('build_id',b.id,'project_id',b.project_id)::text)
++                    FROM nixbot_uploads.publications s JOIN builds b ON b.id=s.build_id
++                    JOIN nixbot_uploads.publication_members m ON m.publication_id=s.id
++                    WHERE m.destination=$1 AND m.path=$2 AND s.state='waiting'""",
++                    self.destination,
++                    path,
++                )
++
++    async def _transfer(self, path):
++        file = self._pin_name(path).with_suffix(".progress")
++        file.write_text("")
++        progress = asyncio.create_task(self._progress(path, file))
++        try:
++            command, env = self._command()
++            env["ATTIC_PROGRESS_FILE"] = str(file)
++            stdin = (path + "\n").encode() if self.config.paths_via == "stdin" else None
++            rc, out = await _run(
++                command if stdin else [*command, path],
++                stdin=stdin,
++                env=env,
++                timeout=self.timeout,
++            )
++            await self._finish(path, rc == 0, "" if rc == 0 else out[-4000:])
++        except asyncio.CancelledError:
++            await self.pool.execute(
++                "UPDATE nixbot_uploads.publication_paths SET state='queued' WHERE destination=$1 AND path=$2",
++                self.destination,
++                path,
++            )
++            raise
++        except Exception as exc:
++            await self._finish(path, False, str(exc))
++        finally:
++            self.progress.pop(path, None)
++            progress.cancel()
++            with contextlib.suppress(asyncio.CancelledError):
++                await progress
++            file.unlink(missing_ok=True)
++            self._wake.set()
++
++    async def _finish(self, path, success, output):
++        await self.pool.execute(
++            """WITH settled AS (
++            UPDATE nixbot_uploads.publication_paths SET state=CASE
++                WHEN $3 THEN 'complete' WHEN attempts >= $4 THEN 'failed' ELSE 'retrying' END,
++                error=$5,updated_at=now(),
++                available_at=now()+$6::double precision*interval '1 second'
++                WHERE destination=$1 AND path=$2 RETURNING destination,path,state,error
++            ) UPDATE nixbot_uploads.publications s SET state='failed',error=settled.error
++            FROM nixbot_uploads.publication_members m,settled WHERE s.id=m.publication_id
++                AND m.destination=settled.destination AND m.path=settled.path
++                AND settled.state='failed' AND s.state='waiting'""",
++            self.destination,
++            path,
++            success,
++            self.config.max_attempts,
++            output,
++            float(self.config.retry_delay),
++        )
++
++    async def _early(self):
++        while True:
++            buffered = self._take_buffer()
++            if buffered:
++                valid = await self.resolve(set(buffered))
++                if valid:
++                    try:
++                        await self._enqueue(sorted(valid), recursive=False)
++                    except Exception:
++                        logging.getLogger(__name__).exception(
++                            "early publication failed"
++                        )
++            await asyncio.sleep(0.25)
++
++    async def run(self):
++        while True:
++            try:
++                await self._exclusive()
++            except asyncio.CancelledError:
++                raise
++            except Exception:
++                logging.getLogger(__name__).exception("publication worker interrupted")
++                await asyncio.sleep(1)
++
++    async def _exclusive(self):
++        async with self.pool.acquire() as owner:
++            while not await owner.fetchval(
++                "SELECT pg_try_advisory_lock(hashtext('nixbot-publication'),hashtext($1))",
++                self.destination,
++            ):
++                await asyncio.sleep(1)
++            try:
++                await self._run_owned(owner)
++            finally:
++                await owner.execute(
++                    "SELECT pg_advisory_unlock(hashtext('nixbot-publication'),hashtext($1))",
++                    self.destination,
++                )
++
++    async def _run_owned(self, owner):
++        await self.pool.execute(
++            "UPDATE nixbot_uploads.publication_paths SET state='queued' WHERE destination=$1 AND state='uploading'",
++            self.destination,
++        )
++        early = asyncio.create_task(self._early())
++        active = set()
++        try:
++            while True:
++                if owner.is_closed():
++                    raise ConnectionError("publication ownership connection closed")
++                for task in list(active):
++                    if task.done():
++                        active.remove(task)
++                        task.result()
++                if early.done():
++                    early.result()
++                await self.pool.execute(
++                    """UPDATE nixbot_uploads.publications s SET state=CASE WHEN a.status='cancelled'
++                    THEN 'cancelled' ELSE 'failed' END,error='Attribute finalization ended'
++                    FROM build_attributes a WHERE s.destination=$1 AND s.state IN ('planning','waiting')
++                    AND a.build_id=s.build_id AND a.attr=s.attr AND a.status NOT IN ('pending','building')""",
++                    self.destination,
++                )
++                while len(active) < self.config.jobs:
++                    async with self._lock:
++                        row = await self.pool.fetchrow(
++                            """SELECT p.path,COALESCE(min(m.publication_id),0) AS owner
++                            FROM nixbot_uploads.publication_paths p LEFT JOIN nixbot_uploads.publication_members m ON m.destination=p.destination AND m.path=p.path
++                            AND EXISTS(SELECT 1 FROM nixbot_uploads.publications subscriber WHERE subscriber.id=m.publication_id AND subscriber.state IN ('planning','waiting'))
++                            WHERE p.destination=$1 AND p.state IN ('queued','retrying') AND p.available_at<=now()
++                            GROUP BY p.destination,p.path ORDER BY (COALESCE(min(m.publication_id),0)>$2) DESC,
++                            COALESCE(min(m.publication_id),0),p.available_at,p.path LIMIT 1""",
++                            self.destination,
++                            self._last_owner,
++                        )
++                        if not row:
++                            break
++                        self._last_owner = row["owner"]
++                        await self.pool.execute(
++                            "UPDATE nixbot_uploads.publication_paths SET state='uploading',attempts=attempts+1 WHERE destination=$1 AND path=$2",
++                            self.destination,
++                            row["path"],
++                        )
++                    active.add(asyncio.create_task(self._transfer(row["path"])))
++                await self._cleanup_pins()
++                await asyncio.sleep(0.2)
++        finally:
++            early.cancel()
++            for task in active:
++                task.cancel()
++            await asyncio.gather(early, *active, return_exceptions=True)
+diff --git a/nixbot/publication.sql b/nixbot/publication.sql
+new file mode 100644
+index 0000000..74d53b2
+--- /dev/null
++++ b/nixbot/publication.sql
+@@ -0,0 +1,46 @@
++CREATE SCHEMA nixbot_uploads;
++CREATE TABLE nixbot_uploads.publication_paths (
++    destination TEXT NOT NULL,
++    path TEXT NOT NULL,
++    state TEXT NOT NULL DEFAULT 'queued',
++    bytes BIGINT NOT NULL DEFAULT 0,
++    attempts INT NOT NULL DEFAULT 0,
++    error TEXT NOT NULL DEFAULT '',
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
++    available_at TIMESTAMPTZ NOT NULL DEFAULT now(),
++    pinned BOOLEAN NOT NULL DEFAULT false,
++    PRIMARY KEY (destination, path)
++);
++CREATE TABLE nixbot_uploads.publications (
++    id BIGSERIAL PRIMARY KEY,
++    build_id BIGINT NOT NULL REFERENCES builds(id) ON DELETE CASCADE,
++    attr TEXT NOT NULL,
++    destination TEXT NOT NULL,
++    state TEXT NOT NULL DEFAULT 'planning',
++    error TEXT NOT NULL DEFAULT '',
++    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
++    UNIQUE (build_id, attr, destination)
++);
++CREATE TABLE nixbot_uploads.publication_members (
++    publication_id BIGINT NOT NULL REFERENCES nixbot_uploads.publications(id) ON DELETE CASCADE,
++    destination TEXT NOT NULL,
++    path TEXT NOT NULL,
++    PRIMARY KEY (publication_id, path),
++    FOREIGN KEY (destination, path) REFERENCES nixbot_uploads.publication_paths(destination, path)
++);
++CREATE FUNCTION nixbot_uploads.notify_publication_change() RETURNS trigger LANGUAGE plpgsql AS $$
++DECLARE item RECORD;
++BEGIN
++  FOR item IN SELECT DISTINCT b.id,b.project_id FROM nixbot_uploads.publication_members m
++    JOIN nixbot_uploads.publications s ON s.id=m.publication_id JOIN builds b ON b.id=s.build_id
++    WHERE m.destination=NEW.destination AND m.path=NEW.path LOOP
++    PERFORM pg_notify('build_events',json_build_object('build_id',item.id,'project_id',item.project_id)::text);
++  END LOOP;
++  RETURN NEW;
++END $$;
++CREATE TRIGGER publication_progress AFTER UPDATE ON nixbot_uploads.publication_paths
++  FOR EACH ROW EXECUTE FUNCTION nixbot_uploads.notify_publication_change();
++CREATE INDEX publications_waiting_idx ON nixbot_uploads.publications(destination,state);
++CREATE INDEX publication_pins_idx ON nixbot_uploads.publication_paths(destination) WHERE pinned;
++CREATE INDEX publication_members_path_idx ON nixbot_uploads.publication_members(destination,path);
++CREATE INDEX publication_pending_idx ON nixbot_uploads.publication_paths(destination,available_at) WHERE state IN ('queued','retrying');
+diff --git a/nixbot/upload.py b/nixbot/upload.py
+index 843b34d..87efce6 100644
+--- a/nixbot/upload.py
++++ b/nixbot/upload.py
+@@ -19,6 +19,7 @@ import logging
+ import os
+ from collections import defaultdict
+ from dataclasses import dataclass, field
++from importlib import resources
+ from typing import TYPE_CHECKING, Any
+ 
+ from nixbot_effects.proc import ProcessGroup
+@@ -172,7 +173,7 @@ class Uploader:
+         }
+         return command, env
+ 
+-    async def upload(self, paths: list[str]) -> UploadResult:
++    async def upload(self, paths: list[str], *, owner=None) -> UploadResult:
+         raise NotImplementedError
+ 
+     async def run(self) -> None:
+@@ -192,7 +193,7 @@ class BatchUploader(Uploader):
+ 
+     _waiters: list[_Waiter] = field(default_factory=list, init=False)
+ 
+-    async def upload(self, paths: list[str]) -> UploadResult:
++    async def upload(self, paths: list[str], *, owner=None) -> UploadResult:
+         """Upload an attribute's final outputs and wait for the first verdict."""
+         if not paths:
+             return UploadResult(success=True, output="")
+@@ -288,7 +289,7 @@ class StreamUploader(Uploader):
+         default_factory=lambda: defaultdict(list), init=False
+     )
+ 
+-    async def upload(self, paths: list[str]) -> UploadResult:
++    async def upload(self, paths: list[str], *, owner=None) -> UploadResult:
+         loop = asyncio.get_running_loop()
+         futures = [loop.create_future() for _ in paths]
+         for p, fut in zip(paths, futures, strict=True):
+@@ -383,4 +384,26 @@ async def start_uploaders(
+     uploaders: Sequence[Uploader], pool: asyncpg.Pool
+ ) -> list[asyncio.Task[None]]:
+     await q.drop_unknown_uploaders(pool, names=[u.name for u in uploaders])
++    publications = [u for u in uploaders if hasattr(u, "destination")]
++    if publications:
++        async with pool.acquire() as conn, conn.transaction():
++            await conn.execute(
++                "SELECT pg_advisory_xact_lock(hashtext('nixbot-uploads'))"
++            )
++            if (
++                await conn.fetchval(
++                    "SELECT to_regclass('nixbot_uploads.publication_paths')"
++                )
++                is None
++            ):
++                await conn.execute(
++                    resources.files(__package__).joinpath("publication.sql").read_text()
++                )
++    destinations = [u.destination for u in publications]
++    reconciled = set()
++    for uploader in publications:
++        uploader.active_destinations = destinations
++        if uploader._root not in reconciled:
++            await uploader.reconcile_roots()
++            reconciled.add(uploader._root)
+     return [asyncio.create_task(u.run(), name=f"uploader-{u.name}") for u in uploaders]

@@ -21,7 +21,7 @@
     };
   };
 
-  services.buildbot-nix.master.buildSystems = [
+  services.nixbot.buildSystems = [
     config.nixpkgs.hostPlatform.system # local build
     "aarch64-linux" # build on gratis
     "aarch64-darwin" # build on fruity

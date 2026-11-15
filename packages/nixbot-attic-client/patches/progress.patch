@@ -84,7 +84,7 @@ index 1329f30..27f7401 100644
  use std::pin::Pin;
  use std::sync::Arc;
  use std::task::{Context, Poll};
-@@ -562,10 +564,32 @@ pub async fn upload_path(
+@@ -562,10 +564,30 @@ pub async fn upload_path(
          .map_ok(Bytes::from);
 
      let start = Instant::now();
@@ -92,8 +92,6 @@ index 1329f30..27f7401 100644
 -        .upload_path(upload_info, nar_stream, force_preamble)
 -        .await
 -    {
-+    // Optional side channel for the Buildbot upload view. stdout/stderr retain
-+    // their original behaviour. Failure to write telemetry must not fail uploads.
 +    let mut events = std::env::var_os("ATTIC_PROGRESS_FILE")
 +        .and_then(|path| OpenOptions::new().append(true).open(path).ok());
 +    let upload = api.upload_path(upload_info, nar_stream, force_preamble);

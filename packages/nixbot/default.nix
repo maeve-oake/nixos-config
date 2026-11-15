@@ -1,0 +1,18 @@
+{ inputs, pkgs, ... }:
+let
+  upstream = inputs.nixbot;
+  evaluator = pkgs.callPackage "${upstream}/packages/nix-eval-jobs.nix" { };
+  package = pkgs.python3.pkgs.callPackage "${upstream}/packages/nixbot.nix" {
+    nix-eval-jobs = evaluator;
+    nixbot-cli = pkgs.python3.pkgs.callPackage "${upstream}/packages/nixbot-cli.nix" { };
+  };
+in
+package.overrideAttrs (old: {
+  patches = (old.patches or [ ]) ++ [
+    ./patches/shared-publications.patch
+    ./patches/awaited-lifecycle.patch
+    ./patches/native-upload-ui.patch
+    ./patches/live-log-state.patch
+    ./patches/existing-checks.patch
+  ];
+})
