@@ -446,7 +446,7 @@ index 0000000..74d53b2
 +CREATE INDEX publication_members_path_idx ON nixbot_uploads.publication_members(destination,path);
 +CREATE INDEX publication_pending_idx ON nixbot_uploads.publication_paths(destination,available_at) WHERE state IN ('queued','retrying');
 diff --git a/nixbot/upload.py b/nixbot/upload.py
-index 843b34d..68a1f43 100644
+index 843b34d..87efce6 100644
 --- a/nixbot/upload.py
 +++ b/nixbot/upload.py
 @@ -19,6 +19,7 @@ import logging
@@ -457,21 +457,7 @@ index 843b34d..68a1f43 100644
  from typing import TYPE_CHECKING, Any
  
  from nixbot_effects.proc import ProcessGroup
-@@ -146,7 +147,12 @@ class Uploader:
- 
-     @staticmethod
-     def create(config: UploaderConfig, pool: asyncpg.Pool, **kwargs: Any) -> Uploader:
--        cls = StreamUploader if config.paths_via == "stream" else BatchUploader
-+        from .publication import PublicationUploader
-+
-+        state_dir = kwargs.pop("state_dir", None)
-+        if state_dir is not None and config.paths_via != "stream":
-+            kwargs["root_dir"] = state_dir / "publication-roots"
-+        cls = StreamUploader if config.paths_via == "stream" else PublicationUploader
-         return cls(config, pool, **kwargs)
- 
-     @property
-@@ -172,7 +178,7 @@ class Uploader:
+@@ -172,7 +173,7 @@ class Uploader:
          }
          return command, env
  
@@ -480,7 +466,7 @@ index 843b34d..68a1f43 100644
          raise NotImplementedError
  
      async def run(self) -> None:
-@@ -192,7 +198,7 @@ class BatchUploader(Uploader):
+@@ -192,7 +193,7 @@ class BatchUploader(Uploader):
  
      _waiters: list[_Waiter] = field(default_factory=list, init=False)
  
@@ -489,7 +475,7 @@ index 843b34d..68a1f43 100644
          """Upload an attribute's final outputs and wait for the first verdict."""
          if not paths:
              return UploadResult(success=True, output="")
-@@ -288,7 +294,7 @@ class StreamUploader(Uploader):
+@@ -288,7 +289,7 @@ class StreamUploader(Uploader):
          default_factory=lambda: defaultdict(list), init=False
      )
  
@@ -498,7 +484,7 @@ index 843b34d..68a1f43 100644
          loop = asyncio.get_running_loop()
          futures = [loop.create_future() for _ in paths]
          for p, fut in zip(paths, futures, strict=True):
-@@ -383,4 +389,26 @@ async def start_uploaders(
+@@ -383,4 +384,26 @@ async def start_uploaders(
      uploaders: Sequence[Uploader], pool: asyncpg.Pool
  ) -> list[asyncio.Task[None]]:
      await q.drop_unknown_uploaders(pool, names=[u.name for u in uploaders])

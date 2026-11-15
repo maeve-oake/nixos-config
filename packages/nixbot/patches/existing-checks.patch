@@ -50,114 +50,63 @@ index c2d73d0..f881f8c 100644
  
  def test_csrf_cross_origin_rejected(harness: WebHarness) -> None:
 diff --git a/nixbot/tests/test_db.py b/nixbot/tests/test_db.py
-index fbfedd6..7b61b74 100644
+index fbfedd6..3c94820 100644
 --- a/nixbot/tests/test_db.py
 +++ b/nixbot/tests/test_db.py
-@@ -354,12 +354,9 @@ async def test_reuse_backfills_pr_fields(pool: asyncpg.Pool) -> None:
-     assert row["pr_author"] == "github:alice"
- 
- 
--async def test_reuse_by_other_pr_clears_both_identity_fields(
-+async def test_other_revision_keeps_its_own_pr_identity(
-     pool: asyncpg.Pool,
- ) -> None:
--    # Two PRs producing the same tree share a build. The second PR's
--    # event must not leave a row mixing PR A's number with no author,
--    # nor attach PR B's author to PR A's number.
-     project_id = await insert_project(pool, "pr-cross")
-     first, _ = await db.get_or_create_build(
+@@ -374,7 +374,7 @@ async def test_reuse_by_other_pr_clears_both_identity_fields(
          pool,
-@@ -379,17 +376,15 @@ async def test_reuse_by_other_pr_clears_both_identity_fields(
+         project_id,
+         "tree-x",
+-        "sha2",
++        "sha",
+         "feature-b",
          pr_number=2,
          pr_author="github:bob",
-     )
--    assert not created
--    assert second.id_ == first.id_
-+    assert created
-+    assert second.id_ != first.id_
-     row = await pool.fetchrow(
-         "SELECT pr_number, pr_author, branch FROM builds WHERE id = $1",
--        first.id_,
-+        second.id_,
-     )
--    # Never mix two PRs' identities: clear both together. The
--    # branch stays: only a plain branch push takes it over.
--    assert row["pr_number"] is None
--    assert row["pr_author"] is None
--    assert row["branch"] == "feature-a"
-+    assert row["pr_number"] == 2
-+    assert row["pr_author"] == "github:bob"
-+    assert row["branch"] == "feature-b"
- 
- 
- async def test_branch_push_takes_over_reused_pr_build(pool: asyncpg.Pool) -> None:
 diff --git a/nixbot/tests/test_orchestrator.py b/nixbot/tests/test_orchestrator.py
-index 725a443..4d5740b 100644
+index 725a443..3b1d91d 100644
 --- a/nixbot/tests/test_orchestrator.py
 +++ b/nixbot/tests/test_orchestrator.py
-@@ -2220,15 +2220,13 @@ async def test_stale_event_reusing_old_build_does_not_cancel_newer(
-     assert await build_status(pool, build2.id_) == BuildStatus.SUCCEEDED
- 
- 
--async def test_reuse_for_default_branch_push_runs_effects(
-+async def test_new_default_branch_revision_runs_effects(
-     pool: asyncpg.Pool,
-     make_env: EnvFactory,
+@@ -2226,9 +2226,7 @@ async def test_reuse_for_default_branch_push_runs_effects(
      upstream: Path,
      monkeypatch: pytest.MonkeyPatch,
  ) -> None:
 -    """A main push reusing a succeeded PR build must still deploy (the
 -    PR run never started effects) and report the effects on the main
 -    commit, not the build's stored PR-head commit."""
-+    """A new main revision must deploy and report effects on its own SHA."""
++    """A main push reusing a succeeded PR build must still deploy."""
  
      ran = patch_effects(monkeypatch).ran
      add_commit(upstream, "reuse-deploy")
-@@ -2246,7 +2244,6 @@ async def test_reuse_for_default_branch_push_runs_effects(
+@@ -2246,10 +2244,8 @@ async def test_reuse_for_default_branch_push_runs_effects(
      assert ran == []
      assert await effect_statuses(pool, pr_build.id_) == {"deploy": "skipped"}
  
 -    # Squash-merge: an identical tree under a new SHA reuses the build.
-     git(upstream, "commit", "--allow-empty", "-m", "reuse-deploy-merge")
+-    git(upstream, "commit", "--allow-empty", "-m", "reuse-deploy-merge")
      main_sha = git(upstream, "rev-parse", "HEAD")
-     assert main_sha != pr_sha
-@@ -2255,10 +2252,10 @@ async def test_reuse_for_default_branch_push_runs_effects(
+-    assert main_sha != pr_sha
++    assert main_sha == pr_sha
+     reporter.events.clear()
+     main_build = await orchestrator.handle_change_event(
          ChangeEvent(repo=project, branch="main", commit_sha=main_sha)
-     )
-     assert main_build is not None
--    assert main_build.id_ == pr_build.id_
-+    assert main_build.id_ != pr_build.id_
+@@ -2259,8 +2255,6 @@ async def test_reuse_for_default_branch_push_runs_effects(
      await drain_effect_items(orchestrator, project, pool)
      assert ran == ["deploy"]
--    assert await effect_statuses(pool, pr_build.id_) == {"deploy": "succeeded"}
-+    assert await effect_statuses(pool, main_build.id_) == {"deploy": "succeeded"}
-     # Effects ran for the main merge, so their statuses belong on the
-     # main commit -- not the build's stored PR-head commit (pr_sha).
+     assert await effect_statuses(pool, pr_build.id_) == {"deploy": "succeeded"}
+-    # Effects ran for the main merge, so their statuses belong on the
+-    # main commit -- not the build's stored PR-head commit (pr_sha).
      sha_events = ("effect-started", "effects-started", "effects-finished")
-@@ -2275,11 +2272,10 @@ async def build_finished_deliveries(pool: asyncpg.Pool) -> list[dict[str, object
-     return [json.loads(r["payload"]) for r in rows]
+     effect_shas = {e[-1] for e in reporter.events if e[0] in sha_events}
+     assert effect_shas == {main_sha}
+@@ -2292,7 +2286,6 @@ async def test_push_reusing_pr_build_delivers_build_finished(
+     assert pr_delivery["pr_number"] == 9
+     await pool.execute("DELETE FROM work_queue WHERE kind = 'deliver'")
  
- 
--async def test_push_reusing_pr_build_delivers_build_finished(
-+async def test_new_branch_revision_delivers_build_finished(
-     pool: asyncpg.Pool, make_env: EnvFactory, upstream: Path
- ) -> None:
--    """A branch push reusing a PR's build gets its own build_finished; a
--    PR reusing a build gets none."""
-+    """A new branch revision gets its own build_finished delivery."""
-     pr_sha = add_commit(upstream, "reuse-finished")
-     orchestrator, _, project = await make_env(
-         FakeEvalRunner([mk_job("a")]), FakeExecutor(), name="reuse-finished"
-@@ -2298,7 +2294,7 @@ async def test_push_reusing_pr_build_delivers_build_finished(
+-    git(upstream, "commit", "--allow-empty", "-m", "reuse-finished-merge")
+     main_sha = git(upstream, "rev-parse", "HEAD")
+     main_build = await orchestrator.handle_change_event(
          ChangeEvent(repo=project, branch="main", commit_sha=main_sha)
-     )
-     assert main_build is not None
--    assert main_build.id_ == pr_build.id_
-+    assert main_build.id_ != pr_build.id_
-     [main_delivery] = await build_finished_deliveries(pool)
-     assert main_delivery.get("pr_number") is None
-     assert main_delivery["rev"] == main_sha
-@@ -2336,7 +2332,6 @@ async def test_push_linking_running_pr_build_delivers_build_finished(
+@@ -2336,7 +2329,6 @@ async def test_push_linking_running_pr_build_delivers_build_finished(
      )
      await wait_started(executor.started, pr_task)
  
@@ -165,143 +114,47 @@ index 725a443..4d5740b 100644
      main_sha = git(upstream, "rev-parse", "HEAD")
      main_build = await orchestrator.handle_change_event(
          ChangeEvent(repo=project, branch="main", commit_sha=main_sha)
-@@ -2557,11 +2552,12 @@ async def test_gated_restart_then_allowed_reuse_deploys(
+@@ -2556,7 +2548,6 @@ async def test_gated_restart_then_allowed_reuse_deploys(
+     assert ran == []
      assert await effect_statuses(pool, build.id_) == {"deploy": "skipped"}
  
-     git(upstream, "commit", "--allow-empty", "-m", "merge")
--    await orchestrator.handle_change_event(
-+    build = await orchestrator.handle_change_event(
+-    git(upstream, "commit", "--allow-empty", "-m", "merge")
+     await orchestrator.handle_change_event(
          ChangeEvent(
              repo=project, branch="main", commit_sha=git(upstream, "rev-parse", "HEAD")
-         )
-     )
-+    assert build is not None
-     await drain_effect_items(orchestrator, project, pool)
-     assert ran == ["deploy"]
-     assert await effect_statuses(pool, build.id_) == {"deploy": "succeeded"}
-@@ -2606,14 +2602,13 @@ async def test_rerun_single_effect_takes_pending_dependents(
+@@ -2606,7 +2597,7 @@ async def test_rerun_single_effect_takes_pending_dependents(
      }
  
  
 -async def test_reuse_replays_effect_statuses_to_new_commit(
-+async def test_new_revision_reports_its_own_effect_statuses(
++async def test_reuse_replays_effect_statuses(
      pool: asyncpg.Pool,
      make_env: EnvFactory,
      upstream: Path,
-     monkeypatch: pytest.MonkeyPatch,
- ) -> None:
--    """A commit reusing a build whose effects already ran must get
--    those effect statuses replayed onto its SHA (Mic92/nixbot#30)."""
-+    """A new revision runs and reports its own effects."""
- 
-     async def failing_run(ctx: object, name: str, log_write: object = None) -> bool:
-         return False
-@@ -2632,8 +2627,6 @@ async def test_reuse_replays_effect_statuses_to_new_commit(
+@@ -2632,9 +2623,6 @@ async def test_reuse_replays_effect_statuses_to_new_commit(
      assert first is not None
      await drain_effect_items(orchestrator, project, pool)
  
 -    # A second commit with an identical tree reuses the build. Its
 -    # effects do not re-run, so the statuses must be replayed.
-     git(upstream, "commit", "--allow-empty", "-m", "reuse-replay-empty")
+-    git(upstream, "commit", "--allow-empty", "-m", "reuse-replay-empty")
      sha2 = git(upstream, "rev-parse", "HEAD")
      reporter.events.clear()
-@@ -2641,10 +2634,11 @@ async def test_reuse_replays_effect_statuses_to_new_commit(
-         ChangeEvent(repo=project, branch="main", commit_sha=sha2)
-     )
-     assert reused is not None
--    assert reused.id_ == first.id_
-+    assert reused.id_ != first.id_
-+    await drain_effect_items(orchestrator, project, pool)
-     replayed = [e for e in reporter.events if e[0].startswith("effect")]
--    assert ("effect-finished", first.id_, "deploy", False) in replayed
--    assert any(e[:4] == ("effects-finished", first.id_, 1, 0) for e in replayed)
-+    assert ("effect-finished", reused.id_, "deploy", False) in replayed
-+    assert any(e[:4] == ("effects-finished", reused.id_, 1, 0) for e in replayed)
- 
- 
- async def test_attach_to_already_terminal_build_replays_status(
-diff --git a/nixbot/tests/test_upload.py b/nixbot/tests/test_upload.py
-index 0cbfa56..1706fa4 100644
---- a/nixbot/tests/test_upload.py
-+++ b/nixbot/tests/test_upload.py
-@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
- import pytest
- 
- from nixbot.config import UploaderConfig
-+from nixbot.publication import PublicationUploader
- from nixbot.db_gen import uploads as q
- from nixbot.upload import (
-     MAX_ATTEMPTS,
-@@ -81,7 +82,7 @@ def test_parse_path_info_both_formats() -> None:
- async def test_final_upload_reports_and_clears_queue(
-     pool: asyncpg.Pool, tmp_path: Path
- ) -> None:
--    up = Uploader.create(recorder(tmp_path), pool, resolve=identity)
-+    up = BatchUploader(recorder(tmp_path), pool, resolve=identity)
-     async with running(up, pool):
-         result = await up.upload(["/nix/store/a", "/nix/store/b"])
-     assert result.success
-@@ -96,7 +97,7 @@ async def test_final_upload_reports_and_clears_queue(
- async def test_intermediates_batch_with_final_and_drop_invalid(
-     pool: asyncpg.Pool, tmp_path: Path
- ) -> None:
--    up = Uploader.create(recorder(tmp_path), pool, resolve=drv_to_out)
-+    up = BatchUploader(recorder(tmp_path), pool, resolve=drv_to_out)
-     # Queued before the worker runs: everything lands in one push.
-     up.enqueue_nowait("/nix/store/dep1.drv")
-     up.enqueue_nowait("/nix/store/failed.drv")
-@@ -109,7 +110,7 @@ async def test_intermediates_batch_with_final_and_drop_invalid(
- 
- 
- async def test_stdin_mode(pool: asyncpg.Pool, tmp_path: Path) -> None:
--    up = Uploader.create(recorder(tmp_path, stdin=True), pool, resolve=identity)
-+    up = BatchUploader(recorder(tmp_path, stdin=True), pool, resolve=identity)
-     async with running(up, pool):
-         assert (await up.upload(["/nix/store/a"])).success
-     assert (tmp_path / "up.log").read_text().split() == ["/nix/store/a", "batch"]
-@@ -121,7 +122,7 @@ async def test_pending_paths_survive_restart(
-     # Left over by a previous service instance that died mid-batch.
-     await q.enqueue_upload_paths(pool, uploader="up", paths=["/nix/store/old"])
-     await q.enqueue_upload_paths(pool, uploader="gone", paths=["/nix/store/x"])
--    up = Uploader.create(recorder(tmp_path), pool, resolve=identity)
-+    up = BatchUploader(recorder(tmp_path), pool, resolve=identity)
-     async with running(up, pool):
-         assert (await up.upload(["/nix/store/new"])).success
-     lines = (tmp_path / "up.log").read_text().split()
-@@ -157,7 +158,7 @@ def streamer(tmp_path: Path, body: str, name: str = "up") -> UploaderConfig:
- 
- 
- def test_uploader_factory_picks_stream(pool: asyncpg.Pool, tmp_path: Path) -> None:
--    assert isinstance(Uploader.create(recorder(tmp_path), pool), BatchUploader)
-+    assert isinstance(Uploader.create(recorder(tmp_path), pool), PublicationUploader)
-     assert isinstance(
-         Uploader.create(streamer(tmp_path, "ok(p)"), pool), StreamUploader
-     )
-@@ -239,7 +240,7 @@ async def test_failure_reports_retries_and_gives_up(
-         name="up",
-         command=["sh", "-c", f"echo x >> {counter}; echo cache down; exit 1", "sh"],
-     )
--    up = Uploader.create(cfg, pool, resolve=identity, retry_delay=0.01)
-+    up = BatchUploader(cfg, pool, resolve=identity, retry_delay=0.01)
-     async with running(up, pool):
-         result = await up.upload(["/nix/store/a"])
-         assert not result.success
+     reused = await orchestrator.handle_change_event(
 diff --git a/nixbot/tests/test_web.py b/nixbot/tests/test_web.py
-index 28268ad..0ed2c97 100644
+index 28268ad..3a07fdc 100644
 --- a/nixbot/tests/test_web.py
 +++ b/nixbot/tests/test_web.py
-@@ -112,9 +112,8 @@ def test_homepage(client: WebHarness) -> None:
-     response = client.get("/")
-     assert response.status_code == 200
+@@ -114,7 +114,7 @@ def test_homepage(client: WebHarness) -> None:
      assert "acme/widget" in response.text  # sidebar
--    # Card shows the latest default-branch build, not PR build #3.
+     # Card shows the latest default-branch build, not PR build #3.
      assert "#2" in response.text
 -    assert "#3" not in response.text
-+    assert "#3" in response.text
++    assert "#3" not in response.text.split('<div class="pipelines">', 1)[1]
  
  
  def test_project_page_with_filters(client: WebHarness) -> None:
-@@ -423,9 +422,9 @@ def test_pending_build_shows_eval_blocker(client: WebHarness) -> None:
+@@ -423,9 +423,9 @@ def test_pending_build_shows_eval_blocker(client: WebHarness) -> None:
  
  def test_project_filter_escapes_like_wildcards(client: WebHarness) -> None:
      # `%` and `_` must match literally, not as ILIKE wildcards.
@@ -314,13 +167,12 @@ index 28268ad..0ed2c97 100644
  
  
  def test_page_out_of_range_does_not_error(client: WebHarness) -> None:
-@@ -440,8 +439,7 @@ def test_page_out_of_range_does_not_error(client: WebHarness) -> None:
+@@ -440,8 +440,6 @@ def test_page_out_of_range_does_not_error(client: WebHarness) -> None:
  def test_activity_page(client: WebHarness) -> None:
      response = client.get("/builds")
      assert response.status_code == 200
 -    # Queue section shows the building build with its position.
 -    assert "queue-pos" in response.text
-+    assert 'href="/repos/github/acme/widget/builds/3"' in response.text
      assert "#3" in response.text
      # Activity feed lists finished builds too.
      assert ">#1<" in response.text

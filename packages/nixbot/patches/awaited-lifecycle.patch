@@ -1,20 +1,32 @@
 diff --git a/nixbot/bootstrap.py b/nixbot/bootstrap.py
-index 14b710b..1fb06f1 100644
+index 14b710b..864795b 100644
 --- a/nixbot/bootstrap.py
 +++ b/nixbot/bootstrap.py
-@@ -302,7 +302,10 @@ async def build_service(config: Config) -> tuple[CIService, FastAPI]:
+@@ -54,6 +54,7 @@ from .migrations import apply_migrations
+ from .nix_eval import CgroupLimiter, EvalRunner
+ from .orchestrator import Orchestrator
+ from .polling import PolledRepository, PollingService
++from .publication import PublicationUploader
+ from .repos import RepoStore
+ from .status import (
+     CommitStatusPoster,
+@@ -302,7 +303,14 @@ async def build_service(config: Config) -> tuple[CIService, FastAPI]:
          eval_runner=EvalRunner(limiter=CgroupLimiter.create()),
          executor=executor,
          identity_issuer=identity_issuer,
 -        uploaders=[Uploader.create(c, pool) for c in config.uploaders],
 +        uploaders=[
-+            Uploader.create(c, pool, state_dir=config.state_dir)
++            Uploader.create(c, pool)
++            if c.paths_via == "stream"
++            else PublicationUploader(
++                c, pool, root_dir=config.state_dir / "publication-roots"
++            )
 +            for c in config.uploaders
 +        ],
          failed_build_cache=lambda project_id: PostgresFailedBuildCache(
              pool, project_id
          ),
-@@ -333,6 +336,7 @@ async def build_service(config: Config) -> tuple[CIService, FastAPI]:
+@@ -333,6 +341,7 @@ async def build_service(config: Config) -> tuple[CIService, FastAPI]:
          identity_issuer=identity_issuer,
      )
      ctx = app.state.web_context
