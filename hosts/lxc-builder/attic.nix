@@ -32,6 +32,10 @@ in
       inherit name;
       inherit (target) jobs;
       command = [ (push name target) ];
+      planCommand = [
+        "${push name target}"
+        "--plan-json"
+      ];
     }) targets
   );
   systemd.services.nixbot.serviceConfig.LoadCredential = [

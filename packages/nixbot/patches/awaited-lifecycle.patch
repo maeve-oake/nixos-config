@@ -497,7 +497,7 @@ index 0000000..d9e3b54
 +            except Exception:
 +                logger.exception("inventory worktree cleanup failed")
 diff --git a/nixbot/config.py b/nixbot/config.py
-index 6718422..4fbd9a7 100644
+index 6718422..326d895 100644
 --- a/nixbot/config.py
 +++ b/nixbot/config.py
 @@ -256,11 +256,15 @@ class PrApprovalConfig(BaseModel):
@@ -517,8 +517,11 @@ index 6718422..4fbd9a7 100644
  class UploaderConfig(BaseModel):
      """Binary-cache push command receiving batches of store paths
      (built intermediates and final outputs) on argv or stdin."""
-@@ -271,6 +275,10 @@ class UploaderConfig(BaseModel):
+@@ -269,8 +273,13 @@ class UploaderConfig(BaseModel):
+ 
+     name: str
      command: list[str | Interpolate]
++    plan_command: list[str] | None = None
      environment: Mapping[str, str | Interpolate] = {}
      paths_via: Literal["argv", "stdin", "stream"] = "argv"
 +    jobs: int = Field(default=1, ge=1)
@@ -528,7 +531,7 @@ index 6718422..4fbd9a7 100644
  
  
  def glob_to_regex(glob: str) -> re.Pattern:
-@@ -404,6 +412,9 @@ class Config(BaseModel):
+@@ -404,6 +413,9 @@ class Config(BaseModel):
      outputs_path: Path | None = None
      post_build_steps: list[PostBuildStep] = []
      uploaders: list[UploaderConfig] = []
@@ -538,7 +541,7 @@ index 6718422..4fbd9a7 100644
      failed_build_report_limit: int = (
          47  # Default: 50 total - 3 reserved for eval/build/effects
      )
-@@ -481,6 +492,8 @@ class Config(BaseModel):
+@@ -481,6 +493,8 @@ class Config(BaseModel):
      def load(cls, path: Path) -> Config:
          try:
              data = json.loads(path.read_text())
