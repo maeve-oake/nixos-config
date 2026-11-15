@@ -276,10 +276,10 @@ index 0000000..9a5bc98
 +  }
 +});
 diff --git a/nixbot/web/static/style.css b/nixbot/web/static/style.css
-index 9ff1b26..419c91f 100644
+index 9ff1b26..9dda0f8 100644
 --- a/nixbot/web/static/style.css
 +++ b/nixbot/web/static/style.css
-@@ -1420,3 +1420,101 @@ button.quiet:hover {
+@@ -1420,3 +1420,100 @@ button.quiet:hover {
  	border-color: var(--border);
  	color: var(--fg);
  }
@@ -302,6 +302,8 @@ index 9ff1b26..419c91f 100644
 +  min-width: 0;
 +}
 +.upload-card:only-child { grid-column: 1 / -1; }
++#uploads-buyan { --upload-color: #c29bed; }
++#uploads-kitezh { --upload-color: #ffb267; }
 +.upload-heading { font-size: 0.8rem; margin-bottom: 0.5rem; }
 +.upload-path {
 +  display: grid;
@@ -337,19 +339,16 @@ index 9ff1b26..419c91f 100644
 +  border-radius: 2px;
 +  overflow: hidden;
 +}
-+.upload-track > span { display: block; height: 100%; background: var(--accent); transition: width 0.5s ease; }
-+.upload-separator { display: none; }
++.upload-track > span { display: block; height: 100%; background: var(--upload-color, var(--accent)); transition: width 0.5s ease; }
 +.upload-path[data-state="queued"] .upload-track,
-+.upload-path[data-state="queued"] .upload-percent,
-+.upload-path[data-state="queued"] .upload-separator { visibility: hidden; }
++.upload-path[data-state="queued"] .upload-percent { visibility: hidden; }
 +.upload-path[data-state="failed"] .upload-percent { color: var(--bad); }
 +.upload-path[data-state="failed"] .upload-track > span { background: var(--bad); }
 +.upload-path[data-state="retrying"] .upload-percent { color: var(--warn); }
 +.upload-more { font-size: 11px; margin-top: 0.4rem; }
 +@container upload-card (max-width: 28.5rem) {
-+  .upload-path { grid-template-columns: minmax(0, 1fr) 7ch 0.5em 3em; }
++  .upload-path { grid-template-columns: minmax(0, 1fr) 7ch 3em; }
 +  .upload-track { display: none; }
-+  .upload-separator { display: inline; }
 +}
 +@media (max-width: 420px) { .upload-grid { grid-template-columns: 1fr; } }
 +@media (prefers-reduced-motion: reduce) { .upload-track > span { transition: none; } }
@@ -510,10 +509,10 @@ index 62a9545..e3091fb 100644
  {% endif %}
 diff --git a/nixbot/web/templates/_uploads.html b/nixbot/web/templates/_uploads.html
 new file mode 100644
-index 0000000..afc3ca8
+index 0000000..02cc08d
 --- /dev/null
 +++ b/nixbot/web/templates/_uploads.html
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,29 @@
 +<div class="upload-panel">
 +  {% set queued = destinations | selectattr('visible_paths') | list %}
 +  {% if queued %}
@@ -533,7 +532,6 @@ index 0000000..afc3ca8
 +                    aria-valuemin="0"
 +                    aria-valuemax="100"
 +                    aria-valuenow="{{ p.percent }}"><span style="width:{{ p.percent }}%"></span></span>
-+              <span class="upload-separator muted">·</span>
 +              <span class="upload-percent">{{ p.percent }}%</span>
 +              </nixbot-upload-path>
 +            {% endfor %}
