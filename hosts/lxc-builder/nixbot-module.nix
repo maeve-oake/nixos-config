@@ -34,6 +34,7 @@ let
         command
         environment
         jobs
+        colour
         ;
       paths_via = u.pathsVia;
       plan_command = u.planCommand;
@@ -58,6 +59,10 @@ in
       type = lib.types.listOf (
         lib.types.submodule {
           options = {
+            colour = lib.mkOption {
+              type = lib.types.nullOr (lib.types.strMatching "#[0-9a-fA-F]{6}");
+              default = null;
+            };
             jobs = lib.mkOption {
               type = lib.types.ints.positive;
               default = 1;
