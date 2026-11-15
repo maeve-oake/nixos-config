@@ -510,7 +510,7 @@ index 62a9545..e3091fb 100644
  {% endif %}
 diff --git a/nixbot/web/templates/_uploads.html b/nixbot/web/templates/_uploads.html
 new file mode 100644
-index 0000000..ef46e42
+index 0000000..afc3ca8
 --- /dev/null
 +++ b/nixbot/web/templates/_uploads.html
 @@ -0,0 +1,30 @@
@@ -521,10 +521,10 @@ index 0000000..ef46e42
 +      <h2 class="section">Uploads</h2>
 +      <div class="upload-grid">
 +        {% for d in queued %}
-+          <section class="upload-card" aria-label="{{ d.name }} uploads">
++          <section class="upload-card" id="uploads-{{ d.name | urlencode }}" aria-label="{{ d.name }} uploads">
 +            <div class="upload-heading"><strong>{{ d.name }}</strong></div>
 +            {% for p in d.visible_paths %}
-+              <nixbot-upload-path class="upload-path" data-state="{{ p.state }}" title="{{ p.path }} · {{ p.state }}{% if p.shared > 1 %} · shared by {{ p.shared }} attributes{% endif %}{% if p.error %} · {{ p.error }}{% endif %}">
++              <nixbot-upload-path id="upload-{{ d.name | urlencode }}-{{ p.path | urlencode }}" class="upload-path" data-state="{{ p.state }}" title="{{ p.path }} · {{ p.state }}{% if p.shared > 1 %} · shared by {{ p.shared }} attributes{% endif %}{% if p.error %} · {{ p.error }}{% endif %}">
 +              <span class="upload-name" role="button" tabindex="0" data-path="{{ p.path }}" title="Copy {{ p.path }}" aria-label="Copy {{ p.path }}">{{ p.name }}</span>
 +              <span class="upload-size">{{ p.size_label }}</span>
 +              <span class="upload-track"
@@ -638,10 +638,10 @@ index 6c4d71d..5f31913 100644
                {{ status_icon(p.last_status or "", labelled=false) }}
 diff --git a/nixbot/web/uploads.py b/nixbot/web/uploads.py
 new file mode 100644
-index 0000000..9ad49b0
+index 0000000..03e43e4
 --- /dev/null
 +++ b/nixbot/web/uploads.py
-@@ -0,0 +1,88 @@
+@@ -0,0 +1,92 @@
 +from __future__ import annotations
 +
 +from fastapi import APIRouter, Request
@@ -682,12 +682,16 @@ index 0000000..9ad49b0
 +    shared = {(r["destination"], r["path"]): r["subscribers"] for r in members}
 +    for key, section in destinations.items():
 +        paths = section["paths"]
-+        order = {"uploading": 0, "failed": 1, "retrying": 2, "queued": 3}
++        order = {"uploading": 0, "retrying": 1, "queued": 1, "failed": 2}
 +        pending = sorted(
 +            (p for p in paths if p["state"] in order),
-+            key=lambda p: (order[p["state"]], p["path"]),
++            key=lambda p: (
++                order[p["state"]],
++                p["updated_at"] if p["state"] == "uploading" else p["available_at"],
++                p["path"],
++            ),
 +        )
-+        limit = 5
++        limit = uploaders[key].config.jobs + 1
 +        section["visible_paths"] = pending[:limit]
 +        section["hidden_paths"] = max(0, len(pending) - limit)
 +        for path in section["visible_paths"]:

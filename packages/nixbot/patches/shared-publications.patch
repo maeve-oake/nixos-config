@@ -1,9 +1,9 @@
 diff --git a/nixbot/publication.py b/nixbot/publication.py
 new file mode 100644
-index 0000000..0bb0f14
+index 0000000..d996e7d
 --- /dev/null
 +++ b/nixbot/publication.py
-@@ -0,0 +1,414 @@
+@@ -0,0 +1,408 @@
 +from __future__ import annotations
 +
 +import asyncio
@@ -23,7 +23,6 @@ index 0000000..0bb0f14
 +
 +    def __post_init__(self):
 +        self._lock = asyncio.Lock()
-+        self._last_owner = 0
 +        self.progress = {}
 +        self._root = self.root_dir
 +        self._root.mkdir(parents=True, exist_ok=True)
@@ -393,20 +392,15 @@ index 0000000..0bb0f14
 +                while len(active) < self.config.jobs:
 +                    async with self._lock:
 +                        row = await self.pool.fetchrow(
-+                            """SELECT p.path,COALESCE(min(m.publication_id),0) AS owner
-+                            FROM nixbot_uploads.publication_paths p LEFT JOIN nixbot_uploads.publication_members m ON m.destination=p.destination AND m.path=p.path
-+                            AND EXISTS(SELECT 1 FROM nixbot_uploads.publications subscriber WHERE subscriber.id=m.publication_id AND subscriber.state IN ('planning','waiting'))
-+                            WHERE p.destination=$1 AND p.state IN ('queued','retrying') AND p.available_at<=now()
-+                            GROUP BY p.destination,p.path ORDER BY (COALESCE(min(m.publication_id),0)>$2) DESC,
-+                            COALESCE(min(m.publication_id),0),p.available_at,p.path LIMIT 1""",
++                            """SELECT path FROM nixbot_uploads.publication_paths
++                            WHERE destination=$1 AND state IN ('queued','retrying') AND available_at<=now()
++                            ORDER BY available_at,path LIMIT 1""",
 +                            self.destination,
-+                            self._last_owner,
 +                        )
 +                        if not row:
 +                            break
-+                        self._last_owner = row["owner"]
 +                        await self.pool.execute(
-+                            "UPDATE nixbot_uploads.publication_paths SET state='uploading',attempts=attempts+1 WHERE destination=$1 AND path=$2",
++                            "UPDATE nixbot_uploads.publication_paths SET state='uploading',attempts=attempts+1,updated_at=clock_timestamp() WHERE destination=$1 AND path=$2",
 +                            self.destination,
 +                            row["path"],
 +                        )
