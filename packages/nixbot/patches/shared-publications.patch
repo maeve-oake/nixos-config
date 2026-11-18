@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000..257cee3
 --- /dev/null
 +++ b/nixbot/publication.py
-@@ -0,0 +1,410 @@
+@@ -0,0 +1,403 @@
 +from __future__ import annotations
 +
 +import asyncio
@@ -26,14 +26,7 @@ index 0000000..257cee3
 +        self.progress = {}
 +        self._root = self.root_dir
 +        self._root.mkdir(parents=True, exist_ok=True)
-+        self.destination = (
-+            self.name
-+            + ":"
-+            + hashlib.sha256(
-+                self.config.model_dump_json(exclude={"colour"}).encode()
-+            ).hexdigest()[:16]
-+        )
-+
++        self.destination = self.name
 +        self.active_destinations = [self.destination]
 +
 +    async def _closure(self, paths, *, recursive=True):

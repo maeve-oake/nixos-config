@@ -38,6 +38,7 @@ let
         ;
       paths_via = u.pathsVia;
       plan_command = u.planCommand;
+      upload_intermediates = u.uploadIntermediates;
     }) cfg.uploaders;
   };
 in
@@ -70,6 +71,11 @@ in
             planCommand = lib.mkOption {
               type = lib.types.nullOr (lib.types.listOf lib.types.str);
               default = null;
+            };
+            uploadIntermediates = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Queue intermediate build outputs for upload as they are built.";
             };
           };
         }

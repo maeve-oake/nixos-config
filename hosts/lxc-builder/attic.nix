@@ -10,12 +10,14 @@ let
       jobs = 12;
       colour = "#c29bed";
       includeUpstream = true;
+      uploadIntermediates = true;
     };
     kitezh = {
       host = "https://attic-kitezh.oa.ke";
       jobs = 4;
       colour = "#ffb267";
       includeUpstream = false;
+      uploadIntermediates = false;
     };
   };
   push =
@@ -32,7 +34,7 @@ in
   services.nixbot.uploaders = builtins.attrValues (
     builtins.mapAttrs (name: target: {
       inherit name;
-      inherit (target) jobs colour;
+      inherit (target) jobs colour uploadIntermediates;
       command = [ (push name target) ];
       planCommand = [
         "${push name target}"

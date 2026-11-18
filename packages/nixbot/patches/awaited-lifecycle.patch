@@ -268,7 +268,17 @@ index 835c45e..695f882 100644
      async def _build_inner(self, job: NixEvalJobSuccess) -> BuildOutcome:
          # Runs after slot acquisition so started_at (and the shown
          # duration) excludes queue wait. False: row already terminal.
-@@ -752,8 +784,24 @@ class _OrchestratorExecutor:
+@@ -734,7 +766,8 @@ class _OrchestratorExecutor:
+
+         def on_built(drv: str) -> None:
+             for uploader in self.o.uploaders:
+-                uploader.enqueue_nowait(drv)
++                if uploader.config.upload_intermediates:
++                    uploader.enqueue_nowait(drv)
+
+         mirror = asyncio.create_task(_mirror_build_cancel())
+         try:
+@@ -752,8 +785,24 @@ class _OrchestratorExecutor:
                      ),
                      store=self.o.config.store_for(self.event.repo.name),
                  )
@@ -517,7 +527,7 @@ index 6718422..caf6fa4 100644
  class UploaderConfig(BaseModel):
      """Binary-cache push command receiving batches of store paths
      (built intermediates and final outputs) on argv or stdin."""
-@@ -269,8 +273,14 @@ class UploaderConfig(BaseModel):
+@@ -269,8 +273,15 @@ class UploaderConfig(BaseModel):
  
      name: str
      command: list[str | Interpolate]
@@ -525,6 +535,7 @@ index 6718422..caf6fa4 100644
 +    colour: str | None = Field(default=None, pattern=r"^#[0-9a-fA-F]{6}$")
      environment: Mapping[str, str | Interpolate] = {}
      paths_via: Literal["argv", "stdin", "stream"] = "argv"
++    upload_intermediates: bool = False
 +    jobs: int = Field(default=1, ge=1)
 +    max_attempts: int = Field(default=3, ge=1)
 +    retry_delay: float = Field(default=30, ge=0)
@@ -532,7 +543,7 @@ index 6718422..caf6fa4 100644
  
  
  def glob_to_regex(glob: str) -> re.Pattern:
-@@ -404,6 +414,9 @@ class Config(BaseModel):
+@@ -404,6 +415,9 @@ class Config(BaseModel):
      outputs_path: Path | None = None
      post_build_steps: list[PostBuildStep] = []
      uploaders: list[UploaderConfig] = []
