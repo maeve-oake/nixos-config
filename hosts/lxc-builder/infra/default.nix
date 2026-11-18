@@ -2,6 +2,10 @@
 let
   handler = name: {
     inherit name;
+    repositories = [
+      "maeve-oake/nixos-config"
+      "anna-oake/nixos-config"
+    ];
     command = [
       "${pkgs.python3}/bin/python3"
       "${./infra-hook.py}"
