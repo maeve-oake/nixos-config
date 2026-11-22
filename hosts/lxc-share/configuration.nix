@@ -18,6 +18,7 @@
           "media"
           "kittycraft"
           "kittycraft-extra"
+          "agent"
         ];
       };
       anna = {
@@ -33,6 +34,7 @@
       "media" = "/storage/media";
       "kittycraft" = "/storage-fast/kittycraft";
       "kittycraft-extra" = "/storage/kittycraft-extra";
+      "agent" = "/storage-fast/agent";
     };
   };
 
