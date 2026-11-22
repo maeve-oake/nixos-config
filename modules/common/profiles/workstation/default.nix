@@ -14,6 +14,15 @@
     programs._1password.enable = true;
     programs._1password-gui.enable = true;
 
+    services.mcpproxy-peer = {
+      enable = true;
+      user = config.me.username;
+      settings = {
+        primaryUrl = "https://mcp.lan.ci";
+        listen = "127.0.0.1:3333";
+      };
+    };
+
     environment.systemPackages = with pkgs; [
       # dev
       just
@@ -35,15 +44,10 @@
             esphome.esphome-vscode
             mkhl.direnv
             ms-vscode.cpptools
-            openai.chatgpt
-            openai.codex-audio
           ];
       })
 
       # ai
-      claude-code
-      codex
-      grok-build
       t3code
 
       # shell

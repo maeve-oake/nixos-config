@@ -93,7 +93,6 @@
   };
   environment.systemPackages = with pkgs; [
     # apps
-    opencode
     plex-desktop
     darktable
     ffmpeg
