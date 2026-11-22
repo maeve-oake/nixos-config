@@ -21,6 +21,12 @@
         primaryUrl = "https://mcp.lan.ci";
         listen = "127.0.0.1:3333";
       };
+      path = with pkgs; [
+        nodejs-slim
+        nodejs-slim.npm
+        go
+        uv
+      ];
     };
 
     environment.systemPackages = with pkgs; [
