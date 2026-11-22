@@ -81,7 +81,6 @@
     plex-desktop
     darktable
     satdump
-    opencode
   ];
 
   # Do not remove

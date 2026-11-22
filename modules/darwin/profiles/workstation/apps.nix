@@ -26,7 +26,6 @@
     "plex"
     "affinity"
     "bambu-studio"
-    "chatgpt"
     "discord"
     "grok-bot"
   ];
